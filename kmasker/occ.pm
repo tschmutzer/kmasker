@@ -1,13 +1,14 @@
-package kmasker::build;
+package kmasker::occ;
 use Exporter qw(import);
 use jellyfish;
 use File::Basename;
-use kmasker::fasta;
+use kmasker::filehandler;
+use POSIX qw/ceil/;
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(make_occ);
-our @EXPORT_OK = qw(make_occ);
+our @EXPORT = qw(normalize_occ);
+our @EXPORT_OK = qw(make_occ normalize_occ);
 
 
 #sub make_index{
@@ -28,7 +29,7 @@ sub make_occ{
 	my $qmerfile = jellyfish::QueryMerFile->new($index);
 	my $seqname="";
 	my %seqdata;
-	while (read_fasta_sequence($fasta, \%seqdata)) {
+	while (read_sequence($fasta, \%seqdata)) {
 			print $occ ">".$seqdata{header}."\n";
 			#calculate the values for the occ file
 			my $overhead = $mer - 1;
@@ -48,6 +49,31 @@ sub make_occ{
 	}
 	close($fasta);
 	close($occ);
+}
+
+sub normalize_occ{
+	my $file = $_[0];
+	my $depth = $_[1];
+	my %seqdata;
+	(my $name,my $path,my $suffix) = fileparse($file, qr/\.[^.]*/);
+	open(my $occ, "<", "$file") or die "Can not open $file\n";
+	open(my $occ_norm, ">", $path.$name."_normalized.occ") or die "Can not write to " . $path.$name."_normalized.occ\n";
+	if ($depth == 1) {
+		print "Nothing to do! Depth was 1. \n";
+		return;
+	}
+	else {
+	while (read_occ($occ, \%seqdata)) {
+		print $occ_norm ">".$seqdata{header}."\n";
+		my @values = split /\s+/ , $seqdata{seq};
+		foreach(@values) {
+			#print $_ . ": $depth = " . ceil($_/$depth) . "\n" ;
+			$_ = ceil($_/$depth);
+
+			}
+		print $occ_norm "@values\n";
+		}
+	}
 }
 
 1;

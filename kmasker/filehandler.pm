@@ -1,14 +1,14 @@
-package kmasker::fasta;
+package kmasker::filehandler;
 use Exporter qw(import);
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(read_fasta_sequence);
-our @EXPORT_OK = qw(read_fasta_sequence);
+our @EXPORT = qw(read_sequence read_occ);
+our @EXPORT_OK = qw(read_sequence read_occ);
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
-sub read_fasta_sequence {
+sub read_sequence { #works for fasta 
    my ($fh, $seq_info) = @_;
 
    $seq_info->{seq} = undef; # clear out previous sequence
@@ -34,7 +34,7 @@ sub read_fasta_sequence {
          }              
       }         
       else {    
-         s/\s+//;  # remove any white space
+         s/\s+//g;  # remove any white space
          $seq_info->{seq} .= $_;
       }         
    }    
@@ -49,3 +49,48 @@ sub read_fasta_sequence {
       return;   
    }    
 }
+
+
+sub read_occ { #works for occ
+   my ($fh, $seq_info) = @_;
+
+   $seq_info->{seq} = undef; # clear out previous sequence
+
+   # put the header into place
+   $seq_info->{header} = $seq_info->{next_header} if $seq_info->{next_header};
+
+   my $file_not_empty = 0; 
+   while (<$fh>) {
+      $file_not_empty = 1;
+      next if /^\s*$/;  # skip blank lines
+      chomp;    
+
+      if (/^>/) { # fasta header line
+         my $h = $_;    
+         $h =~ s/^>//;  
+         if ($seq_info->{header}) {
+            $seq_info->{next_header} = $h;
+            return $seq_info;   
+         }              
+         else { # first time through only
+            $seq_info->{header} = $h;
+         }              
+      }         
+      else {    
+         #s/\s+//g;  # remove any white space # We do not want this, because we are using split with whitespaces
+         $seq_info->{seq} .= $_;
+      }         
+   }    
+
+   if ($file_not_empty) {
+      return $seq_info;
+   }    
+   else {
+      # clean everything up
+      $seq_info->{header} = $seq_info->{seq} = $seq_info->{next_header} = undef;
+
+      return;   
+   }    
+}
+
+1;

@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use kmasker::build;
+use kmasker::occ;
 my $fasta;
 my $index;
 my $mer;
@@ -13,4 +13,4 @@ my $mer;
              "index=s"  => \$index)   # flag
  or die("Error in command line arguments\n");
 
-make_occ($fasta, $index, $mer)
+kmasker::occ::make_occ($fasta, $index, $mer)
