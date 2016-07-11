@@ -40,24 +40,45 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
   sequence_parser                         parser(4, 100, 1, streams);
   sequence_mers                           mers(canonical);
   const sequence_mers                     mers_end(canonical);
-
+  bool whitspace = false;
   while(true) {
     sequence_parser::job j(parser);
     if(j.is_empty()) break;
     for(size_t i = 0; i < j->nb_filled; ++i) {
       std::cout << ">" << j->data[i].header << "\n";
       mers = j->data[i].seq;
-      if(mers != mers_end) {
+     /* if(mers != mers_end) {
         std::cout << db.check(*mers);
         ++mers;
-      }
-        for(int k = 1 ; mers != mers_end; ++mers, k++) {
-            std::cout << " " << db.check(*mers);
-        }
+      }*/
+        int k = 1;
+	for( ; mers != mers_end; ++mers, k++) {
+            if(whitespace == false) {
+		std::cout << db.check(*mers);	
+	   	whitspace = true;
+	    }
+	    else {
+	    	std::cout << " " << db.check(*mers);
+       	    }
+	    if(k % 40 == 0) {
+		std::cout << "\n";
+		whitespace=false;	
+	    }
+	 }
         //int seqsize = j->data[i].seq.size();
-        for (int a = 1; a < mers->k(); a++) {
-            std::cout << " " << "0";
-        }
+        for (int a = 1; a < mers->k(); a++, k++) {
+            if(whitespace == false) {
+	    	std::cout << "0";
+		whitespace = true;
+	    }
+	    else {
+		std::cout << " " << "0";
+            }
+	    if(k % 40 == 0) {
+		std::cout << "\n";
+		whitespace=false;
+	    }
+	}
       std::cout << "\n";
     }
   }
