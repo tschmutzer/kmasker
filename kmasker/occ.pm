@@ -7,8 +7,8 @@ use POSIX qw/ceil/;
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(normalize_occ);
-our @EXPORT_OK = qw(make_occ normalize_occ);
+our @EXPORT = qw(normalize_occ apply_occ);
+our @EXPORT_OK = qw(make_occ normalize_occ apply_occ);
 
 
 #sub make_index{
@@ -74,6 +74,50 @@ sub normalize_occ{
 		print $occ_norm "@values\n";
 		}
 	}
+}
+
+sub apply_occ{
+	my $fasta_file = $_[0];
+	my $occ_file = $_[1];
+	my $rept = $_[2];
+	my %seqdata;
+	my %occ_data;
+	open(my $occ, "<", "$occ_file") or die "Can not open $occ_file\n";
+	open(my $fasta, "<", "$fasta_file") or die "Can not open $fasta_file\n";
+
+	(my $name,my $path,my $suffix) = fileparse($fasta_file, qr/\.[^.]*/);
+	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT$rept.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
+	while(read_occ($occ, \%occ_data) && read_sequence($fasta, \%seqdata)) {
+		my @sequence = split '', $seqdata{seq};
+		my @occvalues = split /\s+/, $occ_data{seq};
+		#print $seqdata{header} . " " . $occ_data{header} . "\n";
+		#print length($seqdata{seq}) . " " . length($occ_data{seq}) . "\n";
+		#for (my $k = 0; $k < scalar(@sequence); $k++) {
+		#	print $occvalues[$k];
+		#	print " ";
+		#	print $sequence[$k];
+		#	print "\n";
+		#}
+		if($seqdata{header} != $occ_data{header}) {
+			print "Warning: Headers in occ and fasta are different! \n";
+		}
+		if(scalar(@sequence) != scalar(@occvalues)) {
+			die "Sorry your occ input has an different length than the fasta file !\n " . scalar(@sequence) . "!=" . scalar(@occvalues) . "\n";
+		}
+		for (my $i = 0; $i < scalar(@sequence); $i++) {
+			if($occvalues[$i] > $rept) {
+				#we will mask the sequnce in this part
+				$sequence[$i] = "X";
+			}
+			print $freakmaskedFASTA ">" .$seqdata{header}."\n";
+			foreach(@sequence){
+				print $freakmaskedFASTA $_;
+			}
+			print $freakmaskedFASTA "\n";
+		}
+
+	}
+
 }
 
 1;
