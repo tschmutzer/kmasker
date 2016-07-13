@@ -95,7 +95,7 @@ sub read_occ { #works for occ
 
 sub sequence_length {
    $seqfile = $_[0]; #just the filename of the sequence file
-   open(my $seqfh, "<", "$seqfile") or die "Can not open $file\n";
+   open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
    (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
    open(my $seql, ">", "$path/$name.$suffix.length") or die "Can not write to $path/$name.$suffix.length \n";
    my %seqdata;
