@@ -23,7 +23,7 @@ sub make_occ{
 	my $file=$_[0];
 	my $index=$_[1];
 	my $mer=$_[2];
-	(my $name,my $path,my $suffix) = fileparse($file);
+	(my $name,my $path,my $suffix) = fileparse($file, qr/\.[^.]*/);
 	open(my $fasta, "<", "$file") or die "Can not open $file\n";
 	open(my $occ, ">", $path.$name.".occ") or die "Can not write to " . $path.$name.".occ\n";
 	my $qmerfile = jellyfish::QueryMerFile->new($index);
