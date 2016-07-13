@@ -93,4 +93,14 @@ sub read_occ { #works for occ
    }    
 }
 
+sub sequence_length {
+   $seqfile = $_[0]; #just the filename of the sequence file
+   open(my $seqfh, "<", "$seqfile") or die "Can not open $file\n";
+   (my $name,my $path,my $suffix) = fileparse($seqfile);
+   my %seqdata;
+   while (read_sequence($fasta, \%seqdata)) {
+      print $seqdata{header} . " : " . length($seqdata{seq}) . "\n";
+   }
+}
+
 1;
