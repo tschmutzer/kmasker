@@ -38,49 +38,62 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                          bool canonical) {
   jellyfish::stream_manager<PathIterator> streams(file_begin, file_end);
   sequence_parser                         parser(4, 100, 1, streams);
-  sequence_mers                           mers(canonical);
-  const sequence_mers                     mers_end(canonical);
-  bool whitspace = false;
+  //sequence_mers                           mers(canonical);
+  //const sequence_mers                     mers_end(canonical);
+  bool whitespace = false;
   while(true) {
     sequence_parser::job j(parser);
     if(j.is_empty()) break;
     for(size_t i = 0; i < j->nb_filled; ++i) {
       std::cout << ">" << j->data[i].header << "\n";
-      mers = j->data[i].seq;
+        /* What we trying to archive with the code modification is:
+         -get the first kmer of the sequence string
+         -then get the next char from the sequence string by using a pointer to the chars of that string
+         -using the shift operation of the sequence-mer-class to append this char */
+        //mers = j->data[i].seq;
      /* if(mers != mers_end) {
         std::cout << db.check(*mers);
         ++mers;
       }*/
+        //lets start with the first kmer
+        jellyfish::mer_dna mer;
+        mer = j->data[i].seq.substr(1,mer.k());
+        std::cout << db.check(mer) << " : " << mer.to_str();
+        //std::cout << mer.k();
         int k = 1;
-	for( ; mers != mers_end; ++mers, k++) {
+        /*for( ; mers != mers_end; ++mers, k++) {
             if(whitespace == false) {
-		std::cout << db.check(*mers);	
-	   	whitspace = true;
-	    }
-	    else {
-	    	std::cout << " " << db.check(*mers);
-       	    }
-	    if(k % 40 == 0) {
-		std::cout << "\n";
-		whitespace=false;	
-	    }
-	 }
-        //int seqsize = j->data[i].seq.size();
-        for (int a = 1; a < mers->k(); a++, k++) {
-            if(whitespace == false) {
-	    	std::cout << "0";
-		whitespace = true;
-	    }
-	    else {
-		std::cout << " " << "0";
+                std::cout << db.check(*mers) << " : " << mers->to_str() << " : " << j->data[i].seq;
+                whitespace = true;
             }
-	    if(k % 40 == 0) {
-		std::cout << "\n";
-		whitespace=false;
-	    }
-	}
-      std::cout << "\n";
-    }
+            else {
+                //std::cout << " " << db.check(*mers);
+                std::cout << " " << db.check(*mers) << " : " << mers->to_str() << " : " << j->data[i].seq;
+
+            }
+            if(k == 40) {
+                std::cout << "\n";
+                whitespace=false;
+                k=1;
+            }
+         }
+         //int seqsize = j->data[i].seq.size();
+         for (int a = 1; a < mers->k(); a++, k++) {
+             if(whitespace == false) {
+                 std::cout << "0";
+                 whitespace = true;
+             }
+             else {
+                 std::cout << " " << "0";
+             }
+             if(k == 40) {
+                 std::cout << "\n";
+                 whitespace=false;
+                 k=1;
+             }
+         }
+        std::cout << "\n"; */
+      }
   }
 }
 
