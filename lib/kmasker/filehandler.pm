@@ -3,8 +3,8 @@ use Exporter qw(import);
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(read_sequence read_occ);
-our @EXPORT_OK = qw(read_sequence read_occ);
+our @EXPORT = qw(read_sequence read_occ sequence_length);
+our @EXPORT_OK = qw(read_sequence read_occ sequence_length);
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
