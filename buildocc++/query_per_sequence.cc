@@ -61,7 +61,8 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         if((mershift = j->data[i].seq.substr(0,mer.k()).find_last_of('N')) != std::string::npos) {
             /*std::cout << "-1" << " : " << mer.to_str()<< " : " << mershift;
             std::cout << "\n";*/
-            std::cout << "-1";
+            //std::cout << "-1";
+            std::cout << "0";
         }
         else {
             //std::cout << db.check(mer) << " : " << mer.to_str()<< " : " << mershift;
@@ -80,7 +81,8 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                 mer.shift_left('A');
                 /*std::cout << "-1" << " : " << mer.to_str() << " : " << mershift;
                 std::cout << "\n";*/
-                std::cout << "-1";
+                //std::cout << "-1";
+                std::cout << "0";
 
             }
             else {
@@ -89,7 +91,8 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                     mer.shift_left(c);
                     /*std::cout << "-1" << " : " << mer.to_str()<< " : " << mershift;
                     std::cout << "\n";*/
-                    std::cout << "-1";
+                    //std::cout << "-1";
+                    std::cout << "0";
 
                 }
                 else { //allright, no Ns in the kmer
