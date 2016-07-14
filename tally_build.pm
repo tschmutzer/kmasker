@@ -1,4 +1,4 @@
-package lib::tally_build;
+package kmasker::tally_build;
 use Exporter qw(import);
 use File::Basename;
 use strict;
@@ -46,7 +46,6 @@ sub make_kindex_tally{
 	my ($input_seq, $md5_name, $k) = @_;
 	
 	#1
-	#system("/opt/Bio/genometools/1.5.8/bin/gt suffixerator -dna -pl -tis -suf -lcp -db SMALL_ERR418039_2_trim_Q20.fastq.fasta -indexname SMALL");
 	system("/opt/Bio/genometools/1.5.8/bin/gt suffixerator -dna -pl -tis -suf -lcp -db $input_seq -indexname ".$md5_name."_".$k);
 	#2
 	system("/opt/Bio/genometools/1.5.8/bin/gt tallymer mkindex -esa ".$md5_name."_".$k." -mersize 21 -minocc 1 -pl -indexname ".$md5_name."_".$k." -counts");
