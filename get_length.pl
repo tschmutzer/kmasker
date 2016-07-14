@@ -9,4 +9,4 @@ my $fasta;
  GetOptions ("fasta=s"   => \$fasta)      # string
  or die("Error in command line arguments\n");
 
-sequence_length($fasta)
+sequence_length($fasta);

@@ -5,12 +5,12 @@ use warnings;
 use Getopt::Long;
 use kmasker::occ;
 my $occ;
-my $depth;
+my $repT;
 my $fasta;
 
  GetOptions ("occ=s"   => \$occ,  
-             "depth=i"  => \$depth,
+             "repT=i"  => \$depth,
              "fasta=s" => \$fasta) 
  or die("Error in command line arguments\n");
 
-apply_occ($fasta, $occ, $depth)
+apply_occ($fasta, $occ, $repT)
