@@ -99,7 +99,7 @@ sub sequence_length {
    (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
    open(my $seql, ">", "$path/$name.$suffix.length") or die "Can not write to $path/$name.$suffix.length \n";
    my %seqdata;
-   while (read_sequence(my $fasta, \%seqdata)) {
+   while (read_sequence(my $seqfh, \%seqdata)) {
       #print $seqdata{header} . " : " . length($seqdata{seq}) . "\n";
       print $seql $seqdata{header} . "\t" . length($seqdata{seq}) . "\n";
    }
