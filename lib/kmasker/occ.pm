@@ -63,15 +63,29 @@ sub normalize_occ{
 		return;
 	}
 	else {
-	while (read_occ($occ, \%seqdata)) {
-		print $occ_norm ">".$seqdata{header}."\n";
-		my @values = split /\s+/ , $seqdata{seq};
-		foreach(@values) {
-			#print $_ . ": $depth = " . ceil($_/$depth) . "\n" ;
-			$_ = ceil($_/$depth);
+		while (read_occ($occ, \%seqdata)) {
+			print $occ_norm ">".$seqdata{header}."\n";
+			my @values = split /\s+/ , $seqdata{seq};
+			foreach(@values) {
+				#print $_ . ": $depth = " . ceil($_/$depth) . "\n" ;
+				$_ = ceil($_/$depth);
 
+				}
+			#print $occ_norm "@values\n";
+			my $whitespace = 0;
+			for (my $i = 0; $i < scalar(@values); $i++) {
+				if($whitespace) {
+					print $occ_norm " " . $values[$i];
+				}
+				else{
+					print $occ_norm $values[$i];
+					$whitespace = 1;
+				}
+				if(($i+1) % 25 == 0) {
+					print $occ_norm "\n";
+					$whitespace = 0;
+				}
 			}
-		print $occ_norm "@values\n";
 		}
 	}
 }
@@ -99,7 +113,7 @@ sub apply_occ{
 		#	print "\n";
 		#}
 		if($seqdata{header} ne $occ_data{header}) {
-			print "Warning: Headers in occ and fasta are different! \n";
+			print "Warning: Headers in occ and fasta are different! " . $seqdata{header} . " != " . $occ_data{header}  . "\n";
 		}
 		if(scalar(@sequence) != scalar(@occvalues)) {
 			die "Sorry your occ input has an different length than the fasta file !\n " . scalar(@sequence) . "!=" . scalar(@occvalues) . "\n";

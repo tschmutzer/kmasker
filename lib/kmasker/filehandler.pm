@@ -79,7 +79,7 @@ sub read_occ { #works for occ
       }         
       else {    
          #s/\s+//g;  # remove any white space # We do not want this, because we are using split with whitespaces
-         $seq_info->{seq} .= $_;
+         $seq_info->{seq} .= " " .$_;
       }         
    }    
 
@@ -103,6 +103,19 @@ sub sequence_length {
    while (read_sequence($seqfh, \%seqdata)) {
       #print $seqdata{header} . " : " . length($seqdata{seq}) . "\n";
       print $seql $seqdata{header} . "\t" . length($seqdata{seq}) . "\n";
+   }
+}
+
+sub occ_length {
+   my $seqfile = $_[0]; #just the filename of the sequence file
+   open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
+   (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
+   open(my $seql, ">", "$path/$name$suffix.length") or die "Can not write to $path/$name$suffix.length \n";
+   my %seqdata;
+   while (read_occ($seqfh, \%seqdata)) {
+      #print $seqdata{header} . " : " . length($seqdata{seq}) . "\n";
+      my @occvalues = split /\s+/, $seqdata{seq};
+      print $seql $seqdata{header} . "\t" . scalar(@occvalues) . "\n";
    }
 }
 

@@ -103,7 +103,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             }
             k++;
             whitespace = true; //we need a whitespace in the next beginning of the loop
-            if(k == 40) { //check if we have to make a line break
+            if(k == 25) { //check if we have to make a line break
                 std::cout << "\n";
                 whitespace=false;
                 k=1;
@@ -117,7 +117,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             else {
                 std::cout << " " << "0";
             }
-            if(k == 40) {
+            if(k == 25) {
                 std::cout << "\n";
                 whitespace=false;
                 k=1;
