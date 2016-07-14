@@ -2,6 +2,7 @@ package kmasker::filehandler;
 use Exporter qw(import);
 use strict;
 use warnings;
+use File::Basename;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(read_sequence read_occ sequence_length);
 our @EXPORT_OK = qw(read_sequence read_occ sequence_length);
@@ -97,7 +98,7 @@ sub sequence_length {
    my $seqfile = $_[0]; #just the filename of the sequence file
    open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
    (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
-   open(my $seql, ">", "$path/$name.$suffix.length") or die "Can not write to $path/$name.$suffix.length \n";
+   open(my $seql, ">", "$path/$name$suffix.length") or die "Can not write to $path/$name$suffix.length \n";
    my %seqdata;
    while (read_sequence($seqfh, \%seqdata)) {
       #print $seqdata{header} . " : " . length($seqdata{seq}) . "\n";
