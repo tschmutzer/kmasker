@@ -17,6 +17,7 @@
 */
 
 #include <vector>
+#include <algorithm>
 
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
@@ -25,7 +26,7 @@
 #include <jellyfish/whole_sequence_parser.hpp>
 #include <jellyfish/mer_dna_bloom_counter.hpp>
 #include <jellyfish/jellyfish.hpp>
-#include "sequence_mers.hpp"
+//#include "sequence_mers.hpp"
 
 namespace err = jellyfish::err;
 
@@ -40,7 +41,6 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
   sequence_parser                         parser(4, 100, 1, streams);
   //sequence_mers                           mers(canonical);
   //const sequence_mers                     mers_end(canonical);
-  bool whitespace = false;
   while(true) {
     sequence_parser::job j(parser);
     if(j.is_empty()) break;
@@ -51,49 +51,80 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
          -then get the next char from the sequence string by using a pointer to the chars of that string
          -using the shift operation of the sequence-mer-class to append this char */
         //mers = j->data[i].seq;
-     /* if(mers != mers_end) {
-        std::cout << db.check(*mers);
-        ++mers;
-      }*/
         //lets start with the first kmer
+        int mershift = 0; //how often we have to shift to get rid of the N
         jellyfish::mer_dna mer;
-        mer = j->data[i].seq.substr(1,mer.k());
-        std::cout << db.check(mer) << " : " << mer.to_str();
-        //std::cout << mer.k();
+        std::string firstmer = j->data[i].seq.substr(0,mer.k());
+        std::replace (firstmer.begin(), firstmer.end(), 'N', 'A'); //replace all N with A for jellyfish::mer_dna
+        mer = firstmer; //use the string to initalize the mer object
+        //put the position of the right-most N into mershift and check if there is an N at all
+        if((mershift = j->data[i].seq.substr(0,mer.k()).find_last_of('N')) != std::string::npos) {
+            /*std::cout << "-1" << " : " << mer.to_str()<< " : " << mershift;
+            std::cout << "\n";*/
+            std::cout << "-1";
+        }
+        else {
+            //std::cout << db.check(mer) << " : " << mer.to_str()<< " : " << mershift;
+            mershift = 0; //necessary because mershift is std::string::npos after the above condition
+            std::cout << db.check(mer);
+        }
+        //now calculate how many times the mer must be shifted
         int k = 1;
-        /*for( ; mers != mers_end; ++mers, k++) {
+        bool whitespace = true;
+        for (char& c: j->data[i].seq.substr(mer.k())) {
+            if (whitespace == true) {
+                std::cout << " ";
+            }
+            if (c == 'N') { //got a new N, have to shift mer.k()-1 times from now
+                mershift = mer.k() - 1;
+                mer.shift_left('A');
+                /*std::cout << "-1" << " : " << mer.to_str() << " : " << mershift;
+                std::cout << "\n";*/
+                std::cout << "-1";
+
+            }
+            else {
+                if(mershift > 0) { //still needs shifting because there is an N somewhere in the kmer
+                    mershift--;
+                    mer.shift_left(c);
+                    /*std::cout << "-1" << " : " << mer.to_str()<< " : " << mershift;
+                    std::cout << "\n";*/
+                    std::cout << "-1";
+
+                }
+                else { //allright, no Ns in the kmer
+                    mer.shift_left(c);
+                    /*std::cout << db.check(mer) << " : " << mer.to_str()<< " : " << mershift;
+                    std::cout << "\n";*/
+                    std::cout << db.check(mer);
+
+                }
+                
+            }
+            k++;
+            whitespace = true; //we need a whitespace in the next beginning of the loop
+            if(k == 40) { //check if we have to make a line break
+                std::cout << "\n";
+                whitespace=false;
+                k=1;
+            }
+        }
+        for (int a = 1; a < mer.k(); a++, k++) { //print last bases which have no kmer
             if(whitespace == false) {
-                std::cout << db.check(*mers) << " : " << mers->to_str() << " : " << j->data[i].seq;
+                std::cout << "0";
                 whitespace = true;
             }
             else {
-                //std::cout << " " << db.check(*mers);
-                std::cout << " " << db.check(*mers) << " : " << mers->to_str() << " : " << j->data[i].seq;
-
+                std::cout << " " << "0";
             }
             if(k == 40) {
                 std::cout << "\n";
                 whitespace=false;
                 k=1;
             }
-         }
-         //int seqsize = j->data[i].seq.size();
-         for (int a = 1; a < mers->k(); a++, k++) {
-             if(whitespace == false) {
-                 std::cout << "0";
-                 whitespace = true;
-             }
-             else {
-                 std::cout << " " << "0";
-             }
-             if(k == 40) {
-                 std::cout << "\n";
-                 whitespace=false;
-                 k=1;
-             }
-         }
-        std::cout << "\n"; */
-      }
+        }
+        std::cout << "\n";
+     }
   }
 }
 
