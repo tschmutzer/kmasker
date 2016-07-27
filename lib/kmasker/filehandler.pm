@@ -4,8 +4,8 @@ use strict;
 use warnings;
 use File::Basename;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(read_sequence read_occ sequence_length);
-our @EXPORT_OK = qw(read_sequence read_occ sequence_length);
+our @EXPORT = qw(read_sequence read_occ sequence_length occ_length);
+our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length);
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
@@ -79,7 +79,12 @@ sub read_occ { #works for occ
       }         
       else {    
          #s/\s+//g;  # remove any white space # We do not want this, because we are using split with whitespaces
-         $seq_info->{seq} .= " " .$_;
+         if($seq_info->{seq}) {
+            $seq_info->{seq} .= " " .$_;
+         }
+         else {
+            $seq_info->{seq} = $_;
+         }
       }         
    }    
 
@@ -100,10 +105,12 @@ sub sequence_length {
    (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
    open(my $seql, ">", "$path/$name$suffix.length") or die "Can not write to $path/$name$suffix.length \n";
    my %seqdata;
-   while (read_sequence(my $seqfh, \%seqdata)) {
+   while (read_sequence($seqfh, \%seqdata)) {
       #print $seqdata{header} . " : " . length($seqdata{seq}) . "\n";
       print $seql $seqdata{header} . "\t" . length($seqdata{seq}) . "\n";
    }
+   close($seqfh);
+   close($seql);
 }
 
 sub occ_length {
@@ -117,6 +124,8 @@ sub occ_length {
       my @occvalues = split /\s+/, $seqdata{seq};
       print $seql $seqdata{header} . "\t" . scalar(@occvalues) . "\n";
    }
+   close($seqfh);
+   close($seql);
 }
 
 1;

@@ -1,7 +1,7 @@
 /*  Modified by Chris Ulpinnis for KMasker project to generate occ files.
         
-    This file is part of Jellyfish.
-
+    Based on jellyfishs example code (query_per_sequence.cc)
+ 
     Jellyfish is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or

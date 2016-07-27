@@ -81,13 +81,16 @@ sub normalize_occ{
 					print $occ_norm $values[$i];
 					$whitespace = 1;
 				}
-				if(($i+1) % 25 == 0) {
+				if((($i+1) % 25 == 0) && ($i+1 != scalar(@values))) {
 					print $occ_norm "\n";
 					$whitespace = 0;
 				}
 			}
+			print $occ_norm "\n";
 		}
 	}
+	close($occ);
+	close($occ_norm);
 }
 
 sub apply_occ{
@@ -101,7 +104,8 @@ sub apply_occ{
 
 	(my $name,my $path,my $suffix) = fileparse($fasta_file, qr/\.[^.]*/);
 	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT$rept.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
-	while(read_sequence($fasta, \%seqdata) && read_occ($occ, \%occ_data)) {
+	while(read_sequence($fasta, \%seqdata)) {
+		read_occ($occ, \%occ_data);
 		my @sequence = split '', $seqdata{seq};
 		my @occvalues = split /\s+/, $occ_data{seq};
 		#print $seqdata{header} . " " . $occ_data{header} . "\n";
@@ -114,6 +118,9 @@ sub apply_occ{
 		#}
 		if($seqdata{header} ne $occ_data{header}) {
 			print "Warning: Headers in occ and fasta are different! " . $seqdata{header} . " != " . $occ_data{header}  . "\n";
+		}
+		else {
+			print "Working on: " . $seqdata{header} . "\n";
 		}
 		if(scalar(@sequence) != scalar(@occvalues)) {
 			die "Sorry your occ input has an different length than the fasta file !\n " . scalar(@sequence) . "!=" . scalar(@occvalues) . "\n";
@@ -131,6 +138,8 @@ sub apply_occ{
 		print $freakmaskedFASTA "\n";
 
 	}
+	close($occ);
+	close($fasta);
 
 }
 

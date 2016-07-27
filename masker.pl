@@ -9,7 +9,7 @@ my $repT;
 my $fasta;
 
  GetOptions ("occ=s"   => \$occ,  
-             "repT=i"  => \$depth,
+             "repT=i"  => \$repT,
              "fasta=s" => \$fasta) 
  or die("Error in command line arguments\n");
 

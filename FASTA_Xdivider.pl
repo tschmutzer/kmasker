@@ -2,17 +2,15 @@
 use strict;
 use IO::File;
 use File::Basename;
-use Bio::SeqIO;
-use Bio::Seq;
 use Getopt::Long;
-
+use kmasker::filehandler;
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # author:       Thomas Schmutzer
 # date:         2011_06_17
-# last update:	2011_06_17
+# last update:	2016_07_25 by Chris Ulpinnis
 # institute:    @IPK Gatersleben
-# version:		0.0.9
+# version:		0.0.10
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -64,14 +62,15 @@ print "\n\t.. finished\n";
 sub process_fasta(){
 	
 	
-	# Initiating Handler
-	my $inFASTA		= new Bio::SeqIO(-file =>$fasta, -format =>'fasta') or die "could not find file $fasta \n";
-	my $newFAST		= new Bio::SeqIO(-file =>">Xsplit_".$fasta, -format =>'fasta') or die "could not find file ".$fasta.".qual\n";		
+	# Initiating Handler	
+	open( my $inFASTA, "<", "$fasta");
+	(my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
+	open( my $newFAST, ">", $path . "/Xsplit_" . $name);
+	my %seqdata; 	
+	while(read_sequence($inFASTA, \%seqdata)) {
 		
-	while(my $read = $inFASTA->next_seq()) {
-		
-		my $id 			= $read->id();
-		my $seq			= $read->seq();
+		my $id 			= $seqdata{header};
+		my $seq			= $seqdata{seq};
 		my @seqarray	= split("X", $seq);
 		my $split 		= 1;
 		
@@ -91,9 +90,8 @@ sub process_fasta(){
         				
 	}	
 		   
-   	$inFASTA->close();
-   	$newFAST->close();   	
-   	
+   	close($inFASTA);
+	close($newFAST);  	
 	
 }
 
