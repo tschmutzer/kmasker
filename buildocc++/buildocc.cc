@@ -134,7 +134,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
 int main(int argc, char *argv[])
 {
   if(argc < 3)
-    err::die(err::msg() << "Usage: " << argv[0] << "db.jf file.fa [...]");
+    err::die(err::msg() << "Usage: " << argv[0] << " db.jf file.fa [...]");
 
   std::ifstream in(argv[1], std::ios::in|std::ios::binary);
   jellyfish::file_header header(in);

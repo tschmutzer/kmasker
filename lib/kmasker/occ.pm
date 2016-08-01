@@ -143,4 +143,54 @@ sub apply_occ{
 
 }
 
+sub apply_occ_reverse{
+	my $fasta_file = $_[0];
+	my $occ_file = $_[1];
+	my $rept = $_[2];
+	my %seqdata;
+	my %occ_data;
+	open(my $occ, "<", "$occ_file") or die "Can not open $occ_file\n";
+	open(my $fasta, "<", "$fasta_file") or die "Can not open $fasta_file\n";
+
+	(my $name,my $path,my $suffix) = fileparse($fasta_file, qr/\.[^.]*/);
+	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT$rept_reverse.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
+	while(read_sequence($fasta, \%seqdata)) {
+		read_occ($occ, \%occ_data);
+		my @sequence = split '', $seqdata{seq};
+		my @occvalues = split /\s+/, $occ_data{seq};
+		#print $seqdata{header} . " " . $occ_data{header} . "\n";
+		#print length($seqdata{seq}) . " " . length($occ_data{seq}) . "\n";
+		#for (my $k = 0; $k < scalar(@sequence); $k++) {
+		#	print $occvalues[$k];
+		#	print " ";
+		#	print $sequence[$k];
+		#	print "\n";
+		#}
+		if($seqdata{header} ne $occ_data{header}) {
+			print "Warning: Headers in occ and fasta are different! " . $seqdata{header} . " != " . $occ_data{header}  . "\n";
+		}
+		else {
+			print "Working on: " . $seqdata{header} . "\n";
+		}
+		if(scalar(@sequence) != scalar(@occvalues)) {
+			die "Sorry your occ input has an different length than the fasta file !\n " . scalar(@sequence) . "!=" . scalar(@occvalues) . "\n";
+		}
+		for (my $i = 0; $i < scalar(@sequence); $i++) {
+			if($occvalues[$i] < $rept) {
+				#we will mask the sequnce in this part
+				$sequence[$i] = "X";
+			}
+		}
+		print $freakmaskedFASTA ">" .$seqdata{header}."\n";
+		foreach(@sequence){
+			print $freakmaskedFASTA $_;
+		}
+		print $freakmaskedFASTA "\n";
+
+	}
+	close($occ);
+	close($fasta);
+
+}
+
 1;
