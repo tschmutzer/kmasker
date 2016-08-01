@@ -7,9 +7,9 @@ How to build?
 =============
 
 You have to build this file against libjellyfish. On most linux systems you can do this in the following manner:
-```
+
 g++ -std=c++0x -Wall -O3 -ljellyfish-2.0 -L/path/to/jellyfish/libs -I/path/to/jellyfish/includes -lpthread -Wl,--rpath=/path/to/jellyfish/libs buildocc.cc -o buildocc
-```
+
 
 How to use?
 ============
