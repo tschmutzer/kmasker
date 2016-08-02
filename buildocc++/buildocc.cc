@@ -72,7 +72,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         //now calculate how many times the mer must be shifted
         int k = 1;
         bool whitespace = true;
-        for (char& c: j->data[i].seq.substr(1)) {
+        for (char& c: j->data[i].seq.substr(mer.k())) {
             if (whitespace == true) {
                 std::cout << " ";
             }
