@@ -7,8 +7,8 @@ use POSIX qw/ceil/;
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(normalize_occ apply_occ);
-our @EXPORT_OK = qw(make_occ normalize_occ apply_occ);
+our @EXPORT = qw(normalize_occ apply_occ merge_occ);
+our @EXPORT_OK = qw(make_occ normalize_occ apply_occ merge_occ);
 
 
 #sub make_index{
@@ -153,7 +153,7 @@ sub apply_occ_reverse{
 	open(my $fasta, "<", "$fasta_file") or die "Can not open $fasta_file\n";
 
 	(my $name,my $path,my $suffix) = fileparse($fasta_file, qr/\.[^.]*/);
-	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT$rept_reverse.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
+	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT${rept}_reverse.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
 	while(read_sequence($fasta, \%seqdata)) {
 		read_occ($occ, \%occ_data);
 		my @sequence = split '', $seqdata{seq};
@@ -207,17 +207,17 @@ sub merge_occ {
 		my @focc_values = split /\s+/, $f_occdata{seq};
 		my @socc_values = split /\s+/, $s_occdata{seq};
 		if($f_occdata{header} ne $s_occdata{header}) {
-			print "Warning: Headers in occ and fasta are different! " . $s_occdata{header} . " != " . f_occdata{header}  . "\n";
+			print "Warning: Headers in occ and fasta are different! " . $s_occdata{header} . " != " . $f_occdata{header}  . "\n";
 		}
 		if(scalar(@focc_values) != scalar(@socc_values)) {
 			die "Can not merge! The files differ in length.\n " . scalar(@socc_values) . "!=" . scalar(@focc_values) . "\n";
 		}
 		print $merged_occ $f_occdata{header} . "\n";
 		my @out_values;
-		for (my $i = 0; $i < scalar($socc_values); $i++) {
+		for (my $i = 0; $i < scalar(@focc_values); $i++) {
 			$out_values[$i] = $focc_values[$i] + $socc_values[$i];
 		}
-		print $out_occ "@{out_values}\n";
+		print $merged_occ "@{out_values}\n";
 	}
 }
 
