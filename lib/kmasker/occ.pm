@@ -193,4 +193,32 @@ sub apply_occ_reverse{
 
 }
 
+sub merge_occ {
+	my $first_occ = $_[0];
+	my $second_occ = $_[1];
+	my $out_occ = $_[2];
+	my %f_occdata;
+	my %s_occdata;
+	open(my $focc_stream, "<", "${first_occ}") or die "Can not open $first_occ\n";
+	open(my $socc_stream, "<", "${second_occ}") or die "Can not open $second_occ\n";
+	open(my $merged_occ, ">", "${out_occ}");
+	while(read_occ($focc_stream, \%f_occdata)) {
+		read_occ($socc_stream, \%s_occdata);
+		my @focc_values = split /\s+/, $f_occdata{seq};
+		my @socc_values = split /\s+/, $s_occdata{seq};
+		if($f_occdata{header} ne $s_occdata{header}) {
+			print "Warning: Headers in occ and fasta are different! " . $s_occdata{header} . " != " . f_occdata{header}  . "\n";
+		}
+		if(scalar(@focc_values) != scalar(@socc_values)) {
+			die "Can not merge! The files differ in length.\n " . scalar(@socc_values) . "!=" . scalar(@focc_values) . "\n";
+		}
+		print $merged_occ $f_occdata{header} . "\n";
+		my @out_values;
+		for (my $i = 0; $i < scalar($socc_values); $i++) {
+			$out_values[$i] = $focc_values[$i] + $socc_values[$i];
+		}
+		print $out_occ "@{out_values}\n";
+	}
+}
+
 1;
