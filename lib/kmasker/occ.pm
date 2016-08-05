@@ -217,7 +217,21 @@ sub merge_occ {
 		for (my $i = 0; $i < scalar(@focc_values); $i++) {
 			$out_values[$i] = $focc_values[$i] + $socc_values[$i];
 		}
-		print $merged_occ "@{out_values}\n";
+		my $whitespace = 0;
+		for (my $i = 0; $i < scalar(@out_values); $i++) {
+			if($whitespace) {
+				print $merged_occ " " . $out_values[$i];
+			}
+			else{
+				print $merged_occ $out_values[$i];
+				$whitespace = 1;
+			}
+			if((($i+1) % 25 == 0) && ($i+1 != scalar(@out_values))) {
+				print $merged_occ "\n";
+				$whitespace = 0;
+			}
+		}
+		print $merged_occ "\n";
 	}
 }
 
