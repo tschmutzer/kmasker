@@ -3,9 +3,20 @@ use strict;
 use warnings;
 use IO::File;
 use Getopt::Long;
+use Digest::MD5 qw(md5 md5_hex md5_base64);
+
+#setup package directory
+use File::Basename qw(dirname);
+use Cwd  qw(abs_path);
+use lib dirname(dirname abs_path $0) . '/lib';
+
+#include packages
+use kmasker::kmasker_build qw(build_kindex_jelly make_config);
 
 my $version = "0.0.17 rc160929";
-my $CORE 	= "/opt/Bio/Kmasker/0.0.15/bin/";
+#my $CORE 	= "/opt/Bio/Kmasker/0.0.15/bin";
+my $CORE 	= "/data/filer/agbi/schmutzr/projects/KMASKER/source_code_v160929_Kmasker_plants";
+
 my $fasta;
 my $fastq;
 my $indexfile;
@@ -16,6 +27,10 @@ my $build;
 my $run;
 my $postprocessing;
 my $repositories;
+my $build_config;
+my $make_config;
+my $PATH_kindex_private = "";
+my $PATH_kindex_global 	= "";
 
 my $kindex_usr;
 my $k_usr;
@@ -43,7 +58,7 @@ my $verbose;
 
 #HASH
 my %HASH_repository_kindex;
-my %HASH_repository_kindex_short_tag = {};
+my %HASH_repository_kindex_short_tag;
 
 #DEFAULT: bowman
 my $kindex 		= "Hv8x";
@@ -54,8 +69,10 @@ my $result = GetOptions (	#MAIN
 							"postprocessing"=> \$postprocessing,
 							
 							#BUILD
-							"seq=s"   		=> \@seq_usr,  			# provide the fasta or fastqfile
+							"seq=s{1,}"   	=> \@seq_usr,  			# provide the fasta or fastqfile
 							"k=i"			=> \$k_usr,
+							"config=s"		=> \$build_config,
+							"make_config"	=> \$make_config,
 							
 							#RUN
 							"fasta=s"		=> \$fasta,	
@@ -81,29 +98,31 @@ my $result = GetOptions (	#MAIN
 
 if(defined $help){
 	
-	print "\n\n Usage of program Kmasker: ";
+	print "\n Usage of program Kmasker: ";
     print "\n (version:  ".$version.")";
-    print "\n\n";
+    print "\n";
 	
 	if(defined $build){
-		#HELP section build
-		
-		print "\n Command:\n";
+		#HELP section build		
+		print "\n Command:";
 		print "\n\t Kmasker --build --seq mysequences.fasta";
 		
-		print "\n Option(s):\n";
-		print "\n --seq\t fasta or fastq sequence(s) that are used to build the index";
-		print "\n --k\t k-mer size to build index [21]";
+		print "\n\n Option(s):";
+		print "\n --seq\t\t fasta or fastq sequence(s) that are used to build the index";
+		print "\n --k\t\t k-mer size to build index [21]";
+		print "\n --make_config\t creates basic config file ('build_kindex.config') for completion by user";
+		print "\n --config\t configuration file providing information used for construction of kindex";
 		
+		print "\n\n";
 		exit();
 	}
 	
 	if(defined $run){
 		#HELP section run
-		print "\n Command:\n";
+		print "\n Command:";
 		print "\n\t Kmasker --fasta sequence_to_be_analyzed.fasta\n";		
 		
-		print "\n Option(s):\n";
+		print "\n\n Option(s):";
 		print "\n --fasta\t FASTA sequence for k-mer analysis and masking";
 		print "\n --kindex\t use specific k-mer index e.g. bowman or morex [default: bowman]";
 		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
@@ -112,30 +131,34 @@ if(defined $help){
 		print "\n --repositories\t show complete list of global and private repositories of existing k-mer indices";
 		print "\n --species\t show list of existing species with build kindex";		
 	
+		print "\n\n";
 		exit();
 	}
 	
 	if(defined $postprocessing){
 		#HELP section postprocessing
-		print "\n Command:\n";
+		print "\n Command:";
 		print "\n\t Kmasker --postprocessing --gff mysequences.fasta";
 		
-		print "\n Option(s):\n";
-		print "\n --plot_hist\t create graphical output as histogram (looks for --clist)";
-		print "\n --clist\t list of contig identifier that are used in postprocessing";		
-		print "\n --gff\t perform repeat annotation and construct GFF report";
+		print "\n\n Option(s):";
+		print "\n --plot_hist\t\t create graphical output as histogram (looks for --clist)";
+		print "\n --clist\t\t list of contig identifier that are used in postprocessing";		
+		print "\n --gff\t\t\t perform repeat annotation and construct GFF report";
 		print "\n --repeat_library\t provide repeat library [REdat]"; 
 		
+		print "\n\n";
 		exit();
 	}
 	
 
     
-    print "\n Description:\n\t Kmasker is a tool for the automatic detection of repetitive sequence regions.\n";
-    print "\n\n";
-	print "\n --build\t construction of new index (requires --indexfiles)";
-	print "\n --run\t run k-mer repeat detection and masking (requires --fasta)";
+    print "\n Description:\n\t Kmasker is a tool for the automatic detection of repetitive sequence regions.";
+    
+    print "\n\n Option(s):";
+	print "\n --build\t\t construction of new index (requires --indexfiles)";
+	print "\n --run\t\t\t run k-mer repeat detection and masking (requires --fasta)";
 	print "\n --postprocessing\t perform downstream analysis with constructed index and detected repeats";
+	print "\n\n";
 	exit();
 }
 
@@ -186,23 +209,60 @@ if(defined $length_threshold_usr){
 if(defined $repeat_lib_user	){
 	#FIX
 }
-					
 
-##END 
+if(defined $build){
+	#USE BUILD MODULE
+	
+	if(defined $make_config){
+		&make_config;
+	}else{
+	
+		my %HASH_info 						= ();
+		my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
+		$HASH_info{"user_name"}				= $user_name;
+		$HASH_info{"seq"} 					= $input;
+		$HASH_info{"k-mer"}					= $k; 
+		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
+		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
+		
+		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
+	}
+}
 
+if(defined $run){
+	#USE BUILD MODULE
+	&run_kmasker($fasta, $kindex, \%HASH_repository_kindex);	 
+}
 
+if(defined $postprocessing){
+	#USE BUILD MODULE
+	 
+}				
 
-
+##END MAIN
 
 
 ## subroutine
 #
 sub read_user_config(){
 	$user_name 			= `whoami`;
+	$user_name			=~ s/\n//g;
 	my $uconf 			= "/home/".$user_name."/.user_config.kmasker";
 	my $urepositories 	= "/home/".$user_name."/.user_repositories.kmasker";
 	if(-e $uconf){
 		#LOAD info
+		my $uCFG = new IO::File($uconf, "r") or die "\n unable to read user config $!";	
+		while(<$uCFG>){
+			next if($_ =~ /^$/);
+			next if($_ =~ /^#/);
+			my $line = $_;
+			$line =~ s/\n//;
+			my @ARRAY_tmp = split("\t", $line);
+			$PATH_kindex_global	= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_global");
+			$PATH_kindex_global .= "/" if($PATH_kindex_global !~ /\/$/);			
+			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
+			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
+		}
 	}else{
 		#SETUP user
 		&initiate_user();
@@ -215,13 +275,32 @@ sub read_user_repositories(){
 	#if /home/user/.user_config.kmasker not exist --> initiate
 	
 	$user_name 			= `whoami`;
+	$user_name			=~ s/\n//g;
 	my $urepositories 	= "/home/".$user_name."/.user_repositories.kmasker";
 	if(-e $urepositories){
 		#LOAD info
 		
-		#read global repository
+		#load global repository
+		my $REPO_global = new IO::File($CORE."/bin/repositories.kmasker", "r") or die "\n unable to read global repository list $!";	
+		while(<$REPO_global>){
+			next if($_ =~ /^$/);
+			next if($_ =~ /^#/);
+			my $line = $_;
+			$line =~ s/\n//;
+			my @ARRAY_line = split("\t", $line);
+			$HASH_repository_kindex{$ARRAY_line[0]} = $line;
+		}
 		
-		#read user repositories
+		#load priavte user repositories
+		my $REPO_private = new IO::File("/home/".$user_name."/.user_repositories.kmasker", "r") or die "\n unable to read user repository list $!";	
+		while(<$REPO_private>){
+			next if($_ =~ /^$/);
+			next if($_ =~ /^#/);
+			my $line = $_;
+			$line =~ s/\n//;
+			my @ARRAY_line = split("\t", $line);
+			$HASH_repository_kindex{$ARRAY_line[0]} = $line;
+		}
 		
 	}else{
 		#SETUP user
@@ -234,35 +313,38 @@ sub read_user_repositories(){
 sub initiate_user(){
 	
 	$user_name 			= `whoami`;
+	$user_name			=~ s/\n//g;
 	my $uconf 			= "/home/".$user_name."/.user_config.kmasker";
 	my $urepositories 	= "/home/".$user_name."/.user_repositories.kmasker";
 	if(-e $uconf){
 		#USER already exists, do nothing
 	}else{
 		#SETUP user
-		system("cp ".$CORE.".user_config.kmasker /home/".$user_name."/.user_config.kmasker");
-		my $USER_REPOS 	= new IO::File("/home/".$user_name."/.user_config.kmasker", "w") or die "could not write user repository : $!\n";
+		system("cp ".$CORE."/bin/config.kmasker /home/".$user_name."/.user_config.kmasker");
+		my $USER_REPOS 	= new IO::File("/home/".$user_name."/.user_repositories.kmasker", "w") or die "could not write user repository : $!\n";
 		
 		print $USER_REPOS "##KINDEX repository\n";
 		#1
 		print $USER_REPOS "#short_tag\t";
 		#2
-		print $USER_REPOS "species botanic_name\t";
+		print $USER_REPOS "species\t";
 		#3
-		print $USER_REPOS "type (cultivar;genotype;etc.)\t";
+		print $USER_REPOS "botanic_name\t";
 		#4
-		print $USER_REPOS "sequencing_depth\t";
+		print $USER_REPOS "type (cultivar;genotype;etc.)\t";
 		#5
-		print $USER_REPOS "sequence_type\t";
+		print $USER_REPOS "sequencing_depth\t";
 		#6
-		print $USER_REPOS "note\t";
+		print $USER_REPOS "k-mer\t";
 		#7
-		print $USER_REPOS "md5sum (filename)\t";
+		print $USER_REPOS "sequence_type\t";
 		#8
-		print $USER_REPOS "absolut_path (filename)\n";
-		
-	}
-	
+		print $USER_REPOS "note\t";
+		#9
+		print $USER_REPOS "md5sum (filename)\t";
+		#10
+		print $USER_REPOS "absolut_path (filename)\n";		
+	}	
 }
 
 ## subroutine
@@ -272,6 +354,14 @@ sub check_settings(){
 	my $module_count = 0;
 	if(defined $build){
 		$module_count++;
+		
+		if(defined $make_config){
+			#nothing to do
+		}elsif((scalar @seq_usr) == 0){
+			print "\n .. kmasker was stopped: no input sequence provided (--seq) !";
+			print "\n\n";
+			exit(0);
+		}
 	}
 	if(defined $run){
 		$module_count++;
@@ -284,9 +374,7 @@ sub check_settings(){
 	if($module_count > 1){
 		print "\n Kmasker was stopped. Multiple modules (build, run or postprocessing were used!\n";
 		exit(0);
-	}
-	
-	
+	}	
 }
 
 
