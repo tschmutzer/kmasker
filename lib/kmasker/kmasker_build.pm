@@ -55,9 +55,6 @@ sub build_kindex_jelly{
 	$HASH_info{"absolut_path"} = getcwd if(!exists $HASH_info{"absolut_path"});
 	$HASH_info{"sequencing_depth"} = 1 if(!exists $HASH_info{"sequencing_depth"});
 	
-	#SAVE info of build
-	&write_repository_entry(\%HASH_info);
-		
 	#BUILD JELLY index	
 	my $md5 = "MD5SUM";
 	if($num_input_seq == 1){
@@ -68,14 +65,18 @@ sub build_kindex_jelly{
 	print "\n ... finished kindex construction!\n";
 	
 	#MOVE: make folder in directory and move jelly index
-	print "\n create : ".$HASH_info{"PATH_kindex_private"};
 	system("mkdir ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
 	if(-e "KINDEX_".$HASH_info{"short_tag"}."_".$md5."_k".$k.".jf"){
 		system("mv KINDEX_".$HASH_info{"short_tag"}."_".$md5."_k".$k.".jf ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
 	}
+	$HASH_info{"absolut_path"} = $HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}."/";
+	
+	#SAVE info of build
+	&write_repository_entry(\%HASH_info);
+	
 	#STORE input sequence as gzip -9 compressed files???
 
-	print "\n ... Thanks for using Kmasker!\n\n";
+	print "\n - Thanks for using Kmasker! -\n\n";
 
 	exit();
 
