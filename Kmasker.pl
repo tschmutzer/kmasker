@@ -12,6 +12,7 @@ use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly make_config);
+use kmasker::kmasker_run qw(run_kmasker);
 
 my $version = "0.0.17 rc160929";
 #my $CORE 	= "/opt/Bio/Kmasker/0.0.15/bin";
@@ -20,7 +21,6 @@ my $CORE 	= "/data/filer/agbi/schmutzr/projects/KMASKER/source_code_v160929_Kmas
 my $fasta;
 my $fastq;
 my $indexfile;
-my $user_kindex;
 
 #MODULES
 my $build;
@@ -58,10 +58,9 @@ my $verbose;
 
 #HASH
 my %HASH_repository_kindex;
-my %HASH_repository_kindex_short_tag;
 
-#DEFAULT: bowman
-my $kindex 		= "Hv8x";
+#DEFAULT: no default anymore
+my $kindex;
 
 my $result = GetOptions (	#MAIN
 							"build"			=> \$build,
@@ -79,7 +78,6 @@ my $result = GetOptions (	#MAIN
 							"kindex=s"		=> \$kindex_usr,
 							"rept=s"		=> \$repeat_threshod_usr,
 							"min_length=s"	=> \$length_threshold_usr,
-							"index"			=> \$user_kindex,
 							"repositories"	=> \$show_index_repository,
 							"species"		=> \$show_list_of_species,
 							
@@ -124,7 +122,7 @@ if(defined $help){
 		
 		print "\n\n Option(s):";
 		print "\n --fasta\t FASTA sequence for k-mer analysis and masking";
-		print "\n --kindex\t use specific k-mer index e.g. bowman or morex [default: bowman]";
+		print "\n --kindex\t use specific k-mer index e.g. bowman or morex";
 		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --min_length\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
@@ -166,17 +164,16 @@ if(defined $help){
 ##MAIN
 
 #load global settings
-&check_settings;
 &read_user_config;
 &read_user_repositories;
 
 #USER specification
 #kindex
-if(defined $user_kindex){
-	if(exists $HASH_repository_kindex_short_tag{$user_kindex}){
-		$kindex = $user_kindex;
+if(defined $kindex_usr){
+	if(exists $HASH_repository_kindex{$kindex_usr}){
+		$kindex = $kindex_usr;
 	}else{
-		print "\n ERROR: defined kindex ('".$user_kindex."') does not exist!";
+		print "\n ERROR: defined kindex ('".$kindex_usr."') does not exist!\n\n";
 		exit();
 	}	
 }	
@@ -210,6 +207,9 @@ if(defined $repeat_lib_user	){
 	#FIX
 }
 
+#CHECK setting
+&check_settings;
+
 if(defined $build){
 	#USE BUILD MODULE
 	
@@ -230,12 +230,21 @@ if(defined $build){
 }
 
 if(defined $run){
-	#USE BUILD MODULE
-	&run_kmasker($fasta, $kindex, \%HASH_repository_kindex);	 
+	#USE RUN MODULE
+	
+	my %HASH_info 						= ();
+	my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
+	$HASH_info{"user_name"}				= $user_name;
+	$HASH_info{"rept"}					= $repeat_threshold; 
+	$HASH_info{"min_length"}			= $length_threshold;
+	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
+	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
+	
+	&run_kmasker($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);	 
 }
 
 if(defined $postprocessing){
-	#USE BUILD MODULE
+	#USE POSTPROCESSING MODULE
 	 
 }				
 
@@ -365,6 +374,17 @@ sub check_settings(){
 	}
 	if(defined $run){
 		$module_count++;
+		if(!(defined $kindex)){
+			print "\n .. kmasker was stopped: no kindex defined (--kindex) !";
+			print "\n\n";
+			exit(0);
+		}
+		
+		if(!(defined $fasta)){
+			print "\n .. kmasker was stopped: no sequence provided (--fasta) !";
+			print "\n\n";
+			exit(0);
+		}
 	}
 	if(defined $postprocessing){
 		$module_count++; 
