@@ -26,7 +26,6 @@ sub run_kmasker{
 	if(exists $HASH_repo_this{$kindex}){
 		
 		# GET info from repository
-		#my $href = &get_kindex_info($href_info, $href_repo);
 		my %HASH_info_this = %{$href_info};
 		
 		# GET info
@@ -41,7 +40,6 @@ sub run_kmasker{
 		#create symbolic link to kindex
 		system("ln -s ".$absolut_path."KINDEX_".$kindex."_k".$k.".jf"); 
 		#start
-		#system("cmasker -f ".$fasta." -j ".$kindex." -n ".$seq_depth." -r ".$rept." -o Kmasker_KDX_".$kindex."_RT".$rept);
 		system("cmasker -f ".$fasta." -j KINDEX_".$kindex."_k".$k.".jf -n ".$seq_depth." -r ".$rept." -o");
 		
 		#clean
