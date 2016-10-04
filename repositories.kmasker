@@ -1,6 +1,0 @@
-##KINDEX repository
-#short_tag	species	botanic_name	type (cultivar;genotype;etc.)	sequencing_depth	k-mer	sequence_type	note	md5sum (filename)	absolut_path (filename)
-Hv8x	barley	Hordeum vulgare	bowman	8	21	reads	.	.	.	.
-AspAB9x	Aegilops	Aegilops speltoides	unknown	9	21	reads	sequencing the A genome and B chromosome	.	.	.
-Asp0B9x	Aegilops	Aegilops speltoides     unknown	9	21	reads	sequencing the A genome without B chromosome	.	.	.
-Asp1x	Aegilops	Aegilops speltoides	unknown	1	21	assembly	de novo WGS assembly constructed with SOAPdenovo	.	.	.
