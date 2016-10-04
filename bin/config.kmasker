@@ -1,1 +1,3 @@
-bucket
+PATH_kindex_global	/mnt/hsm_nfs/schmutzr/KINDEX/
+PATH_kindex_private	/data/filer/agbi/schmutzr/KINDEX/
+
