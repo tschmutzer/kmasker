@@ -4,7 +4,6 @@ use warnings;
 use IO::File;
 use Getopt::Long;
 use Digest::MD5 qw(md5 md5_hex md5_base64);
-
 #setup package directory
 use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
@@ -259,7 +258,7 @@ if(defined $run){
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
 	
-	&run_kmasker($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);	 
+	&run_kmasker($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex, $length_threshold_usr);
 }
 
 if(defined $postprocessing){
