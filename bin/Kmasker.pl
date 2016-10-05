@@ -42,6 +42,8 @@ my $length_threshold	= 100;
 my $length_threshold_usr;
 my $repeat_threshold	= 5;
 my $repeat_threshod_usr;
+my $tolerant_length_threshold_usr;
+my $tolerant_length_threshold = 0;
 
 #Postprocessing
 my $gff;
@@ -49,12 +51,13 @@ my $repeat_lib_user;
 my $repeat_lib			= "REdat";
 my $clist;
 my $occ;
+my $stats;
 
 #GENERAL parameter
 my $help;
 my $keep_temporary_files;
-my $show_index_repository;
-my $show_list_of_species;
+my $show_kindex_repository;
+my $show_details_for_kindex;
 my $plot_hist_frequency;
 my $user_name;
 my $verbose;
@@ -66,35 +69,39 @@ my %HASH_repository_kindex;
 my $kindex;
 
 my $result = GetOptions (	#MAIN
-							"build"			=> \$build,
-							"run"			=> \$run,
-							"postprocessing"=> \$postprocessing,
+							"build"				=> \$build,
+							"run"				=> \$run,
+							"postprocessing"	=> \$postprocessing,
 							
 							#BUILD
-							"seq=s{1,}"   	=> \@seq_usr,  			# provide the fasta or fastqfile
-							"k=i"			=> \$k_usr,
-							"config=s"		=> \$build_config,
-							"make_config"	=> \$make_config,
+							"seq=s{1,}"   		=> \@seq_usr,  			# provide the fasta or fastqfile
+							"k=i"				=> \$k_usr,
+							"config=s"			=> \$build_config,
+							"make_config"		=> \$make_config,
 							
 							#RUN
-							"fasta=s"		=> \$fasta,	
-							"kindex=s"		=> \$kindex_usr,
-							"rept=s"		=> \$repeat_threshod_usr,
-							"min_length=s"	=> \$length_threshold_usr,
-							"repositories"	=> \$show_index_repository,
-							"species"		=> \$show_list_of_species,
-							
+							"fasta=s"			=> \$fasta,	
+							"kindex=s"			=> \$kindex_usr,
+							"rept=s"			=> \$repeat_threshod_usr,
+							"min_length=s"		=> \$length_threshold_usr,
+#							"tol_length=s"		=> \$tolerant_length_threshold_usr,
+												
 							#POSTPROCESSING
-							"plot_hist"		=> \$plot_hist_frequency,
-							"clist=s"		=> \$clist,
-							"occ=s"			=> \$occ,
-#							"gff"			=> \$gff,
+							"plot_hist"			=> \$plot_hist_frequency,
+							"clist=s"			=> \$clist,
+							"occ=s"				=> \$occ,
+							"stats"				=> \$stats,
+#							"gff"				=> \$gff,
 #							"repeat_library=s"	=> \$repeat_lib_user,							
 							
 							#GLOBAL
-							"keep_tmp"		=> \$keep_temporary_files,
-							"verbose"		=> \$verbose,
-							"help"			=> \$help										
+							"show_repository"	=> \$show_kindex_repository,
+							"show_details=s"	=> \$show_details_for_kindex,
+							
+							#Houskeeping
+							"keep_tmp"			=> \$keep_temporary_files,
+							"verbose"			=> \$verbose,
+							"help"				=> \$help										
 						);
 						
 
@@ -110,7 +117,7 @@ if(defined $help){
 		print "\n Command:";
 		print "\n\t Kmasker --build --seq mysequences.fasta";
 		
-		print "\n\n Option(s):";
+		print "\n\n Options:";
 		print "\n --seq\t\t fasta or fastq sequence(s) that are used to build the index";
 		print "\n --k\t\t k-mer size to build index [21]";
 		print "\n --make_config\t creates basic config file ('build_kindex.config') for completion by user";
@@ -125,14 +132,14 @@ if(defined $help){
 		print "\n Command:";
 		print "\n\t Kmasker --run --fasta sequence_to_be_analyzed.fasta\n";		
 		
-		print "\n\n Option(s):";
+		print "\n\n Options:";
 		print "\n --fasta\t FASTA sequence for k-mer analysis and masking";
 		print "\n --kindex\t use specific k-mer index e.g. bowman or morex";
 		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --min_length\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
-		print "\n --repositories\t show complete list of global and private repositories of existing k-mer indices";
-		print "\n --species\t show list of existing species with build kindex";		
+#		print "\n --tol_length\t maximal length of sequence with high k-mer frequencies. Within non-repetitive candidate sequences with sufficient sequence length \
+#		 		\t\t\t	(--min_length) it is tolerated that small regions occure were the corresponding k-mer frequency exceeds the defined threshold (--rept). [0]";
 	
 		print "\n\n";
 		exit();
@@ -143,11 +150,12 @@ if(defined $help){
 		print "\n Command:";
 		print "\n\t Kmasker --postprocessing --plot_history --occ file.occ --clist list_of_contigs.txt";
 		
-		print "\n\n Option(s):";
+		print "\n\n Options:";
 		print "\n --occ\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --plot_hist\t\t create graphical output as histogram (looks for --clist)";
+		print "\n --plot_hist\t\t create graphical output as histogram (requires --clist)";
 		print "\n --clist\t\t list of contig identifier that are used in postprocessing";	
-	
+
+#		print "\n --stats\t\t\t calculate basic statistics like avegare k-mer frequency per contig etc. (requires --occ)";	
 #		print "\n --gff\t\t\t perform repeat annotation and construct GFF report";
 #		print "\n --repeat_library\t provide repeat library [REdat]"; 
 		
@@ -156,13 +164,17 @@ if(defined $help){
 	}
 	
 
-    
     print "\n Description:\n\t Kmasker is a tool for the automatic detection of repetitive sequence regions.";
     
-    print "\n\n Option(s):";
+    print "\n\n Modules:";
 	print "\n --build\t\t construction of new index (requires --indexfiles)";
 	print "\n --run\t\t\t run k-mer repeat detection and masking (requires --fasta)";
 	print "\n --postprocessing\t perform downstream analysis with constructed index and detected repeats";
+	
+	print "\n\n General options:";
+	print "\n --show_repository\t shows complete list of global and private repositories of existing k-mer indices";
+	print "\n --show_details\t show details for a requested kindex";
+	
 	print "\n\n";
 	exit();
 }
