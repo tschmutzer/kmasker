@@ -47,6 +47,8 @@ my $repeat_threshod_usr;
 my $gff;
 my $repeat_lib_user;
 my $repeat_lib			= "REdat";
+my $clist;
+my $occ;
 
 #GENERAL parameter
 my $help;
