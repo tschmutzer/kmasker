@@ -32,9 +32,10 @@ if( !is.null(opt$list)) {
 } else {
   id_list<-str_sub(qual_file[opentags],2)
 }
+id_list<-str_trim(id_list)
 
 for (pos in opentags){
-  if(str_sub(qual_file[pos],2) %in% id_list) {
+  if(str_trim(str_sub(qual_file[pos],2)) %in% id_list) {
     #get the ID out of the whole line 
     id<-substring(qual_file[pos], 2, nchar(qual_file[pos])-1)
     #extract the numbers between two opening tags 
