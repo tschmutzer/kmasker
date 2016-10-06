@@ -65,7 +65,7 @@ sub process_fasta(){
 	# Initiating Handler	
 	open( my $inFASTA, "<", "$fasta");
 	(my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
-	open( my $newFAST, ">", $path . "/Xsplit_" . $name);
+	open( my $newFAST, ">", $path . "/Xsplit_" . $name . $suffix);
 	my %seqdata; 	
 	while(read_sequence($inFASTA, \%seqdata)) {
 		
