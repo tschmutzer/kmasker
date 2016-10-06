@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
     int opt;
     char* fasta = NULL;
     char* jellydb = NULL;
-    char* prefix = "masked"
+    char* prefix = "masked";
     int index;
     
     
