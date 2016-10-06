@@ -8,9 +8,9 @@ use kmasker::filehandler;
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # author:       Thomas Schmutzer
 # date:         2011_06_17
-# last update:	2016_07_25 by Chris Ulpinnis
+# last update:	2016_10_05 by Chris Ulpinnis
 # institute:    @IPK Gatersleben
-# version:		0.0.10
+# version:		0.0.102
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -79,12 +79,8 @@ sub process_fasta(){
 			if(length($element) >= $sizelimit){
 				my $newID = $id."_".$split++;
 				my $desc  = length($element);
-				my $seqobj = Bio::PrimarySeq->new(
-						 '-seq' 	=> $element,
-		                 '-id'  	=> $newID,
-		                 '-desc' => $desc
-		                );		                
-		        $newFAST->write_seq($seqobj);
+                print $newFAST ">".$id . " " . $desc ."\n";
+                print $newFAST $element . "\n";
 			}
 		}	
         				

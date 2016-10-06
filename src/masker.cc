@@ -18,7 +18,6 @@
 
 #include <vector>
 #include <algorithm>
-
 #include <jellyfish/err.hpp>
 #include <jellyfish/thread_exec.hpp>
 #include <jellyfish/file_header.hpp>
@@ -59,7 +58,7 @@ typedef jellyfish::whole_sequence_parser<jellyfish::stream_manager<char**> > seq
 
 template<typename PathIterator, typename Database>
 void query_from_sequence(PathIterator file_begin, PathIterator file_end, const Database& db,
-                         bool canonical, bool occfile, int rt, int norm) {
+                         bool canonical, bool occfile, int rt, int norm, char* prefix) {
     jellyfish::stream_manager<PathIterator> streams(file_begin, file_end);
     sequence_parser                         parser(4, 100, 1, streams);
     ofstream occfilestream;
@@ -67,9 +66,13 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     char* path = *file_begin;
     string file = basename(path);
     string dir = dirname(path);
+    size_t lastindex = file.find_last_of(".");
+    string filename = file.substr(0, lastindex);
     //cout << dir << "/" << file << "\n";
-    string occnormoutname = dir + "/" + file + "_N" + to_string(norm) +"normalized.occ";
-    string occoutname = dir + "/" + file +".occ";
+    string occnormoutname = dir + "/KMASKER_" + prefix + "_N" + to_string(norm) + "_" + filename + ".occ";
+    cout << "Out normalized OCC is: " << occnormoutname << "\n";
+    string occoutname = dir + "/KMASKER_" + prefix + "_" + filename + ".occ";
+    cout << "Out OCC is: " << occoutname << "\n";
     if(occfile == true){
         occfilestream.open(occoutname);
         occnormfilestream.open(occnormoutname);
@@ -78,8 +81,8 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     //cout << "input was: " << string(dirname(*file_begin)) << "/" << string(basename(*file_begin)) << "\n";
     //cout << string(*file_begin) << "\n";
     //cout << string(*file_begin) << "\n";
-    string fastaoutname = dir + "/freakmasked_RT" + to_string(rt) + "." + file;
-    cout << "Out is: " << fastaoutname << "\n";
+    string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_N" + to_string(norm) + "_" + file;
+    cout << "Out FASTA is: " << fastaoutname << "\n";
     fastaout.open(fastaoutname);
   //sequence_mers                           mers(canonical);
   //const sequence_mers                     mers_end(canonical);
@@ -247,6 +250,7 @@ int main(int argc, char *argv[])
     int opt;
     char* fasta = NULL;
     char* jellydb = NULL;
+    char* prefix = "masked"
     int index;
     
     
@@ -260,9 +264,13 @@ int main(int argc, char *argv[])
             case 'f':
                 fasta = optarg;
                 cout << "Input is: " << fasta << "\n";
-		break;
+                break;
+            case 'p':
+                prefix = optarg;
+                cout << "Prefix is: " << prefix << "\n";
             case 'j':
                 jellydb = optarg;
+                cout << "Jellyfishdb is: " << jellydb << "\n";
                 break;
             case 'n':
                 norm = atoi(optarg);
@@ -271,11 +279,11 @@ int main(int argc, char *argv[])
                 rt = atoi(optarg);
                 break;
             case 'h':
-                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n";
+                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n";
                 return 1;
                 break;
             case '?':
-                if (optopt == 'f' || optopt == 'j' || optopt == 'n' || optopt == 'r')
+                if (optopt == 'f' || optopt == 'j' || optopt == 'n' || optopt == 'r' ||optopt == 'p')
                     fprintf (stderr, "Option -%c requires an argument.\n", optopt);
                 else if (isprint (optopt))
                     fprintf (stderr, "Unknown option `-%c'.\n", optopt);
@@ -307,12 +315,12 @@ int main(int argc, char *argv[])
     if(!in.good())
       err::die("Bloom filter file is truncated");
     in.close();
-    query_from_sequence(file, file+1, filter, header.canonical(),occflag, rt, norm);
+    query_from_sequence(file, file+1, filter, header.canonical(),occflag, rt, norm, prefix);
   } else if(header.format() == binary_dumper::format) {
     jellyfish::mapped_file binary_map(jellydb);
     binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
                     header.size() - 1, binary_map.length() - header.offset());
-    query_from_sequence(file, file+1 , bq, header.canonical(), occflag ,rt, norm);
+    query_from_sequence(file, file+1 , bq, header.canonical(), occflag ,rt, norm, prefix);
   } else {
     err::die(err::msg() << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.");
   }
