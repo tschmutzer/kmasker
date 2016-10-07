@@ -268,6 +268,7 @@ int main(int argc, char *argv[])
             case 'p':
                 prefix = optarg;
                 cout << "Prefix is: " << prefix << "\n";
+                break;
             case 'j':
                 jellydb = optarg;
                 cout << "Jellyfishdb is: " << jellydb << "\n";
