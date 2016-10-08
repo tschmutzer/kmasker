@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly make_config);
 use kmasker::kmasker_run qw(run_kmasker);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version = "0.0.18 rc161004";
+my $version = "0.0.19 rc161008";
 #my $CORE 	= "/opt/Bio/Kmasker/0.0.15/bin";
 my $CORE 	= "/data/filer/agbi/schmutzr/projects/KMASKER/source_code_v160929_Kmasker_plants";
 
@@ -171,8 +171,8 @@ if(defined $help){
 	print "\n --postprocessing\t perform downstream analysis with constructed index and detected repeats";
 	
 	print "\n\n General options:";
-	print "\n --show_repository\t shows complete list of global and private repositories of existing k-mer indices";
-	print "\n --show_details\t show details for a requested kindex";
+	print "\n --show_repository\t shows complete list of global and private k-mer indices";
+	print "\n --show_details\t\t shows details for a requested kindex";
 	
 	print "\n\n";
 	exit();
@@ -245,6 +245,10 @@ if(defined $build){
 		
 		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
 	}
+	
+	#QUIT
+	print "\n - Thanks for using Kmasker! -\n\n";
+	exit();
 }
 
 if(defined $run){
@@ -258,7 +262,11 @@ if(defined $run){
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
 	
-	&run_kmasker($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex, $length_threshold_usr);
+	&run_kmasker($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
+	
+	#QUIT
+	print "\n - Thanks for using Kmasker! -\n\n";
+	exit();
 }
 
 if(defined $postprocessing){
@@ -284,8 +292,22 @@ if(defined $postprocessing){
 	}else{
 		print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
 	}
-	 
-}				
+	
+	#QUIT
+	print "\n - Thanks for using Kmasker! -\n\n";
+	exit();
+}
+	
+
+#GENERAL options
+if(defined $show_kindex_repository){
+	&show_repository();
+}	
+	
+if(defined $show_details_for_kindex){
+	&show_details_for_kindex($show_details_for_kindex);
+}
+				
 
 ##END MAIN
 
@@ -355,6 +377,42 @@ sub read_user_repositories(){
 		&initiate_user();
 	}	
 }
+
+## subroutine
+#
+sub show_repository(){
+	
+	print "\n\nREPOSITORY of available kindex structures:\n";
+	
+	foreach my $kindex_this (keys %HASH_repository_kindex){
+		my @ARRAY_line = split("\t", $HASH_repository_kindex{$kindex_this});
+		print "\n\t".$ARRAY_line[0]."\t\t".$ARRAY_line[1];
+	}
+	print "\n\n";
+}
+
+
+## subroutine
+#
+sub show_details_for_kindex(){
+	my $kindex = $_[0];
+	my $linearray = $HASH_repository_kindex{$kindex};
+	my @ARRAY_details = split("\t", $linearray);
+	
+	print "\n\n KINDEX details for ".$kindex."\n";
+	print "\n\tspecies:          ".$ARRAY_details[1];
+	print "\n\tbotanic_name:     ".$ARRAY_details[2];
+	print "\n\ttype              ".$ARRAY_details[3];
+	print "\n\tsequencing_depth: ".$ARRAY_details[4];
+	print "\n\tk-mer:            ".$ARRAY_details[5];
+	print "\n\tsequence_type:    ".$ARRAY_details[6];
+	print "\n\tnote:             ".$ARRAY_details[7];
+	print "\n\tmd5sum:           ".$ARRAY_details[8];
+	print "\n\tseq:              ".$ARRAY_details[9];
+	print "\n\tabsolut_path:     ".$ARRAY_details[10];	
+	print "\n\n";
+}
+
 
 ## subroutine
 #
