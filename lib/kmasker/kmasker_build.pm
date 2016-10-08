@@ -25,6 +25,12 @@ sub build_kindex_jelly{
 	my $seq				= $HASH_info{"seq"};
 	my $k				= $HASH_info{"k-mer"};
 	
+	#LOAD info
+	if(defined $build_config){
+		#READ config for build
+		my $href_this = &read_config($build_config, \%HASH_info, $href_repos);	
+		%HASH_info = %{$href_this};	
+	}
 	
 	#Create single input file and calculate md5sum for repository
 	system("cat ".$seq." >INPUT.fastq");
@@ -41,14 +47,7 @@ sub build_kindex_jelly{
 	$HASH_info{"md5sum"}= $md5sum;
 	$seq				= "INPUT_".$md5sum.".".$end;
 	system("mv INPUT.fastq INPUT_".$md5sum.".".$end);
-	
- 	#LOAD info
-	if(defined $build_config){
-		#READ config for build
-		my $href_this = &read_config($build_config, \%HASH_info, $href_repos);	
-		%HASH_info = %{$href_this};	
-	}
-	
+		
 	#FILL with default if inforomation is not provided	
 	$HASH_info{"absolut_path"} = getcwd if(!exists $HASH_info{"absolut_path"});
 	$HASH_info{"sequencing_depth"} = 1 if(!exists $HASH_info{"sequencing_depth"});
@@ -62,6 +61,7 @@ sub build_kindex_jelly{
 	system("mkdir ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
 	if(-e "KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf"){
 		system("mv KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
+		system("cp ".$build_config." ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
 	}
 	$HASH_info{"absolut_path"} = $HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}."/";
 	

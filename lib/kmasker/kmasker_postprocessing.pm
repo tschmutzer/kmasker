@@ -25,6 +25,22 @@ sub plot_histogram{
     #in the occ file) use the following
     #system("occVisualizer.R -i ".$occ.");
     #The script will generate one plot per contig in the current working directory
+    
+    #
+    my @ARRAY_info = split("_", $occ);
+    my $kindex = $ARRAY_info[1];
+    if(!( -d "./Kmasker_plots_".$kindex)){
+    	system("mkdir Kmasker_plots_".$kindex);
+    }
+   
+   	my $LIST = new IO::File($clist, "r") or die "\n unable to read $clist $!";	
+   	while(<$LIST>){
+   		next if($_ =~ /^$/);
+		next if($_ =~ /^#/);
+		my $line = $_;
+		$line =~ s/\n//;
+		system("mv ".$line."*.png Kmasker_plots_".$kindex);
+   	}    
 }
 
 
