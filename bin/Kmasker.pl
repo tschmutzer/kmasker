@@ -152,7 +152,7 @@ if(defined $help){
 		print "\n\n Options:";
 		print "\n --occ\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
 		print "\n --plot_hist\t\t create graphical output as histogram (requires --clist)";
-		print "\n --clist\t\t list of contig identifier that are used in postprocessing";	
+		print "\n --clist\t\t file containing a list of contig identifier that are used in postprocessing";	
 
 #		print "\n --stats\t\t\t calculate basic statistics like avegare k-mer frequency per contig etc. (requires --occ)";	
 #		print "\n --gff\t\t\t perform repeat annotation and construct GFF report";
@@ -242,8 +242,8 @@ if(defined $build){
 		$HASH_info{"k-mer"}					= $k; 
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
-		
 		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
+		
 	}
 	
 	#QUIT
@@ -274,7 +274,7 @@ if(defined $postprocessing){
 	
 	if(defined $occ){
 	# postprocessing requires an OCC file
-	
+		
 		my $missing_parameter = "";
 	
 		if(defined $plot_hist_frequency){
@@ -285,9 +285,10 @@ if(defined $postprocessing){
 			}
 		}		
 		
-		
-		#GIVE warning note for missing parameter
-		print "\n ERROR: missing parameter (".$missing_parameter.") !\n\n";
+		if($missing_parameter ne ""){
+			#GIVE warning note for missing parameter
+			print "\n ERROR: missing parameter (".$missing_parameter.") !\n\n";
+		}
 		
 	}else{
 		print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
@@ -332,6 +333,23 @@ sub read_user_config(){
 			$PATH_kindex_global .= "/" if($PATH_kindex_global !~ /\/$/);			
 			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
 			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
+			
+			#PRIVATE
+			if(-d $PATH_kindex_private){
+				#directory exists - do nothing
+			}else{
+				#directory has to be created
+				system("mkdir ".$PATH_kindex_private);
+			}
+			
+			#GLOBAL
+			#PRIVATE
+			if(-d $PATH_kindex_global){
+				#directory exists - do nothing
+			}else{
+				#directory has to be created
+				system("mkdir ".$PATH_kindex_global);
+			}
 		}
 	}else{
 		#SETUP user
@@ -396,21 +414,26 @@ sub show_repository(){
 #
 sub show_details_for_kindex(){
 	my $kindex = $_[0];
-	my $linearray = $HASH_repository_kindex{$kindex};
-	my @ARRAY_details = split("\t", $linearray);
-	
-	print "\n\n KINDEX details for ".$kindex."\n";
-	print "\n\tspecies:          ".$ARRAY_details[1];
-	print "\n\tbotanic_name:     ".$ARRAY_details[2];
-	print "\n\ttype              ".$ARRAY_details[3];
-	print "\n\tsequencing_depth: ".$ARRAY_details[4];
-	print "\n\tk-mer:            ".$ARRAY_details[5];
-	print "\n\tsequence_type:    ".$ARRAY_details[6];
-	print "\n\tnote:             ".$ARRAY_details[7];
-	print "\n\tmd5sum:           ".$ARRAY_details[8];
-	print "\n\tseq:              ".$ARRAY_details[9];
-	print "\n\tabsolut_path:     ".$ARRAY_details[10];	
-	print "\n\n";
+	if(exists $HASH_repository_kindex{$kindex}){
+		my $linearray = $HASH_repository_kindex{$kindex};
+		my @ARRAY_details = split("\t", $linearray);
+		
+		print "\n\n KINDEX details for ".$kindex."\n";
+		print "\n\tspecies:          ".$ARRAY_details[1];
+		print "\n\tbotanic_name:     ".$ARRAY_details[2];
+		print "\n\ttype              ".$ARRAY_details[3];
+		print "\n\tsequencing_depth: ".$ARRAY_details[4];
+		print "\n\tk-mer:            ".$ARRAY_details[5];
+		print "\n\tsequence_type:    ".$ARRAY_details[6];
+		print "\n\tnote:             ".$ARRAY_details[7];
+		print "\n\tmd5sum:           ".$ARRAY_details[8];
+		print "\n\tseq:              ".$ARRAY_details[9];
+		print "\n\tabsolut_path:     ".$ARRAY_details[10];	
+		print "\n\n";
+	}else{
+		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.\n\n";
+		exit();
+	}
 }
 
 
