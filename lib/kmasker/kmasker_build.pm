@@ -17,7 +17,8 @@ our @EXPORT_OK = qw(build_kindex_jelly make_config);
 sub build_kindex_jelly{	
 	my $href_info		= $_[0];
 	my $build_config 	= $_[1];
-	my $href_repos		= $_[2];	
+	my $href_repos		= $_[2];
+	my $store_input		= $_[3];	
 	my %HASH_info 		= %{$href_info};
 	my %HASH_repo		= %{$href_repos};
 	my $user_name 		= $HASH_info{"user_name"};
@@ -25,24 +26,21 @@ sub build_kindex_jelly{
 	my $k				= $HASH_info{"k-mer"};
 	
 	
-	#create md5sum of input files	
-	my @ARRAY_md5_name 	= `md5sum $seq`;
-	my @ARRAY_name		= ();
-	my @ARRAY_md5		= ();
-	my $num_input_seq	=  scalar(@ARRAY_md5_name);
-	for(my $i=0;$i<scalar(@ARRAY_md5_name);$i++){
-		$ARRAY_md5_name[$i] =~ s/\n//g;
-		$ARRAY_md5_name[$i] =~ s/  /\t/g;
-		$ARRAY_md5_name[$i] =~ s/ //g;
-		my @ARRAY_tmp = split("\t", $ARRAY_md5_name[$i]);
-		push(@ARRAY_name, $ARRAY_tmp[1]);
-		push(@ARRAY_md5, $ARRAY_tmp[0]);
-	}
-	
-	my $LIST_md5sum = join("\,", @ARRAY_md5);
-	my $LIST_name = join("\,", @ARRAY_name);
-	$HASH_info{"seq"}	= $LIST_name;
-	$HASH_info{"md5sum"}= $LIST_md5sum;
+	#Create single input file and calculate md5sum for repository
+	system("cat ".$seq." >INPUT.fastq");
+	my @ARRAY_help 		= split(/\./, $seq);
+	my $end 			= pop(@ARRAY_help);
+	$end				=~ s/ //g;
+	my $RESULT_md5_name = `md5sum INPUT.fastq`;	
+	$RESULT_md5_name 	=~ s/\n//g;
+	$RESULT_md5_name 	=~ s/  /\t/g;
+	$RESULT_md5_name 	=~ s/ //g;
+	my @ARRAY_tmp 		= split("\t", $RESULT_md5_name);
+	my $md5sum 			= $ARRAY_tmp[0];
+	$HASH_info{"seq"}	= "INPUT_".$md5sum.".".$end;
+	$HASH_info{"md5sum"}= $md5sum;
+	$seq				= "INPUT_".$md5sum.".".$end;
+	system("mv INPUT.fastq INPUT_".$md5sum.".".$end);
 	
  	#LOAD info
 	if(defined $build_config){
@@ -56,18 +54,14 @@ sub build_kindex_jelly{
 	$HASH_info{"sequencing_depth"} = 1 if(!exists $HASH_info{"sequencing_depth"});
 	
 	#BUILD JELLY index	
-	my $md5 = "MD5SUM";
-	if($num_input_seq == 1){
-		$md5 = $LIST_md5sum;
-	}	
 	print "\n ... start construction of kindex\n"; 
-	system("jellyfish count -m ".$k." -s 24G -t 10 -o KINDEX_".$HASH_info{"short_tag"}."_".$md5."_k".$k.".jf ".$seq."");
+	system("jellyfish count -m ".$k." -s 24G -t 10 -o KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$seq."");
 	print "\n ... finished kindex construction!\n";
 	
 	#MOVE: make folder in directory and move jelly index
 	system("mkdir ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
-	if(-e "KINDEX_".$HASH_info{"short_tag"}."_".$md5."_k".$k.".jf"){
-		system("mv KINDEX_".$HASH_info{"short_tag"}."_".$md5."_k".$k.".jf ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
+	if(-e "KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf"){
+		system("mv KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
 	}
 	$HASH_info{"absolut_path"} = $HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}."/";
 	
@@ -75,11 +69,12 @@ sub build_kindex_jelly{
 	&write_repository_entry(\%HASH_info);
 	
 	#STORE input sequence as gzip -9 compressed files???
-
-	print "\n - Thanks for using Kmasker! -\n\n";
-
-	exit();
-
+	if(defined $store_input){
+		system("gzip -9 ".$seq);
+		system("mv ".$seq.".gz ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});		
+	}else{
+		system("rm ".$seq);
+	}
 }
 
 ## subroutine

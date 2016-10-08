@@ -16,8 +16,8 @@ our @EXPORT_OK = qw(plot_histogram repeat_annotation gff_construction);
 ## subroutine
 #
 sub plot_histogram{
-    $occ=$_[0];
-    $clist=$_[1];
+    my $occ		=	$_[0];
+    my $clist	=	$_[1];
     system("occVisualizer.R -i ".$occ." -l ".$clist);
     #The script will skip large contigs to avoid long running times
     #You can force it to do it anyway with -f
