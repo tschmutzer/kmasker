@@ -69,7 +69,7 @@ for (pos in opentags){
     print(paste("Plotting contig:", id, sep=" "));
     if(length(occs)>1000000){
       if(force == TRUE) {
-        print("Warning: Your contig has more than 100000bp. The process will take some time!")
+        print("Warning: Your contig has more than 1000000bp. The process will take some time!")
       } else {
         print(paste("Finally your Contig has", length(occs), "bp. This is too much to print. You can force me with --force", sep=" "))
         next;
