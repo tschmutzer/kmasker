@@ -30,14 +30,14 @@ opentags<-which(grepl(">.*", qual_file) == TRUE)
 if( !is.null(opt$list)) {
   id_list<-scan(file = opt$list, what=character())
 } else {
-  id_list<-str_sub(qual_file[opentags],2)
+  id_list<-unlist(lapply(str_split(str_trim(str_sub(qual_file[opentags],2)), " "), `[[`, 1))
 }
 id_list<-str_trim(id_list)
 
 for (pos in opentags){
-  if(str_trim(str_sub(qual_file[pos],2)) %in% id_list) {
+  if(str_split(str_trim(str_sub(qual_file[pos],2)), " ")[[1]][1] %in% id_list) {
     #get the ID out of the whole line 
-    id<-substring(qual_file[pos], 2, nchar(qual_file[pos])-1)
+    id<-str_split(str_trim(str_sub(qual_file[pos],2)), " ")[[1]][1]
     #extract the numbers between two opening tags 
     #there should not be any comments (or other stuff) in the file, just numbers and opening tags
     if(pos < opentags[length(opentags)]) {
@@ -48,7 +48,7 @@ for (pos in opentags){
       #After that we turn the list into a vector
       #We convert the characters into numbers finaly.
       approx<-(next_pos_in_text-pos)*30
-      if(approx > 120000 & force == FALSE) {
+      if(approx > 300000 & force == FALSE) {
         print("Sorry, your contig seems to be too large to be read in. Anyway, you can force me to read it with --force")
         next;
       }
@@ -59,7 +59,7 @@ for (pos in opentags){
     else{
       next_pos_in_text <- length(qual_file)
       approx<-(next_pos_in_text-pos)*30
-      if(approx > 120000 & force == FALSE) {
+      if(approx > 300000 & force == FALSE) {
         print("Sorry, your contig seems to be too large to be read in. Anyway, you can force me to read it with --force")
         next;
       }
@@ -67,7 +67,7 @@ for (pos in opentags){
     }
     #this is the same part as in occVisualizer_v140902.pl
     print(paste("Plotting contig:", id, sep=" "));
-    if(length(occs)>100000){
+    if(length(occs)>1000000){
       if(force == TRUE) {
         print("Warning: Your contig has more than 100000bp. The process will take some time!")
       } else {
