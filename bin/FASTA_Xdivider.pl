@@ -31,6 +31,7 @@ if(defined $help){
 	print "\n\t FASTA_Xdivider.pl --fasta sequences.fasta ";
 	print "\n\n OPTIONS:\n"; 
 	print "\n\t --fasta\t provide the fasta file";
+	print "\n\t --sl\t provide a minimal length of the sequence to be extracted [20]";
 	print "\n\n";
 	exit();
 }
@@ -79,7 +80,7 @@ sub process_fasta(){
 			if(length($element) >= $sizelimit){
 				my $newID = $id."_".$split++;
 				my $desc  = length($element);
-                print $newFAST ">".$id . " " . $desc ."\n";
+                print $newFAST ">".$newID . " " . $desc ."\n";
                 print $newFAST $element . "\n";
 			}
 		}	
