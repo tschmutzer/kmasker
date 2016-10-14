@@ -14,6 +14,7 @@ if ( !is.null(opt$help) ) {
   cat(getopt(spec, usage=TRUE));
   q(status=1);
 }
+options(scipen = 999)
 #load zoo
 #library(zoo)
 #require(ggplot2)
@@ -79,16 +80,18 @@ for (pos in opentags){
     mean10 <- rollmean(occs, 500, align= 'center', fill=0)
     positions <- 1:length(occs);
     dataframe <- data.frame(positions, occs, mean10)
+    dataframe<-as.data.frame(apply(dataframe, c(1,2), function(x) if(x<1){return(1)}else{return(x)}))
     colnames(dataframe) <- c('pos', 'occ', 'mean10')
     plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
       geom_line( aes(colour = occ), size=1.1) +
-      scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency")) +
+      scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency\n")) +
       geom_area( aes( x = pos, y = mean10), fill='blue')  +
       geom_line( aes( x = pos, y = mean10), size=1.2)  +
-      labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency") +
+      labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency [log10]") +
       theme_gray(base_size = 19) + 
       theme(legend.text=element_text(size=15)) +
-      guides(fill = guide_legend(keywidth = 3, keyheight = 2))
+      guides(fill = guide_legend(keywidth = 3, keyheight = 2)) +
+      scale_y_log10(breaks=trans_breaks("log10",function(x) 10^x), labels=trans_format("log10", math_format(10^.x)))
     png(paste(id, ".png", sep=""), width=2048, height=1024)
     #in a loop we have to explicitly print the plot
     print(plot)
