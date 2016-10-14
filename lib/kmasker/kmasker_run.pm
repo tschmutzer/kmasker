@@ -49,7 +49,7 @@ sub run_kmasker{
 		system("cmasker -f ".$fasta." -j KINDEX_".$kindex."_".$md5sum."_k".$k.".jf -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex);
         #Note: It is also possible to use the absolute path to the KINDEX
 		#clean
-#		system("rm KINDEX_".$kindex."_".$md5sum."_k".$k.".jf");
+		system("rm KINDEX_".$kindex."_".$md5sum."_k".$k.".jf");
         if(!(-e "KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta)) {
             print "\n .. KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." was not generated!\n";
             print "\n .. please provide a bug report!\n\n";
