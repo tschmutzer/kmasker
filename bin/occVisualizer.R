@@ -7,7 +7,7 @@ spec=matrix(c(
   'input', 'i', 1, "character",
   'help', 'h', 0, "logical",
   'force', 'f', 0, "logical",
-  'list', 'l', 0, "character"
+  'list', 'l', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
