@@ -8,9 +8,9 @@ use kmasker::filehandler;
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # author:       Thomas Schmutzer
 # date:         2011_06_17
-# last update:	2016_10_05 by Chris Ulpinnis
+# last update:	2016_10_16
 # institute:    @IPK Gatersleben
-# version:		0.0.102
+# version:		0.0.103
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
@@ -71,6 +71,8 @@ sub process_fasta(){
 	while(read_sequence($inFASTA, \%seqdata)) {
 		
 		my $id 			= $seqdata{header};
+		my @ARRAY_id	= split(" ", $id);
+		$id				= $ARRAY_id[0];	
 		my $seq			= $seqdata{seq};
 		my @seqarray	= split("X", $seq);
 		my $split 		= 1;
