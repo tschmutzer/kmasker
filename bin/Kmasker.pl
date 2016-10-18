@@ -14,10 +14,8 @@ use kmasker::kmasker_build qw(build_kindex_jelly make_config);
 use kmasker::kmasker_run qw(run_kmasker);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version = "0.0.19 rc161008";
-#my $CORE 	= "/opt/Bio/Kmasker/0.0.15/bin";
-my $CORE 	= "/data/filer/agbi/schmutzr/projects/KMASKER/source_code_v160929_Kmasker_plants";
-
+my $version 	= "0.0.20 rc161014";
+my $path 	= dirname abs_path $0;		
 my $fasta;
 my $fastq;
 my $indexfile;
@@ -57,6 +55,8 @@ my $help;
 my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
+my $computing_power_user;
+my $computing_power = "server";
 my $plot_hist_frequency;
 my $user_name;
 my $verbose;
@@ -98,6 +98,7 @@ my $result = GetOptions (	#MAIN
 							"show_details=s"	=> \$show_details_for_kindex,
 							
 							#Houskeeping
+							"cpt"				=> \$computing_power_user,
 							"keep_tmp"			=> \$keep_temporary_files,
 							"verbose"			=> \$verbose,
 							"help"				=> \$help										
@@ -173,6 +174,7 @@ if(defined $help){
 	print "\n\n General options:";
 	print "\n --show_repository\t shows complete list of global and private k-mer indices";
 	print "\n --show_details\t\t shows details for a requested kindex";
+	print "\n --cpt\t\t\t computing power type ('notebook' or 'server') [server]";
 	
 	print "\n\n";
 	exit();
@@ -220,6 +222,13 @@ if(defined $length_threshold_usr){
 	}
 }
 
+#computing power type
+if(defined $computing_power_user){
+	if($computing_power_user eq "notebook"){
+		$computing_power = $computing_power_user;
+	}
+}
+
 #repeat library
 if(defined $repeat_lib_user	){
 	#FIX
@@ -240,6 +249,8 @@ if(defined $build){
 		$HASH_info{"user_name"}				= $user_name;
 		$HASH_info{"seq"} 					= $input;
 		$HASH_info{"k-mer"}					= $k; 
+		$HASH_info{"computing_power"}		= "server";
+		$HASH_info{"computing_power"}		= "notebook" if($computing_power eq "notebook"); 
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
 		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
@@ -369,7 +380,7 @@ sub read_user_repositories(){
 		#LOAD info
 		
 		#load global repository
-		my $REPO_global = new IO::File($CORE."/bin/repositories.kmasker", "r") or die "\n unable to read global repository list $!";	
+		my $REPO_global = new IO::File($path."/repositories.kmasker", "r") or die "\n unable to read global repository list $!";	
 		while(<$REPO_global>){
 			next if($_ =~ /^$/);
 			next if($_ =~ /^#/);
@@ -449,7 +460,7 @@ sub initiate_user(){
 		#USER already exists, do nothing
 	}else{
 		#SETUP user
-		system("cp ".$CORE."/bin/config.kmasker /home/".$user_name."/.user_config.kmasker");
+		system("cp ".$path."/config.kmasker /home/".$user_name."/.user_config.kmasker");
 		my $USER_REPOS 	= new IO::File("/home/".$user_name."/.user_repositories.kmasker", "w") or die "could not write user repository : $!\n";
 		
 		print $USER_REPOS "##KINDEX repository\n";

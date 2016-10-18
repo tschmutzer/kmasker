@@ -36,8 +36,15 @@ sub run_kmasker{
 		my $md5sum				= $ARRAY_kindex_info[8]; 
 		my $absolut_path		= $ARRAY_kindex_info[10];		
 		
-		#create symbolic link to kindex
-		system("ln -s ".$absolut_path."KINDEX_".$kindex."_".$md5sum."_k".$k.".jf"); 
+		#create symbolic link to kindex from private
+		#FIXME 
+		if(-e $HASH_info_this{"PATH_kindex_private"}."KINDEX_".$kindex."/KINDEX_".$kindex."_".$md5sum."_k".$k.".jf"){
+			system("ln -s ".$HASH_info_this{"PATH_kindex_private"}."KINDEX_".$kindex."/KINDEX_".$kindex."_".$md5sum."_k".$k.".jf");
+		}elsif(-e $HASH_info_this{"PATH_kindex_global"}."KINDEX_".$kindex."/KINDEX_".$kindex."_".$md5sum."_k".$k.".jf"){
+			system("ln -s ".$HASH_info_this{"PATH_kindex_global"}."KINDEX_".$kindex."/KINDEX_".$kindex."_".$md5sum."_k".$k.".jf");
+		}else{
+			print "\n WARNING: KINDEX not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
+		}
 		#start
 		system("cmasker -f ".$fasta." -j KINDEX_".$kindex."_".$md5sum."_k".$k.".jf -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex);
         #Note: It is also possible to use the absolute path to the KINDEX
