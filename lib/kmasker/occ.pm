@@ -93,7 +93,7 @@ sub normalize_occ{
 	close($occ_norm);
 }
 
-sub apply_occ{
+sub apply_occ{ #Note: This function is outdated and should not be used under normal circumstances
 	my $fasta_file = $_[0];
 	my $occ_file = $_[1];
 	my $rept = $_[2];
@@ -141,6 +141,142 @@ sub apply_occ{
 	close($occ);
 	close($fasta);
 
+}
+
+sub multi_occ{
+	my $threshold = $_[0];
+	my $fold_change  = $_[1];
+	my $occ1 = $_[2];
+	my $occ2 = $_[3];
+	my $prefix = $_[4];
+	my $name1 = fileparse($occ1, qr/\.[^.]*/);
+	my $name2 = fileparse($occ2, qr/\.[^.]*/);
+	open(my $occ1_f, "<", "$occ1") or die "Can not open $occ1\n";
+	open(my $occ2_f, "<", "$occ2") or die "Can not open $occ2\n";
+	my %occ_data_1;
+	my %occ_data_2;
+	my @out_values;
+	
+	while(read_occ($occ1_f, \%occ_data_1)) {
+		read_occ($occ2_f, \%occ_data_2);
+		my @occ1_values = split /\s+/, $occ_data_1{seq};
+		my @occ2_values = split /\s+/, $occ_data_2{seq};
+		if($occ_data_1{header} ne $occ_data_2{header}) {
+			print "Warning: Headers in occ files are different! " . $occ_data_1{header} . " != " . $occ_data_1{header}  . "\n";
+		}
+		if(scalar(@occ1_values) != scalar(@occ2_values)) {
+			die "Can not merge! The files differ in length.\n " . scalar(@occ1_values) . "!=" . scalar(@occ2_values) . "\n";
+		}
+		for (my $i = 0; $i < scalar(@occ1_values); $i++) {
+			if(($occ1_values[$i] >= $threshold) || ($occ2_values[$i] >= $threshold)) {
+				$out_values[$i] = ($occ2_values[$i] - $occ1_values[$i])/$occ1_values[$i];
+			}
+			else {
+				$out_values[$i] = 0;
+			}
+		}
+		my $last = 0; #0 - uncompareable or not significant, 1 - first occ, 2 - second occ
+		#first for first output
+		open(my $first, ">", $prefix . $name1 . ".tab");
+		open(my $second, ">", $prefix . $name2 . ".tab");
+		#second for second output
+		for(my $i = 0; $i < scalar(@out_values); $i++) {
+			if($out_values[$i] >= $fold_change) {
+				if ($last != 2) {
+					if($i != 0 && $last==1) {
+						print $first "\t" . $i-1 . "\n";
+					}
+					print $second $occ_data_2{header} . "\t" . $i . "\t";
+					$last = 2;
+				}
+							print $last . " ";
+							print $i . " " ;
+
+			}
+			elsif(($out_values[$i] < 0) && ($out_values[$i] <= -1*(1/$fold_change))) {
+					if ($last != 1) {
+						if($i != 0 && $last==2) {
+							print $second "\t" . $i-1 . "\n";
+						}
+						print $first $occ_data_1{header} . "\t" . $i . "\t";
+						$last = 1;
+					}
+											print $last . " ";
+							print $i . " " ;
+				}
+			elsif(($out_values[$i] == 0) || (($out_values[$i] > 0) && ($out_values[$i] < $fold_change)) || (($out_values[$i] < 0) && ($out_values[$i] > -1*(1/$fold_change)))) {
+				if($last == 1) {
+					print $first $i-1 . "\n";
+					$last = 0;
+					print "closing frst";
+				}
+				elsif($last == 2) {
+					print $second $i-1 . "\n";
+					$last = 0;
+				}
+			}
+			elsif($i == scalar(@out_values) -1 ) {
+				if($last == 1) {
+					print $first $i-1 . "\n";
+					$last = 0;
+					print "closing frst";
+				}
+				elsif($last == 2) {
+					print $second $i-1 . "\n";
+					$last = 0;
+				}
+			}
+			else{
+				print "Internal error while processing!\n";
+			}
+		}	
+	}
+}
+
+sub merge_seeds{
+	my $seeds = $_[0];
+	#$second_seeds = $_[1];
+	my $percent_length = $_[1];
+	open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
+	my $name1 = fileparse("$seeds", qr/\.[^.]*/);
+	my @ident;
+	my @start;
+	my @end;
+	my @output;
+	my $temp_start=0;
+	my $temp_stop=0;
+	my $length = 0;
+
+	while(<$seed_f>) {
+		my @line = split(/\t/, $_);
+		push(@ident, $line[0]);
+		push(@start, $line[1]);
+		push(@end, $line[2]);
+		$length++;
+	}
+	my $old_start = 0;
+	my $old_end = 0;
+	for(my $i=1; $i<$length; $i++) {
+		if($ident[$old_end] ne $ident[$i]){
+			push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
+			$old_end = $i;
+			$old_start = $i;
+		}
+		elsif((($start[$i] - $end[$old_end]) / (($end[$old_end] - $start[$old_end]) + ($end[$i] - $start[$i]))) < $percent_length/100 ) {
+			$old_end = $i;
+		}
+		else{
+			push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
+			$old_end = $i;
+			$old_start = $i;
+		}
+	}
+	#seperate output for the last element
+	push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
+	open(my $out , ">", "$name1" . "_growed.tab");
+	foreach (@output) {
+		print $out "$_";
+	}
 }
 
 sub apply_occ_reverse{
