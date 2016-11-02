@@ -149,8 +149,8 @@ sub multi_occ{
 	my $occ1 = $_[2];
 	my $occ2 = $_[3];
 	my $prefix = $_[4];
-	my $name1 = fileparse($occ1, qr/\.[^.]*/);
-	my $name2 = fileparse($occ2, qr/\.[^.]*/);
+	(my $name1,my $path1,my $suffix1) = fileparse($occ1, qr/\.[^.]*/);
+	(my $name2,my $path2,my $suffix2) = fileparse($occ2, qr/\.[^.]*/);
 	open(my $occ1_f, "<", "$occ1") or die "Can not open $occ1\n";
 	open(my $occ2_f, "<", "$occ2") or die "Can not open $occ2\n";
 	my %occ_data_1;
@@ -177,8 +177,8 @@ sub multi_occ{
 		}
 		my $last = 0; #0 - uncompareable or not significant, 1 - first occ, 2 - second occ
 		#first for first output
-		open(my $first, ">", $prefix . $name1 . ".tab");
-		open(my $second, ">", $prefix . $name2 . ".tab");
+		open(my $first, ">", $path1 . "/" . $prefix . $name1 . ".tab");
+		open(my $second, ">", $path2 . "/" . $prefix . $name2 . ".tab");
 		#second for second output
 		for(my $i = 0; $i < scalar(@out_values); $i++) {
 			if($out_values[$i] >= $fold_change) {
@@ -189,8 +189,8 @@ sub multi_occ{
 					print $second $occ_data_2{header} . "\t" . $i . "\t";
 					$last = 2;
 				}
-							print $last . " ";
-							print $i . " " ;
+							#print $last . " ";
+							#print $i . " " ;
 
 			}
 			elsif(($out_values[$i] < 0) && ($out_values[$i] <= -1*(1/$fold_change))) {
@@ -201,14 +201,14 @@ sub multi_occ{
 						print $first $occ_data_1{header} . "\t" . $i . "\t";
 						$last = 1;
 					}
-											print $last . " ";
-							print $i . " " ;
+							#print $last . " ";
+							#print $i . " " ;
 				}
 			elsif(($out_values[$i] == 0) || (($out_values[$i] > 0) && ($out_values[$i] < $fold_change)) || (($out_values[$i] < 0) && ($out_values[$i] > -1*(1/$fold_change)))) {
 				if($last == 1) {
 					print $first $i-1 . "\n";
 					$last = 0;
-					print "closing frst";
+					#print "closing frst";
 				}
 				elsif($last == 2) {
 					print $second $i-1 . "\n";
@@ -219,7 +219,7 @@ sub multi_occ{
 				if($last == 1) {
 					print $first $i-1 . "\n";
 					$last = 0;
-					print "closing frst";
+					#print "closing frst";
 				}
 				elsif($last == 2) {
 					print $second $i-1 . "\n";

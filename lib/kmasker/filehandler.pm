@@ -128,4 +128,135 @@ sub occ_length {
    close($seql);
 }
 
+sub fasta_to_tab {
+   my $fasta = $_[0];
+   my $prefix = $_[1];
+   # Initiating Handler 
+   open( my $inFASTA, "<", "$fasta");
+   (my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
+   open( my $TAB, ">", $path . "/$prefix" . $name . ".tab");
+      my %seqdata;   
+      while(read_sequence($inFASTA, \%seqdata)) {  
+        my $id         = $seqdata{header};
+        my @ARRAY_id   = split(" ", $id);
+        $id            = $ARRAY_id[0];   
+        my $seq        = $seqdata{seq};
+        while ($seq =~ m/(X|x)+/gc) {
+           print $TAB $id .  "\t"  . $-[0] . "\t" . ($+[0] - 1) . "\n"; #needs at least perl 5.6.0
+      }
+                  
+   }
+   close($inFASTA);
+   close($TAB);   
+                  
+}  
+
+sub tab_to_gff {
+  my $tab=$_[1];
+  my $featurename=$_[0];
+   open( my $inTAB, "<", "$tab");
+   (my $name,my $path,my $suffix) = fileparse($tab, qr/\.[^.]*/);
+   open(my $outGFF, ">", $path . "/" . $name . ".gff");
+   print $outGFF "##gff-version 3". "\n";
+   if (defined $_[2]) {
+      my $subfeature = $_[2];
+      print "Using $subfeature as reference for subfeature annotation!\n";
+      open (my $subTAB, "<", "$subfeature");
+      my $insub =  0;
+      my $c = 1;
+      my $s = 1;
+      my $tabline = <$inTAB>;
+      while (<$subTAB>) {
+         my @subline = split(/\t/, $_);
+         my @line = split(/\t/, $tabline);
+         my $ident = $line[0];
+         my $start = $line[1] + 1;
+         my $end = $line[2] + 1;
+         my $ident_s = $subline[0];
+         my $start_s = $subline[1] + 1;
+         my $end_s = $subline[2] + 1;
+         if($ident_s eq $ident && $start_s == $start && $end_s == $end){ #no subfeature
+            my $source = "kmasker";
+            my $type = $featurename;
+            my $score = "."; #evalue
+            my $strand = "?";
+            my $phase = ".";
+            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
+             $tabline = <$inTAB>;
+             $c++;
+         }
+         elsif($ident_s eq $ident && $start_s == $start && $end_s != $end) { #start of subfeature 
+            $insub = 1;
+            my $source = "kmasker";
+            my $type = "main_".$featurename;
+            my $score = "."; #evalue
+            my $strand = "?";
+            my $phase = ".";
+            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
+            #print subfeature
+             $type = "sub_".$featurename;
+             $score = "."; #evalue
+             $strand = "?";
+             $phase = ".";
+            $attributes =  "ID=main_${featurename}_${c}_${type}_${s};Name=${type}_${s};Parent=main_${featurename}_${c}";
+            print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
+            $s++;
+         }
+         elsif($ident_s eq $ident && $start_s != $start && $end_s == $end){ #end of subfeature
+            if($insub == 1){
+               $insub = 0;
+               my $source = "kmasker";
+               my $type = "sub_".$featurename;
+               my $score = "."; #evalue
+               my $strand = "?";
+               my $phase = ".";
+               my $attributes =  "ID=main_${featurename}_${c}_${type}_${s};Name=${type}_${s};Parent=main_${featurename}_${c}";
+               print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
+               $tabline = <$inTAB>;
+               $c++;
+               $s=0;
+            }
+            else{
+               die "Error: Found end of subfeature without start!";
+            }
+         }
+         elsif($insub == 1 && $ident_s eq $ident && $start_s > $start && $end_s < $end) { # in subfeature
+               my $source = "kmasker";
+               my $type = "sub_".$featurename;
+               my $score = "."; #evalue
+               my $strand = "?";
+               my $phase = ".";
+               my $attributes =  "ID=main_${featurename}_${c}_${type}_${s};Name=${type}_${s};Parent=main_${featurename}_${c}";
+               print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
+               $s++;
+         }
+         else{
+            print "Warning: Internal error!";
+            $tabline = <$inTAB>;
+            $c++;
+            $s=0;
+         }
+      }
+   }
+   else{
+      my $c = 1;
+      while(<$inTAB>) {
+         my @line = split(/\t/, $_);
+         my $ident = $line[0];
+         my $start = $line[1] + 1;
+         my $end = $line[2] + 1;
+         my $source = "kmasker";
+         my $type = $featurename;
+         my $score = "."; #evalue
+         my $strand = "?";
+         my $phase = ".";
+         my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+         print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes . "\n";
+         $c++;
+      }
+   }  
+}
+
 1;

@@ -3,12 +3,12 @@
 use strict;
 use warnings;
 use Getopt::Long;
-use kmasker::occ;
+use kmasker::filehandler;
 my $tab;
-my $percent;
+my $feature;
 
  GetOptions ("tab=s"   => \$tab,  
-             "percent=i" => \$percent) 
+             "feature=s" => \$feature) 
  or die("Error in command line arguments\n");
 
-kmasker::occ::merge_seeds($tab, $percent);
+kmasker::filehandler::tab_to_gff($feature, $tab);
