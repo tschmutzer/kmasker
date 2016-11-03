@@ -189,18 +189,18 @@ sub tab_to_gff {
          elsif($ident_s eq $ident && $start_s == $start && $end_s != $end) { #start of subfeature 
             $insub = 1;
             my $source = "kmasker";
-            my $type = "main_".$featurename;
+            my $type = $featurename;
             my $score = "."; #evalue
             my $strand = "?";
             my $phase = ".";
             my $attributes =  "ID=${type}_$c;Name=${type}_$c";
             print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             #print subfeature
-             $type = "sub_".$featurename;
+             $type = $featurename;
              $score = "."; #evalue
              $strand = "?";
              $phase = ".";
-            $attributes =  "ID=main_${featurename}_${c}_${type}_${s};Name=${type}_${s};Parent=main_${featurename}_${c}";
+             $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
             print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             $s++;
          }
@@ -208,11 +208,11 @@ sub tab_to_gff {
             if($insub == 1){
                $insub = 0;
                my $source = "kmasker";
-               my $type = "sub_".$featurename;
+               my $type = $featurename;
                my $score = "."; #evalue
                my $strand = "?";
                my $phase = ".";
-               my $attributes =  "ID=main_${featurename}_${c}_${type}_${s};Name=${type}_${s};Parent=main_${featurename}_${c}";
+               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
                print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
                $tabline = <$inTAB>;
                $c++;
@@ -224,11 +224,11 @@ sub tab_to_gff {
          }
          elsif($insub == 1 && $ident_s eq $ident && $start_s > $start && $end_s < $end) { # in subfeature
                my $source = "kmasker";
-               my $type = "sub_".$featurename;
+               my $type = $featurename;
                my $score = "."; #evalue
                my $strand = "?";
                my $phase = ".";
-               my $attributes =  "ID=main_${featurename}_${c}_${type}_${s};Name=${type}_${s};Parent=main_${featurename}_${c}";
+               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
                print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
                $s++;
          }
@@ -257,6 +257,57 @@ sub tab_to_gff {
          $c++;
       }
    }  
+}
+
+sub merge_tab_seeds{
+   my $seeds = $_[0];
+   #$second_seeds = $_[1];
+   my $percent_length = $_[1];
+   my $min = $_[2];
+   open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
+   my $name1 = fileparse("$seeds", qr/\.[^.]*/);
+   my @ident;
+   my @start;
+   my @end;
+   my @output;
+   my $temp_start=0;
+   my $temp_stop=0;
+   my $length = 0;
+
+   while(<$seed_f>) {
+      my @line = split(/\t/, $_);
+      push(@ident, $line[0]);
+      push(@start, $line[1]);
+      push(@end, $line[2]);
+      $length++;
+   }
+   my $old_start = 0;
+   my $old_end = 0;
+   for(my $i=1; $i<$length; $i++) {
+      if($ident[$old_end] ne $ident[$i]){
+         push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
+         $old_end = $i;
+         $old_start = $i;
+      }
+      elsif(((($start[$i] - $end[$old_end]) / (($end[$old_end] - $start[$old_end]) + ($end[$i] - $start[$i]))) <= $percent_length/100) || (($start[$i] - $end [$old_end]) <= $min )) {
+         $old_end = $i;
+      }
+      else{
+         if($start[$old_end] != $end[$old_end]) {
+             push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
+         }
+         $old_end = $i;
+         $old_start = $i;
+      }
+   }
+   #seperate output for the last element
+   if($start[$old_end] != $end[$old_end]) {
+      push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
+   }
+   open(my $out , ">", "$name1" . "_growed.tab");
+   foreach (@output) {
+      print $out "$_";
+   }
 }
 
 1;
