@@ -113,6 +113,38 @@ sub sequence_length {
    close($seql);
 }
 
+sub extract_sequence_region {
+   my $seqfile = $_[0];
+   my $list = $_[1];
+   my $offset = 0;
+   if(defined $_[3]) {
+      $offset = $_[3];
+   }
+   open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
+   (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
+   open(my $listfh, "<", "$list") or die "Can not open $list\n";
+   my @start;
+   my @stop;
+   my @ident;
+   while(<$listfh>) {
+      my @line = split(/\t/, $_);
+      push(@ident, $line[0]);
+      push(@start, ($line[1] - $offset));
+      push(@stop , ($line[2] - $offset));
+   }
+   my %seqdata;
+   open(my $seql, ">", "$path/selected_$name$suffix") or die "Can not write to $path/selected_$name$suffix\n";
+   while (read_sequence($seqfh, \%seqdata)) {
+      for(my $i = 0; $i < scalar(@ident); $i++) {
+         if($seqdata{header} eq $ident[$i]) {
+            print $seql ">" . $seqdata{header} . "_" . $start[$i] . "_" . $stop[$i] . "\n";
+            my $temp = substr($seqdata{seq}, $start[$i], (($stop[$i] - $start[$i]) + 1));
+            print $seql $temp . "\n";
+         }
+      }
+   }
+}
+
 sub occ_length {
    my $seqfile = $_[0]; #just the filename of the sequence file
    open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
