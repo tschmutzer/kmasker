@@ -189,20 +189,22 @@ sub fasta_to_tab {
 }  
 
 sub tab_to_gff {
-  my $tab=$_[1];
+  my $tab=$_[2];
   my $featurename=$_[0];
+  my $minlength=$_[1];
    open( my $inTAB, "<", "$tab");
    (my $name,my $path,my $suffix) = fileparse($tab, qr/\.[^.]*/);
    open(my $outGFF, ">", $path . "/" . $name . ".gff");
    print $outGFF "##gff-version 3". "\n";
-   if (defined $_[2]) {
-      my $subfeature = $_[2];
+   if (defined $_[3]) {
+      my $subfeature = $_[3];
       print "Using $subfeature as reference for subfeature annotation!\n";
       open (my $subTAB, "<", "$subfeature");
       my $insub =  0;
       my $c = 1;
       my $s = 1;
       my $tabline = <$inTAB>;
+      my $lengthcheck=1;
       while (<$subTAB>) {
          my @subline = split(/\t/, $_);
          my @line = split(/\t/, $tabline);
@@ -212,34 +214,44 @@ sub tab_to_gff {
          my $ident_s = $subline[0];
          my $start_s = $subline[1] + 1;
          my $end_s = $subline[2] + 1;
+         if(($end - $start) + 1 < $minlength) {
+            $lengthcheck = 0;
+         } 
+         else{$lengthcheck = 1;}
          if($ident_s eq $ident && $start_s == $start && $end_s == $end){ #no subfeature
             my $source = "kmasker";
             my $type = $featurename;
             my $score = "."; #evalue
-            my $strand = "?";
+            my $strand = ".";
             my $phase = ".";
             my $attributes =  "ID=${type}_$c;Name=${type}_$c";
-            print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
-             $tabline = <$inTAB>;
+            if($lengthcheck==1){
+                  print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
              $c++;
+             }
+             $tabline = <$inTAB>;
          }
          elsif($ident_s eq $ident && $start_s == $start && $end_s != $end) { #start of subfeature 
             $insub = 1;
             my $source = "kmasker";
             my $type = $featurename;
             my $score = "."; #evalue
-            my $strand = "?";
+            my $strand = ".";
             my $phase = ".";
             my $attributes =  "ID=${type}_$c;Name=${type}_$c";
-            print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
+            if($lengthcheck==1){
+               print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
+            }
             #print subfeature
              $type = $featurename;
              $score = "."; #evalue
-             $strand = "?";
+             $strand = ".";
              $phase = ".";
              $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
-            print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
-            $s++;
+             if($lengthcheck==1){
+               print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
+               $s++;
+             }
          }
          elsif($ident_s eq $ident && $start_s != $start && $end_s == $end){ #end of subfeature
             if($insub == 1){
@@ -247,12 +259,14 @@ sub tab_to_gff {
                my $source = "kmasker";
                my $type = $featurename;
                my $score = "."; #evalue
-               my $strand = "?";
+               my $strand = ".";
                my $phase = ".";
                my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
-               print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
+               if($lengthcheck==1){
+                   print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
+                   $c++;
+               }
                $tabline = <$inTAB>;
-               $c++;
                $s=0;
             }
             else{
@@ -263,14 +277,16 @@ sub tab_to_gff {
                my $source = "kmasker";
                my $type = $featurename;
                my $score = "."; #evalue
-               my $strand = "?";
+               my $strand = ".";
                my $phase = ".";
                my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
-               print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
-               $s++;
+               if($lengthcheck==1){
+                  print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
+                  $s++;
+               }
          }
          else{
-            print "Warning: Internal error!";
+            print "Warning: Internal error!\n Can not identify $ident_s $start_s $end_s to $ident $start $end!\n";
             $tabline = <$inTAB>;
             $c++;
             $s=0;
@@ -287,16 +303,18 @@ sub tab_to_gff {
          my $source = "kmasker";
          my $type = $featurename;
          my $score = "."; #evalue
-         my $strand = "?";
+         my $strand = ".";
          my $phase = ".";
          my $attributes =  "ID=${type}_$c;Name=${type}_$c";
-         print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes . "\n";
+         if(($end - $start) +1 < $minlength) { 
+            print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes . "\n";
+         }
          $c++;
       }
    }  
 }
 
-sub merge_tab_seeds{
+sub merge_tab_seeds{ #check chomping ! 
    my $seeds = $_[0];
    #$second_seeds = $_[1];
    my $percent_length = $_[1];
@@ -324,7 +342,9 @@ sub merge_tab_seeds{
    for(my $i=1; $i<$length; $i++) {
       if($ident[$old_end] ne $ident[$i]){
          #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
-         print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
+         #if($start[$old_end] != $end[$old_end]) {
+            print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
+         #}
          $old_end = $i;
          $old_start = $i;
       }
@@ -332,25 +352,60 @@ sub merge_tab_seeds{
          $old_end = $i;
       }
       else{
-         if($start[$old_end] != $end[$old_end]) {
+         #if($start[$old_end] != $end[$old_end]) {
              #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
              print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
-         }
+         #}
          $old_end = $i;
          $old_start = $i;
       }
       #print $i . "\n";
    }
    #seperate output for the last element
-   if($start[$old_end] != $end[$old_end]) {
+   #if($start[$old_end] != $end[$old_end]) {
       #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
       print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
-   }
+   #}
    #foreach (@output) {
     #  print $out "$_";
    #}
    close($out);
    close($seed_f);
+}
+
+sub add_annotation_to_gff{
+   my $gff = $_[0];
+   my $blast = $_[1];
+   open(my $gfffh, "<", "$gff") or die "Can not open $gff\n";
+   open(my $blastfh, "<", "$blast") or die "Can not open $blast\n";
+   (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
+   open(my $gff_out, ">", "$path/${name}_annotation${suffix}") or die "Can not write to $path/${name}_annotation${suffix} \n";     
+   my %blastresults;
+   while(<$blastfh>){
+      my @line = split(/\t/, $_);
+      if(! exists $blastresults{$line[0]}) {
+         $blastresults{$line[0]} = \@line;
+      }
+      else{
+         print "Please run blast with -max_targer_seqs=1. I will skip all entries exept the first one\n";
+      }
+   }
+   print $gff_out "##gff-version 3\n";
+   while(<$gfffh>) {
+      if ($_ !~ m/^#/) {
+         chomp($_);
+         my @line = split(/\t/, $_);
+         my $ident = $line[0] . "_" .($line[3] - 1) . "_" . ($line[4] - 1);
+         if ( exists $blastresults{$ident}) {
+            my $refname = @{$blastresults{$ident}}[1];
+            $line[8] = $line[8] . ";Alias=$refname";
+         }
+         for(my $i=0; $i<scalar(@line)-1; $i++) {
+          print $gff_out $line[$i] . "\t";
+        }
+        print $gff_out $line[scalar(@line)-1] . "\n";
+      }
+   }
 }
 
 1;
