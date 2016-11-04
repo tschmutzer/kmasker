@@ -282,12 +282,12 @@ int main(int argc, char *argv[])
     
     opterr = 0;
     
-    while ((opt = getopt(argc, argv, "of:j:hn:r:p:")) != EOF) {
+    while ((opt = getopt(argc, argv, "of:j:hn:r:p:s")) != EOF) {
         switch (opt) {
             case 'o':
                 occflag = true;
                 break;
-            case 'n':
+            case 's':
                 fastaout = false;
                 break;
             case 'f':
@@ -309,7 +309,7 @@ int main(int argc, char *argv[])
                 rt = atoi(optarg);
                 break;
             case 'h':
-                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-n\tSuppress FASTA output\n";
+                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n";
                 return 1;
                 break;
             case '?':
