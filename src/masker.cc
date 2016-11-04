@@ -63,6 +63,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     sequence_parser                         parser(4, 100, 1, streams);
     ofstream occfilestream;
     ofstream occnormfilestream;
+    ofstream fastaout;
     char* path = *file_begin;
     string file = basename(path);
     string dir = dirname(path);
@@ -78,7 +79,6 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         occnormfilestream.open(occnormoutname);
     }
     if(fastaflag == true) {
-        ofstream fastaout;
         string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_N" + to_string(norm) + "_" + file;
         cout << "Out FASTA is: " << fastaoutname << "\n";
         fastaout.open(fastaoutname);
@@ -287,7 +287,7 @@ int main(int argc, char *argv[])
             case 'o':
                 occflag = true;
                 break;
-            case 'n'
+            case 'n':
                 fastaout = false;
                 break;
             case 'f':
