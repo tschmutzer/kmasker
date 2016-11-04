@@ -58,7 +58,7 @@ typedef jellyfish::whole_sequence_parser<jellyfish::stream_manager<char**> > seq
 
 template<typename PathIterator, typename Database>
 void query_from_sequence(PathIterator file_begin, PathIterator file_end, const Database& db,
-                         bool canonical, bool occfile, int rt, int norm, char* prefix) {
+                         bool canonical, bool occfile, int rt, int norm, char* prefix, bool fastaflag) {
     jellyfish::stream_manager<PathIterator> streams(file_begin, file_end);
     sequence_parser                         parser(4, 100, 1, streams);
     ofstream occfilestream;
@@ -69,28 +69,33 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     size_t lastindex = file.find_last_of(".");
     string filename = file.substr(0, lastindex);
     //cout << dir << "/" << file << "\n";
-    string occnormoutname = dir + "/KMASKER_" + prefix + "_N" + to_string(norm) + "_" + filename + ".occ";
-    cout << "Out normalized OCC is: " << occnormoutname << "\n";
-    string occoutname = dir + "/KMASKER_" + prefix + "_" + filename + ".occ";
-    cout << "Out OCC is: " << occoutname << "\n";
     if(occfile == true){
+        string occnormoutname = dir + "/KMASKER_" + prefix + "_N" + to_string(norm) + "_" + filename + ".occ";
+        cout << "Out normalized OCC is: " << occnormoutname << "\n";
+        string occoutname = dir + "/KMASKER_" + prefix + "_" + filename + ".occ";
+        cout << "Out OCC is: " << occoutname << "\n";
         occfilestream.open(occoutname);
         occnormfilestream.open(occnormoutname);
     }
-    ofstream fastaout;
+    if(fastaflag == true) {
+        ofstream fastaout;
+        string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_N" + to_string(norm) + "_" + file;
+        cout << "Out FASTA is: " << fastaoutname << "\n";
+        fastaout.open(fastaoutname);
+    }
     //cout << "input was: " << string(dirname(*file_begin)) << "/" << string(basename(*file_begin)) << "\n";
     //cout << string(*file_begin) << "\n";
     //cout << string(*file_begin) << "\n";
-    string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_N" + to_string(norm) + "_" + file;
-    cout << "Out FASTA is: " << fastaoutname << "\n";
-    fastaout.open(fastaoutname);
+
   //sequence_mers                           mers(canonical);
   //const sequence_mers                     mers_end(canonical);
   while(true) {
     sequence_parser::job j(parser);
     if(j.is_empty()) break;
     for(size_t i = 0; i < j->nb_filled; ++i) {
-      fastaout << ">" << j->data[i].header << "\n";
+        if(fastaflag == true) {
+            fastaout << ">" << j->data[i].header << "\n";
+        }
         if(occfile) {
             occfilestream << ">" << j->data[i].header << "\n";
             occnormfilestream << ">" << j->data[i].header << "\n";
@@ -115,7 +120,9 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                 occfilestream << "0";
                 occnormfilestream << "0";
             }
-            fastaout << j->data[i].seq.substr(0,1);
+            if(fastaflag == true) {
+                fastaout << j->data[i].seq.substr(0,1);
+            }
         }
         else {
             //std::cout << db.check(mer) << " : " << mer.to_str()<< " : " << mershift;
@@ -125,10 +132,14 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                 occfilestream << db.check(mer);
             }
             if(IntDivRoundUp(db.check(mer),norm) > rt) {
-                fastaout << "X";
+                if(fastaflag == true) {
+                    fastaout << "X";
+                }
             }
             else{
-                fastaout << j->data[i].seq.substr(0,1);
+                if(fastaflag == true) {
+                    fastaout << j->data[i].seq.substr(0,1);
+                }
             }
         }
         //now calculate how many times the mer must be shifted
@@ -157,7 +168,9 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                     occfilestream << "0";
                     occnormfilestream << "0";
                 }
-                fastaout << s;
+                if(fastaflag == true) {
+                    fastaout << s;
+                }
 
             }
             else {
@@ -171,7 +184,9 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                         occfilestream << "0";
                         occnormfilestream << "0";
                     }
-                    fastaout << s;
+                    if(fastaflag == true) {
+                        fastaout << s;
+                    }
                 }
                 else { //allright, no Ns in the kmer
                     mer.shift_left(c);
@@ -182,10 +197,14 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                         occfilestream << db.check(mer);
                     }
                     if (IntDivRoundUp(db.check(mer),norm) > rt) {
-                        fastaout << "X";
+                        if(fastaflag == true) {
+                            fastaout << "X";
+                        }
                     }
                     else {
-                        fastaout << s;
+                        if(fastaflag == true) {
+                            fastaout << s;
+                        }
                     }
 
                 }
@@ -226,16 +245,22 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             }
         }
         //now print the bases in fasta
-        fastaout << j->data[i].seq.substr(j->data[i].seq.length() - (mer.k() - 1));
+        if(fastaflag == true) {
+            fastaout << j->data[i].seq.substr(j->data[i].seq.length() - (mer.k() - 1));
+        }
         
         if (occfile) {
             occfilestream << "\n";
             occnormfilestream << "\n";
         }
-        fastaout << "\n";
+        if(fastaflag == true) {
+            fastaout << "\n";
+        }
      }
   }
-    fastaout.close();
+    if(fastaflag == true) {
+        fastaout.close();
+    }
     if (occfile) {
         occfilestream.close();
         occnormfilestream.close();
@@ -252,6 +277,7 @@ int main(int argc, char *argv[])
     char* jellydb = NULL;
     char* prefix = "masked";
     int index;
+    bool fastaout = true;
     
     
     opterr = 0;
@@ -260,6 +286,9 @@ int main(int argc, char *argv[])
         switch (opt) {
             case 'o':
                 occflag = true;
+                break;
+            case 'n'
+                fastaout = false;
                 break;
             case 'f':
                 fasta = optarg;
@@ -280,7 +309,7 @@ int main(int argc, char *argv[])
                 rt = atoi(optarg);
                 break;
             case 'h':
-                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n";
+                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-n\tSupress FASTA output\n";
                 return 1;
                 break;
             case '?':
@@ -300,6 +329,10 @@ int main(int argc, char *argv[])
     
     for (index = optind; index < argc; index++)
         printf ("Non-option argument %s\n", argv[index]);
+    if(occflag == false && fastaout == false) {
+        cout << "You want me to do nothing!\nNothing done.\n";
+        return 1;
+    }
     
   /*if(argc < 3)
     err::die(err::msg() << "Usage: " << argv[0] << "db.jf file.fa [...]");*/
@@ -316,12 +349,12 @@ int main(int argc, char *argv[])
     if(!in.good())
       err::die("Bloom filter file is truncated");
     in.close();
-    query_from_sequence(file, file+1, filter, header.canonical(),occflag, rt, norm, prefix);
+    query_from_sequence(file, file+1, filter, header.canonical(),occflag, rt, norm, prefix, fastaout);
   } else if(header.format() == binary_dumper::format) {
     jellyfish::mapped_file binary_map(jellydb);
     binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
                     header.size() - 1, binary_map.length() - header.offset());
-    query_from_sequence(file, file+1 , bq, header.canonical(), occflag ,rt, norm, prefix);
+    query_from_sequence(file, file+1 , bq, header.canonical(), occflag ,rt, norm, prefix, fastaout);
   } else {
     err::die(err::msg() << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.");
   }
