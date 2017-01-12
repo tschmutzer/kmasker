@@ -109,9 +109,9 @@ sub make_config(){
 		#1
 		print $USER_kindex_info "#short_tag [mandatory]\n\n";
 		#2
-		print $USER_kindex_info "#species [mandatory]\n\n";
+		print $USER_kindex_info "#common_name [mandatory]\n\n";
 		#3
-		print $USER_kindex_info "#botanic_name [obligarory]\n\n";
+		print $USER_kindex_info "#scientific_name [obligarory]\n\n";
 		#4
 		print $USER_kindex_info "#type (cultivar;genotype;etc.) [obligarory]\n\n";
 		#5
@@ -139,8 +139,8 @@ sub read_config(){
 		#HASH
 		my %HASH_code_words = ();
 		$HASH_code_words{"short_tag"}		= 1;
-		$HASH_code_words{"species"}			= 1;
-		$HASH_code_words{"botanic_name"}	= 1;
+		$HASH_code_words{"common_name"}		= 1;
+		$HASH_code_words{"scientific_name"}	= 1;
 		$HASH_code_words{"type"}			= 1;
 		$HASH_code_words{"sequencing_depth"}= 1;
 		$HASH_code_words{"k-mer"}			= 1;
@@ -206,8 +206,8 @@ sub write_repository_entry(){
 	my %HASH_info_this 		= %{$href_this};
 	my @ARRAY_repository 	= ();
 	$ARRAY_repository[0]	= $HASH_info_this{"short_tag"};
-	$ARRAY_repository[1]	= $HASH_info_this{"species"};
-	$ARRAY_repository[2]	= $HASH_info_this{"botanic_name"};
+	$ARRAY_repository[1]	= $HASH_info_this{"common_name"};
+	$ARRAY_repository[2]	= $HASH_info_this{"scientific_name"};
 	$ARRAY_repository[3]	= $HASH_info_this{"type"};
 	$ARRAY_repository[4]	= $HASH_info_this{"sequencing_depth"};
 	$ARRAY_repository[5]	= $HASH_info_this{"k-mer"};
@@ -222,6 +222,12 @@ sub write_repository_entry(){
 	open(my $RH, '>>', $urepositories) or die "Could not open file '$urepositories' $!";
 	say $RH $new_kindex_entry_in_repository;
 	close $RH;	
+}
+
+
+sub delete_repository_entry(){
+	my $short_tag_this 			= $_[0];
+	#FIXME - needs completion
 }
 
 1;
