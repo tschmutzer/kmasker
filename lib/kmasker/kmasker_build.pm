@@ -10,8 +10,9 @@ our @EXPORT = qw(
 setup_index
 build_kindex_jelly
 make_config
+remove_repository_entry
 );
-our @EXPORT_OK = qw(build_kindex_jelly make_config);
+our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry);
 
 
 sub build_kindex_jelly{	
@@ -30,6 +31,14 @@ sub build_kindex_jelly{
 		#READ config for build
 		my $href_this = &read_config($build_config, \%HASH_info, $href_repos);	
 		%HASH_info = %{$href_this};	
+	}
+	
+	#LOAD expert setting for build
+	my $parameter_extern = $HASH_info{"expert_setting"};
+	#my $setting = "-s 2G -t 1";	#notebook setting
+	my $setting = "-s 24G -t 10";	#server setting
+	if($parameter_extern ne ""){
+		$setting = $parameter_extern;
 	}
 	
 	#Create single input file and calculate md5sum for repository
@@ -53,8 +62,8 @@ sub build_kindex_jelly{
 	$HASH_info{"sequencing_depth"} = 1 if(!exists $HASH_info{"sequencing_depth"});
 	
 	#BUILD JELLY index	
-	print "\n ... start construction of kindex\n"; 
-	system("jellyfish count -m ".$k." -s 24G -t 10 -o KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$seq."");
+	print "\n ... start construction of kindex with the following parameters ".$setting." \n"; 
+	system("jellyfish count -m ".$k." ".$setting." -o KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$seq."");
 	print "\n ... finished kindex construction!\n";
 	
 	#MOVE: make folder in directory and move jelly index
@@ -171,11 +180,11 @@ sub read_config(){
 		my $check = 1;
 		$check = 0 if($HASH_info_this{"short_tag"} eq "");
 		$check = 0 if($HASH_info_this{"k-mer"} eq "");
-		$check = 0 if($HASH_info_this{"species"} eq "");
+		$check = 0 if($HASH_info_this{"common_name"} eq "");
 		if($check == 0){
 			#STOP
 			print "\n\n WARNING: Kmasker (build) was stopped!!!\
-				     \n Missing informatio nin configuration!\n\n";
+				     \n Missing information in configuration!\n\n";
 			exit(0);
 		}
 		
@@ -225,9 +234,49 @@ sub write_repository_entry(){
 }
 
 
-sub delete_repository_entry(){
-	my $short_tag_this 			= $_[0];
-	#FIXME - needs completion
+## subroutine
+#
+sub remove_repository_entry(){
+	
+	my $kindex_shorttag					= $_[0];
+	my $href_this 						= $_[1];
+	my %HASH_info_this 					= %{$href_this};
+	my @ARRAY_repository_entries		= ();
+	my $urepositories 					= "/home/".$HASH_info_this{"user_name"}."/.user_repositories.kmasker";
+	my $utmp							= "kmasker.tmp.file";
+	my $target_entry_details			= "";
+	
+	#READ
+	open(my $RH, '<', $urepositories) or die "Could not open file '$urepositories' $!";
+	open(my $FH, '>', $utmp) or die "Could not write file ".$utmp." $!";
+	while (<$RH>) {
+		my @ARRAY_tmp = split("\t", $_);
+		if($ARRAY_tmp[0] ne $kindex_shorttag){
+  			print $FH $_;
+		}else{
+			$target_entry_details = $_;
+		}
+	}
+	
+	if($target_entry_details eq ""){
+		print "\n WARNING: the kindex ".$kindex_shorttag." does not exist!\n\n";
+		exit();
+	}
+	
+	#MOVE
+	system("mv ".$utmp." ".$urepositories);
+	
+	#REMOVE DATA
+	chomp $target_entry_details;
+	$target_entry_details =~ s/\n$//;	
+	my @ARRAY_entry_details = split("\t", $target_entry_details);
+	my $absolut_path = $ARRAY_entry_details[10];
+	print "\n REMOVING kindex folder : ".$absolut_path."\n\n";
+	system("rm -r ".$absolut_path);
+	
+	close $RH;	
+	close $FH;
 }
+
 
 1;
