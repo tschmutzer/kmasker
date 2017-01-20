@@ -10,11 +10,11 @@ use Cwd  qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
-use kmasker::kmasker_build qw(build_kindex_jelly make_config);
+use kmasker::kmasker_build qw(build_kindex_jelly make_config remove_repository_entry);
 use kmasker::kmasker_run qw(run_kmasker);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.20 rc161014";
+my $version 	= "0.0.21 rc170114";
 my $path 	= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -55,9 +55,9 @@ my $help;
 my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
-my $computing_power_user;
-my $computing_power = "server";
+my $remove_kindex;
 my $plot_hist_frequency;
+my $expert_setting = ""; 
 my $user_name;
 my $verbose;
 
@@ -96,9 +96,10 @@ my $result = GetOptions (	#MAIN
 							#GLOBAL
 							"show_repository"	=> \$show_kindex_repository,
 							"show_details=s"	=> \$show_details_for_kindex,
+							"remove_kindex=s"	=> \$remove_kindex,
 							
 							#Houskeeping
-							"cpt"				=> \$computing_power_user,
+							"expert_setting"	=> \$expert_setting,
 							"keep_tmp"			=> \$keep_temporary_files,
 							"verbose"			=> \$verbose,
 							"help"				=> \$help										
@@ -174,7 +175,8 @@ if(defined $help){
 	print "\n\n General options:";
 	print "\n --show_repository\t shows complete list of global and private k-mer indices";
 	print "\n --show_details\t\t shows details for a requested kindex";
-	print "\n --cpt\t\t\t computing power type ('notebook' or 'server') [server]";
+	print "\n --remove_kindex\t remove kindex from repository";
+	print "\n --expert_setting\t submit individual parameter to Kmasker (e.g. on memory usage for index construction)";
 	
 	print "\n\n";
 	exit();
@@ -222,12 +224,6 @@ if(defined $length_threshold_usr){
 	}
 }
 
-#computing power type
-if(defined $computing_power_user){
-	if($computing_power_user eq "notebook"){
-		$computing_power = $computing_power_user;
-	}
-}
 
 #repeat library
 if(defined $repeat_lib_user	){
@@ -248,9 +244,8 @@ if(defined $build){
 		my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
 		$HASH_info{"user_name"}				= $user_name;
 		$HASH_info{"seq"} 					= $input;
-		$HASH_info{"k-mer"}					= $k; 
-		$HASH_info{"computing_power"}		= "server";
-		$HASH_info{"computing_power"}		= "notebook" if($computing_power eq "notebook"); 
+		$HASH_info{"k-mer"}					= $k;
+		$HASH_info{"expert_setting"}		= $expert_setting;
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
 		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
@@ -270,6 +265,7 @@ if(defined $run){
 	$HASH_info{"user_name"}				= $user_name;
 	$HASH_info{"rept"}					= $repeat_threshold; 
 	$HASH_info{"min_length"}			= $length_threshold;
+	$HASH_info{"expert_setting"}		= $expert_setting; 
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
 	
@@ -314,12 +310,22 @@ if(defined $postprocessing){
 #GENERAL options
 if(defined $show_kindex_repository){
 	&show_repository();
+	exit();
 }	
 	
 if(defined $show_details_for_kindex){
 	&show_details_for_kindex($show_details_for_kindex);
+	exit();
 }
-				
+
+if(defined $remove_kindex){
+	my %HASH_info 						= ();
+	$HASH_info{"user_name"}				= $user_name;
+	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
+	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
+	&remove_repository_entry($remove_kindex,\%HASH_info);
+	exit();
+}				
 
 ##END MAIN
 
@@ -430,8 +436,8 @@ sub show_details_for_kindex(){
 		my @ARRAY_details = split("\t", $linearray);
 		
 		print "\n\n KINDEX details for ".$kindex."\n";
-		print "\n\tspecies:          ".$ARRAY_details[1];
-		print "\n\tbotanic_name:     ".$ARRAY_details[2];
+		print "\n\tcommon_name:      ".$ARRAY_details[1];
+		print "\n\tscientific_name:  ".$ARRAY_details[2];
 		print "\n\ttype              ".$ARRAY_details[3];
 		print "\n\tsequencing_depth: ".$ARRAY_details[4];
 		print "\n\tk-mer:            ".$ARRAY_details[5];
@@ -467,9 +473,9 @@ sub initiate_user(){
 		#1
 		print $USER_REPOS "#short_tag\t";
 		#2
-		print $USER_REPOS "species\t";
+		print $USER_REPOS "common_name\t";
 		#3
-		print $USER_REPOS "botanic_name\t";
+		print $USER_REPOS "scientific_name\t";
 		#4
 		print $USER_REPOS "type (cultivar;genotype;etc.)\t";
 		#5
