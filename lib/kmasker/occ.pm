@@ -169,7 +169,15 @@ sub multi_occ{
 		}
 		for (my $i = 0; $i < scalar(@occ1_values); $i++) {
 			if(($occ1_values[$i] >= $threshold) || ($occ2_values[$i] >= $threshold)) {
-				$out_values[$i] = ($occ2_values[$i] - $occ1_values[$i])/$occ1_values[$i];
+				if(($occ2_values[$i] - $occ1_values[$i]) == 0){
+					$out_values[$i] = 0;
+				}
+				elsif($occ1_values[$i] == 0) {
+					$out_values[$i]="inf";
+				}
+				else {
+					$out_values[$i] = ($occ2_values[$i] - $occ1_values[$i])/$occ1_values[$i];
+				}
 			}
 			else {
 				$out_values[$i] = 0;
