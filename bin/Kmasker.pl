@@ -21,6 +21,7 @@ my $fastq;
 my $indexfile;
 
 #MODULES
+#BUILD
 my $build;
 my $run;
 my $postprocessing;
@@ -30,6 +31,7 @@ my $make_config;
 my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
+#RUN
 my $kindex_usr;
 my $k_usr;
 my $k 					= 21;
@@ -41,6 +43,9 @@ my $repeat_threshold	= 5;
 my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
+my $MK_percent_gapsize	= 10;	#default	FIXME
+my $MK_min_seed			= 5;	#default	FIXME
+my $MK_min_gff			= 10;   #default	FIXME
 
 #Postprocessing
 my $gff;
@@ -265,7 +270,9 @@ if(defined $run){
 	my %HASH_info 						= ();
 	$HASH_info{"user_name"}				= $user_name;
 	$HASH_info{"rept"}					= $repeat_threshold; 
-	$HASH_info{"min_length"}			= $length_threshold;
+	$HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
+	$HASH_info{"MK_min_seed"}			= $MK_min_seed;
+	$HASH_info{"MK_min_gff"}			= $MK_min_gff;
 	$HASH_info{"expert_setting"}		= $expert_setting; 
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
