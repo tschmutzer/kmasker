@@ -123,7 +123,7 @@ sub run_kmasker_MK{
 				my @NAME = split(/\./, $fasta);
 				pop @NAME;
 				my $name = join(".", @NAME);
-				print "\n NAME = ".$name;
+				print "\n NAME = ".$name."\n";
 				push(@ARRAY_occ, "KMASKER_".$kindex."_N".$seq_depth."_".$name.".occ");
 				
 				#clean
@@ -139,6 +139,9 @@ sub run_kmasker_MK{
 			print "\n .. The kindex (".$kindex.") you requested is not available in repository!\n\n";
 		}	
 	}
+	
+	#Feedback
+	print "\n .. start to generate TAB" ;#if(!defined $silent);
 		
 	#Convertion to TAB file
 	my $occ1 = $ARRAY_occ[0];
@@ -147,32 +150,28 @@ sub run_kmasker_MK{
 	(my $name1,my $path1,my $suffix1) = fileparse($occ1, qr/\.[^.]*/);
 	(my $name2,my $path2,my $suffix2) = fileparse($occ2, qr/\.[^.]*/);
 	
-	foreach(@ARRAY_kindex){
-   		my $kindex = $_;
-		
-		#EXTEND regions
-		my $percent = 10; 	# 10% of length 	FIXME: That parameter has to come from user
-		my $min_seed= 5;	# 5 bp 				FIXME: That parameter has to come from user
-		kmasker::filehandler::merge_tab_seeds($name1.".tab", $percent, $min_seed);
-		
-		#PRODUCE GFF
-		my $min_gff= 10;	# 10 bp minimal length to be reported in GFF
-		my $feature = "MDR";
-		kmasker::filehandler::tab_to_gff($feature, $min_gff, $name1.".tab_growed");
-		
-	}
+	#Feedback
+	print "\n .. start to generate extended region" ;#if(!defined $silent);
 	
-	     
-   #clean
-
-#    if(!(-e "KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta)) {
-#    	print "\n .. KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." was not generated!\n";
-#        print "\n .. please provide a bug report!\n\n";
-#        exit();
-#    }
-#       system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
-#        system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
-#	}
+	#EXTEND regions (for TAB1 and TAB2)	
+	my $tab1 = $occ1;
+	my $tab2 = $occ2;
+	$tab1 =~ s/\.occ$//;
+	$tab2 =~ s/\.occ$//;
+	my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
+	my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
+	kmasker::filehandler::merge_tab_seeds("KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
+	kmasker::filehandler::merge_tab_seeds("KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
+	
+	#Feedback
+	print "\n .. start to generate GFF" ;#if(!defined $silent);
+	
+	#PRODUCE GFF
+	my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
+	my $feature = "region_with_fold_change";
+	kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab", "KMASKER_comparativ_FC10_".$tab1.".tab");
+	kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab", "KMASKER_comparativ_FC10_".$tab2.".tab");
+	
 }
 
 
