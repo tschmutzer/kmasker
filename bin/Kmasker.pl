@@ -11,11 +11,11 @@ use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly make_config remove_repository_entry);
-use kmasker::kmasker_run qw(run_kmasker);
+use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
 my $version 	= "0.0.21 rc170114";
-my $path 	= dirname abs_path $0;		
+my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
 my $indexfile;
@@ -66,6 +66,7 @@ my %HASH_repository_kindex;
 
 #DEFAULT: no default anymore
 my $kindex;
+my @multi_kindex;
 
 my $result = GetOptions (	#MAIN
 							"build"				=> \$build,
@@ -81,6 +82,7 @@ my $result = GetOptions (	#MAIN
 							#RUN
 							"fasta=s"			=> \$fasta,	
 							"kindex=s"			=> \$kindex_usr,
+							"multi_kindex=s{1,}"=> \@multi_kindex,
 							"rept=s"			=> \$repeat_threshod_usr,
 							"min_length=s"		=> \$length_threshold_usr,
 #							"tol_length=s"		=> \$tolerant_length_threshold_usr,
@@ -261,7 +263,6 @@ if(defined $run){
 	#USE RUN MODULE
 	
 	my %HASH_info 						= ();
-	my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
 	$HASH_info{"user_name"}				= $user_name;
 	$HASH_info{"rept"}					= $repeat_threshold; 
 	$HASH_info{"min_length"}			= $length_threshold;
@@ -269,7 +270,13 @@ if(defined $run){
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
 	
-	&run_kmasker($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
+	if(defined $kindex){
+	#single kindex				
+		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
+	}elsif(scalar(@multi_kindex > 1)){
+	#multiple kindex
+		&run_kmasker_MK($fasta, \@multi_kindex, \%HASH_info, \%HASH_repository_kindex);
+	}
 	
 	#QUIT
 	print "\n - Thanks for using Kmasker! -\n\n";
@@ -511,7 +518,7 @@ sub check_settings(){
 	}
 	if(defined $run){
 		$module_count++;
-		if(!(defined $kindex)){
+		if(!((defined $kindex)||(scalar (@multi_kindex >1)))){
 			print "\n .. kmasker was stopped: no kindex defined (--kindex) !";
 			print "\n\n";
 			exit(0);
