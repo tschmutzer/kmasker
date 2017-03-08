@@ -195,14 +195,14 @@ sub tab_to_gff {
   my $tab=$_[2];
   my $featurename=$_[0];
   my $minlength=$_[1];
-   open( my $inTAB, "<", "$tab");
+   open( my $inTAB, "<", "$tab") or die "Can not read $tab (tab_to_gff) \n";
    (my $name,my $path,my $suffix) = fileparse($tab, qr/\.[^.]*/);
-   open(my $outGFF, ">", $path . "/" . $name . ".gff");
+   open(my $outGFF, ">", $path . "/" . $name . ".gff") or die "Can not write gff (tab_to_gff) \n";
    print $outGFF "##gff-version 3". "\n";
    if (defined $_[3]) {
       my $subfeature = $_[3];
-      print "Using $subfeature as reference for subfeature annotation!\n";
-      open (my $subTAB, "<", "$subfeature");
+      print "\nUsing $subfeature as reference for subfeature annotation!\n";
+      open (my $subTAB, "<", "$subfeature") or die "Can not read subfeature (tab_to_gff) \n";
       my $insub =  0;
       my $c = 1;
       my $s = 1;
@@ -324,7 +324,7 @@ sub merge_tab_seeds{ #check chomping !
    my $min = $_[2];
    open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
    my $name1 = fileparse("$seeds", qr/\.[^.]*/);
-   open(my $out , ">", "$name1" . "_growed.tab");
+   open(my $out , ">", "KMASKER_regions_$name1" . "_merged.tab");
    my @ident;
    my @start;
    my @end;
