@@ -10,46 +10,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(normalize_occ apply_occ merge_occ);
 our @EXPORT_OK = qw(make_occ normalize_occ apply_occ merge_occ);
 
-
-#sub make_index{
-#	$file = $_[1]
-#	$mer = $_[2]
-#	$c = $_[3]
-#	$size = $_[4]
-#	$threads = $_[5]
-#} # Do this step external? # Maybe the workflow implementation from RNA-Seq-Pipeline
-
-# sub make_occ{
-# 	my $file=$_[0];
-# 	my $index=$_[1];
-# 	my $mer=$_[2];
-# 	(my $name,my $path,my $suffix) = fileparse($file, qr/\.[^.]*/);
-# 	open(my $fasta, "<", "$file") or die "Can not open $file\n";
-# 	open(my $occ, ">", $path.$name.".occ") or die "Can not write to " . $path.$name.".occ\n";
-# 	my $qmerfile = jellyfish::QueryMerFile->new($index);
-# 	my $seqname="";
-# 	my %seqdata;
-# 	while (read_sequence($fasta, \%seqdata)) {
-# 			print $occ ">".$seqdata{header}."\n";
-# 			#calculate the values for the occ file
-# 			my $overhead = $mer - 1;
-# 			my @values;
-# 			$values[(length($seqdata{seq})-$overhead)..length($seqdata{seq})]=0;
-# 			for (my $i = 0; $i < (length($seqdata{seq})-$overhead); $i++) { #q means query
-# 				#print $i . " : " ;
-# 				#we have to differentiate genome and reads in the future, because reads are canonicalized
-# 				my $kmer = substr($seqdata{seq}, $i, $mer);
-# 				print "$kmer :";
-# 				my $qkmer = jellyfish::MerDNA->new($kmer);
-# 				my $count = $qmerfile->get($qkmer);
-# 				print  " $qkmer : $count \n";
-# 				$values[$i]=$count
-# 			}
-# 			print $occ "@values\n";
-# 	}
-# 	close($fasta);
-# 	close($occ);
-# }
+my $version_PM_occ 	= "0.0.2 rc170308";
 
 sub normalize_occ{
 	my $file = $_[0];
@@ -93,56 +54,6 @@ sub normalize_occ{
 	close($occ_norm);
 }
 
-sub apply_occ{ #Note: This function is outdated and should not be used under normal circumstances
-	my $fasta_file = $_[0];
-	my $occ_file = $_[1];
-	my $rept = $_[2];
-	my %seqdata;
-	my %occ_data;
-	open(my $occ, "<", "$occ_file") or die "Can not open $occ_file\n";
-	open(my $fasta, "<", "$fasta_file") or die "Can not open $fasta_file\n";
-
-	(my $name,my $path,my $suffix) = fileparse($fasta_file, qr/\.[^.]*/);
-	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT$rept.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
-	while(read_sequence($fasta, \%seqdata)) {
-		read_occ($occ, \%occ_data);
-		my @sequence = split '', $seqdata{seq};
-		my @occvalues = split /\s+/, $occ_data{seq};
-		#print $seqdata{header} . " " . $occ_data{header} . "\n";
-		#print length($seqdata{seq}) . " " . length($occ_data{seq}) . "\n";
-		#for (my $k = 0; $k < scalar(@sequence); $k++) {
-		#	print $occvalues[$k];
-		#	print " ";
-		#	print $sequence[$k];
-		#	print "\n";
-		#}
-		if($seqdata{header} ne $occ_data{header}) {
-			print "Warning: Headers in occ and fasta are different! " . $seqdata{header} . " != " . $occ_data{header}  . "\n";
-		}
-		else {
-			print "Working on: " . $seqdata{header} . "\n";
-		}
-		if(scalar(@sequence) != scalar(@occvalues)) {
-			die "Sorry your occ input has an different length than the fasta file !\n " . scalar(@sequence) . "!=" . scalar(@occvalues) . "\n";
-		}
-		for (my $i = 0; $i < scalar(@sequence); $i++) {
-			if($occvalues[$i] > $rept) {
-				#we will mask the sequnce in this part
-				$sequence[$i] = "X";
-			}
-		}
-		print $freakmaskedFASTA ">" .$seqdata{header}."\n";
-		foreach(@sequence){
-			print $freakmaskedFASTA $_;
-		}
-		print $freakmaskedFASTA "\n";
-
-	}
-	close($occ);
-	close($fasta);
-
-}
-
 sub multi_occ{
 	my $threshold = $_[0];
 	my $fold_change  = $_[1];
@@ -155,7 +66,14 @@ sub multi_occ{
 	open(my $occ2_f, "<", "$occ2") or die "Can not open $occ2\n";
 	my %occ_data_1;
 	my %occ_data_2;
-	my @out_values;
+	my @out_values;	
+		
+	#Feedback
+	print "\n .. start processing both OCC files" ;#if(!defined $silent);
+	
+	#FILE HANDLER for first and second output
+	open(my $first, ">", $path1 . "/" . $prefix . $name1 . ".tab");
+	open(my $second, ">", $path2 . "/" . $prefix . $name2 . ".tab");	
 	
 	while(read_occ($occ1_f, \%occ_data_1)) {
 		read_occ($occ2_f, \%occ_data_2);
@@ -184,10 +102,8 @@ sub multi_occ{
 			}
 		}
 		my $last = 0; #0 - uncompareable or not significant, 1 - first occ, 2 - second occ
-		#first for first output
-		open(my $first, ">", $path1 . "/" . $prefix . $name1 . ".tab");
-		open(my $second, ">", $path2 . "/" . $prefix . $name2 . ".tab");
-		#second for second output
+	
+		# WRITE for first and second tab
 		for(my $i = 0; $i < scalar(@out_values); $i++) {
 			if($out_values[$i] >= $fold_change) {
 				if ($last != 2) {
@@ -239,57 +155,6 @@ sub multi_occ{
 			}
 		}	
 	}
-}
-
-
-sub apply_occ_reverse{
-	my $fasta_file = $_[0];
-	my $occ_file = $_[1];
-	my $rept = $_[2];
-	my %seqdata;
-	my %occ_data;
-	open(my $occ, "<", "$occ_file") or die "Can not open $occ_file\n";
-	open(my $fasta, "<", "$fasta_file") or die "Can not open $fasta_file\n";
-
-	(my $name,my $path,my $suffix) = fileparse($fasta_file, qr/\.[^.]*/);
-	open(my $freakmaskedFASTA, ">", "$path/freakmasked_RT${rept}_reverse.$name$suffix") or die "Can not write to " . "$path/freakmasked_RT$rept.$name$suffix\n" ;
-	while(read_sequence($fasta, \%seqdata)) {
-		read_occ($occ, \%occ_data);
-		my @sequence = split '', $seqdata{seq};
-		my @occvalues = split /\s+/, $occ_data{seq};
-		#print $seqdata{header} . " " . $occ_data{header} . "\n";
-		#print length($seqdata{seq}) . " " . length($occ_data{seq}) . "\n";
-		#for (my $k = 0; $k < scalar(@sequence); $k++) {
-		#	print $occvalues[$k];
-		#	print " ";
-		#	print $sequence[$k];
-		#	print "\n";
-		#}
-		if($seqdata{header} ne $occ_data{header}) {
-			print "Warning: Headers in occ and fasta are different! " . $seqdata{header} . " != " . $occ_data{header}  . "\n";
-		}
-		else {
-			print "Working on: " . $seqdata{header} . "\n";
-		}
-		if(scalar(@sequence) != scalar(@occvalues)) {
-			die "Sorry your occ input has an different length than the fasta file !\n " . scalar(@sequence) . "!=" . scalar(@occvalues) . "\n";
-		}
-		for (my $i = 0; $i < scalar(@sequence); $i++) {
-			if($occvalues[$i] < $rept) {
-				#we will mask the sequnce in this part
-				$sequence[$i] = "X";
-			}
-		}
-		print $freakmaskedFASTA ">" .$seqdata{header}."\n";
-		foreach(@sequence){
-			print $freakmaskedFASTA $_;
-		}
-		print $freakmaskedFASTA "\n";
-
-	}
-	close($occ);
-	close($fasta);
-
 }
 
 sub merge_occ {
