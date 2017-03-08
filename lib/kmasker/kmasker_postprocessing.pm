@@ -12,6 +12,8 @@ gff_construction
 );
 our @EXPORT_OK = qw(plot_histogram repeat_annotation gff_construction);
 
+## VERSION
+my $version_PM_postprocessing 	= "0.0.1 rc170308";
 
 ## subroutine
 #
