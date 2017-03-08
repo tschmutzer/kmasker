@@ -158,7 +158,7 @@ sub read_config(){
 		$HASH_code_words{"sequence_type"}	= 1;
 		$HASH_code_words{"note"}			= 1;
 		
-		my $INPUT_kindex_info 	= new IO::File($build_config, "r") or die "could not write file for repository information: $!\n";
+		my $INPUT_kindex_info 	= new IO::File($build_config, "r") or die "could not read file for repository information (parameter '--config'): $!\n";
 		my $code_word 	= "";
 		my $status 		= 0;
 		while(<$INPUT_kindex_info>){
