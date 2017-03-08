@@ -14,6 +14,8 @@ remove_repository_entry
 );
 our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry);
 
+## VERSION
+my $version_PM_build 	= "0.0.1 rc170308";
 
 sub build_kindex_jelly{	
 	my $href_info		= $_[0];
