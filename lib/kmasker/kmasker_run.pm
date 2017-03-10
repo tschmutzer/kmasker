@@ -76,9 +76,9 @@ sub run_kmasker_SK{
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 		my $feature = "MCR";
-		kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", "temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab");
+		kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.tab", "temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab");
 		#Add annotation
-		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".gff");
+		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.gff");
         system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
         system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
 	}else{
