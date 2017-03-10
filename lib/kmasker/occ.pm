@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(normalize_occ apply_occ merge_occ);
 our @EXPORT_OK = qw(make_occ normalize_occ apply_occ merge_occ);
 
-my $version_PM_occ 	= "0.0.2 rc170308";
+my $version_PM_occ 	= "0.0.2 rc170309";
 
 sub normalize_occ{
 	my $file = $_[0];
@@ -66,7 +66,6 @@ sub multi_occ{
 	open(my $occ2_f, "<", "$occ2") or die "Can not open $occ2\n";
 	my %occ_data_1;
 	my %occ_data_2;
-	my @out_values;	
 		
 	#Feedback
 	print "\n .. start processing both OCC files" ;#if(!defined $silent);
@@ -77,6 +76,7 @@ sub multi_occ{
 	
 	while(read_occ($occ1_f, \%occ_data_1)) {
 		read_occ($occ2_f, \%occ_data_2);
+		my @out_values;	
 		my @occ1_values = split /\s+/, $occ_data_1{seq};
 		my @occ2_values = split /\s+/, $occ_data_2{seq};
 		if($occ_data_1{header} ne $occ_data_2{header}) {
