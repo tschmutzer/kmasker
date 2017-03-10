@@ -1,6 +1,5 @@
 ##KINDEX repository
 #short_tag	common_name	scientific_name	type (cultivar;genotype;etc.)	sequencing_depth	k-mer	sequence_type	note	md5sum (filename)	absolut_path (filename)
-Hv8x	barley	Hordeum vulgare	bowman	8	21	reads	.	.	.	.
-AspAB9x	Aegilops	Aegilops speltoides	unknown	9	21	reads	sequencing the A genome and B chromosome	.	.	.
-Asp0B9x	Aegilops	Aegilops speltoides     unknown	9	21	reads	sequencing the A genome without B chromosome	.	.	.
-Asp1x	Aegilops	Aegilops speltoides	unknown	1	21	assembly	de novo WGS assembly constructed with SOAPdenovo	.	.	.
+As0B9x	Aegilops speltoides	Aegilops speltoides	0B	9	21	reads		8f5742d70cc8b332c4a9a873ed4c85f3	INPUT_8f5742d70cc8b332c4a9a873ed4c85f3.fastq	/data/filer/agbi/schmutzr/KINDEX/KINDEX_As0B9x/
+AsAB9x	Aegilops speltoides	Aegilops speltoides	AB	9	21	reads		a00befe24ef85e8a6435d78a9bb9921a	INPUT_a00befe24ef85e8a6435d78a9bb9921a.fastq	/data/filer/agbi/schmutzr/KINDEX/KINDEX_AsAB9x/
+Lo351	rye	secale cereale	Lo351	15	21	read		f22356231e3456fd47f56c0b1e725c54	INPUT_f22356231e3456fd47f56c0b1e725c54.fastq	/data/filer/agbi/schmutzr/KINDEX/KINDEX_Lo351/
