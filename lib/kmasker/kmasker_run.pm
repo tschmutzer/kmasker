@@ -42,7 +42,9 @@ sub run_kmasker_SK{
 		my $seq_depth			= $ARRAY_kindex_info[4];
 		my $k					= $ARRAY_kindex_info[5];
 		my $md5sum				= $ARRAY_kindex_info[8]; 
-		my $absolut_path		= $ARRAY_kindex_info[10];		
+		my $absolut_path		= $ARRAY_kindex_info[10];	
+		#FIXME: PATH TO BLASTDB
+		my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta"		
 		
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";		
@@ -63,6 +65,18 @@ sub run_kmasker_SK{
             print "\n .. please provide a bug report!\n\n";
             exit();
         }
+        #make tab from masked fasta
+        kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, "temp_");
+        my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
+		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
+		#merge seeds
+		kmasker::filehandler::merge_tab_seeds("temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab", $percent, $min_seed);
+		#PRODUCE GFF
+		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
+		my $feature = "MCR";
+		kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab", "temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab");
+		#Add annotation
+		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".gff");
         system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
         system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
 	}else{
@@ -109,7 +123,8 @@ sub run_kmasker_MK{
 			my $k					= $ARRAY_kindex_info[5];
 			my $md5sum				= $ARRAY_kindex_info[8]; 
 			my $absolut_path		= $ARRAY_kindex_info[10];		
-			
+			my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta"		
+
 			#create symbolic link to kindex from private or global
 			my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";
 			push(@ARRAY_full_kindex_names, $full_kindex_name);
@@ -171,7 +186,9 @@ sub run_kmasker_MK{
 	my $feature = "region_with_fold_change";
 	kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab", "KMASKER_comparativ_FC10_".$tab1.".tab");
 	kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab", "KMASKER_comparativ_FC10_".$tab2.".tab");
-	
+	#Annotate GFF
+	#kmasker::functions::add_annotation($fasta, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab", $BLASTDB, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab".".gff");
+	#kmasker::functions::add_annotation($fasta, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab", $BLASTDB, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab".".gff");
 }
 
 

@@ -4,11 +4,11 @@ use strict;
 use warnings;
 use File::Basename;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(read_sequence read_occ sequence_length occ_length);
-our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length);
+our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
+our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
 
 ## VERSION
-my $version_PM_filehandler 	= "0.0.1 rc170308";
+my $version_PM_filehandler 	= "0.0.1 rc170310";
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
