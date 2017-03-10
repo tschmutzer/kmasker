@@ -44,7 +44,7 @@ sub add_annotation {
         add_annotation_to_gff($GFF, "kmasker_blast.txt");
 }
 
-sub Xtract(){
+sub Xtract{
 	
 	my $fasta 		= $_[0];
 	my $sizelimit 	= 20;	#FIXME HASH_info	
