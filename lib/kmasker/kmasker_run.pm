@@ -80,8 +80,9 @@ sub run_kmasker_SK{
 		kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.tab", "temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab");
 		#Add annotation
 		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.gff");
-        system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
-        system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
+        #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
+        kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
+        #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
