@@ -70,7 +70,7 @@ sub run_kmasker_SK{
         my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
 		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 		#merge seeds
-		$tab =~ s/\.fasta$//;
+		my $tab =~ s/\.fasta$//;
 		kmasker::filehandler::merge_tab_seeds("temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
