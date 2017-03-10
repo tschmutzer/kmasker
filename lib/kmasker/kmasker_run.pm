@@ -5,6 +5,7 @@ use strict;
 use warnings;
 use kmasker::filehandler;
 use kmasker::occ;
+use kmasker::functions;
 
 #adapt
 our @ISA = qw(Exporter);
