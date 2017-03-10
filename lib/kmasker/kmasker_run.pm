@@ -44,7 +44,7 @@ sub run_kmasker_SK{
 		my $md5sum				= $ARRAY_kindex_info[8]; 
 		my $absolut_path		= $ARRAY_kindex_info[10];	
 		#FIXME: PATH TO BLASTDB
-		my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta"		
+		my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta";	
 		
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";		
@@ -123,7 +123,7 @@ sub run_kmasker_MK{
 			my $k					= $ARRAY_kindex_info[5];
 			my $md5sum				= $ARRAY_kindex_info[8]; 
 			my $absolut_path		= $ARRAY_kindex_info[10];		
-			my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta"		
+			my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta";
 
 			#create symbolic link to kindex from private or global
 			my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";
