@@ -1,4 +1,6 @@
 package kmasker::functions;
+use kmasker::occ;
+use kmasker::filehandler;
 use Exporter qw(import);
 use strict;
 use warnings;
