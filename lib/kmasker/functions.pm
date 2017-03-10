@@ -24,7 +24,19 @@ sub show_repository {
 sub read_write_repository {
 	#read config 
 	
-	my $usr = `echo \$USER`;
+	#my $usr = `echo \$USER`;
+	my $usr = $ENV{"USER"};
 	print "\n USER is: ".$usr;
 	
 }
+
+sub add_annotation {
+	my $FASTA = $_[0]; #FASTA to extract sequences from
+	my $TAB = $_[1]; #TAB-file with regions to extract
+	my $BLAST_db = $_[2]; #BLAST-reference 
+	my $GFF = $_[3]; #GFF-file to be annotated
+
+	extract_sequence_region($FASTA, $TAB);
+	system("blastn -db " . $BLAST_db . " -query " . "selected_" . $FASTA . "-perc_identity 80 -word_size 50 -evalue 0.1 -num_threads 30 -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . ">kmasker_blast.txt");
+	add_annotation_to_gff($GFF, "kmasker_blast.txt");
+	}
