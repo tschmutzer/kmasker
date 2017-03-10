@@ -70,13 +70,14 @@ sub run_kmasker_SK{
         my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
 		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 		#merge seeds
-		kmasker::filehandler::merge_tab_seeds("temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab", $percent, $min_seed);
+		$tab =~ s/\.fasta$//;
+		kmasker::filehandler::merge_tab_seeds("temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 		my $feature = "MCR";
-		kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab", "temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab");
+		kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", "temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab");
 		#Add annotation
-		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta.".gff");
+		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".gff");
         system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
         system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
 	}else{
