@@ -198,12 +198,12 @@ sub tab_to_gff {
   my $featurename=$_[3];
 
    open( my $inTAB, "<", "$tab") or die "Can not read $tab (tab_to_gff) \n";
-   open( my $length, "<", "$length") or die "Can not read $length (tab_to_gff) \n";
+   open( my $lengthFH, "<", "$length") or die "Can not read $length (tab_to_gff) \n";
 
    (my $name,my $path,my $suffix) = fileparse($tab, qr/\.[^.]*/);
    open(my $outGFF, ">", $path . "/" . $name . ".gff") or die "Can not write gff (tab_to_gff) \n";
    print $outGFF "##gff-version 3". "\n";
-   while(<$length>) {
+   while(<$lengthFH>) {
       my @line = split(/\t/, $_);
             my $source = "Kmasker";
             my $type = "Contig";
