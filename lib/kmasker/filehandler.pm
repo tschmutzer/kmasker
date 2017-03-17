@@ -8,7 +8,7 @@ our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_seque
 our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
 
 ## VERSION
-my $version_PM_filehandler 	= "0.0.1 rc170310";
+my $version_PM_filehandler 	= "0.0.1 rc170314";
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
@@ -192,15 +192,36 @@ sub fasta_to_tab {
 }  
 
 sub tab_to_gff {
-  my $tab=$_[2];
-  my $featurename=$_[0];
-  my $minlength=$_[1];
+  my $tab=$_[0];
+  my $length=$_[1];
+  my $minlength=$_[2];
+  my $featurename=$_[3];
+
    open( my $inTAB, "<", "$tab") or die "Can not read $tab (tab_to_gff) \n";
+   open( my $length, "<", "$length") or die "Can not read $length (tab_to_gff) \n";
+
    (my $name,my $path,my $suffix) = fileparse($tab, qr/\.[^.]*/);
    open(my $outGFF, ">", $path . "/" . $name . ".gff") or die "Can not write gff (tab_to_gff) \n";
    print $outGFF "##gff-version 3". "\n";
-   if (defined $_[3]) {
-      my $subfeature = $_[3];
+   while(<$length>) {
+      my @line = split(/\t/, $_);
+            my $source = "Kmasker";
+            my $type = "Contig";
+            my $score = "."; #evalue
+            my $strand = ".";
+            my $phase = ".";
+            my $ident = $line[0];
+            my $start = 1;
+            my $end = $line[1];
+            my $attributes =  "ID=$ident;Name=$ident";
+         }
+   
+   if (defined $_[4]) {
+       my $subfeature = $_[4];
+       my $subfeaturename = $featurename;
+       if (defined $_[4]) {
+          $subfeaturename = $_[5];
+      }
       print "\nUsing $subfeature as reference for subfeature annotation!\n";
       open (my $subTAB, "<", "$subfeature") or die "Can not read subfeature (tab_to_gff) \n";
       my $insub =  0;
@@ -222,7 +243,7 @@ sub tab_to_gff {
          } 
          else{$lengthcheck = 1;}
          if($ident_s eq $ident && $start_s == $start && $end_s == $end){ #no subfeature
-            my $source = "kmasker";
+            my $source = "Kmasker";
             my $type = $featurename;
             my $score = "."; #evalue
             my $strand = ".";
@@ -236,8 +257,8 @@ sub tab_to_gff {
          }
          elsif($ident_s eq $ident && $start_s == $start && $end_s != $end) { #start of subfeature 
             $insub = 1;
-            my $source = "kmasker";
-            my $type = $featurename;
+            my $source = "Kmasker";
+            my $type = $subfeaturename;
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
@@ -246,7 +267,7 @@ sub tab_to_gff {
                print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             }
             #print subfeature
-             $type = $featurename;
+             $type = $subfeaturename;
              $score = "."; #evalue
              $strand = ".";
              $phase = ".";
@@ -259,8 +280,8 @@ sub tab_to_gff {
          elsif($ident_s eq $ident && $start_s != $start && $end_s == $end){ #end of subfeature
             if($insub == 1){
                $insub = 0;
-               my $source = "kmasker";
-               my $type = $featurename;
+               my $source = "Kmasker";
+               my $type = $subfeaturename;
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
@@ -277,8 +298,8 @@ sub tab_to_gff {
             }
          }
          elsif($insub == 1 && $ident_s eq $ident && $start_s > $start && $end_s < $end) { # in subfeature
-               my $source = "kmasker";
-               my $type = $featurename;
+               my $source = "Kmasker";
+               my $type = $subfeaturename;
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
@@ -303,7 +324,7 @@ sub tab_to_gff {
          my $ident = $line[0];
          my $start = $line[1] + 1;
          my $end = $line[2] + 1;
-         my $source = "kmasker";
+         my $source = "Kmasker";
          my $type = $featurename;
          my $score = "."; #evalue
          my $strand = ".";
@@ -379,6 +400,10 @@ sub merge_tab_seeds{ #check chomping !
 sub add_annotation_to_gff{
    my $gff = $_[0];
    my $blast = $_[1];
+   my $verbose = "true";
+   if (defined $_[2]) {
+      $verbose = $_[2];
+   }
    open(my $gfffh, "<", "$gff") or die "Can not open $gff\n";
    open(my $blastfh, "<", "$blast") or die "Can not open $blast\n";
    (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
@@ -402,6 +427,13 @@ sub add_annotation_to_gff{
          if ( exists $blastresults{$ident}) {
             my $refname = @{$blastresults{$ident}}[1];
             $line[8] = $line[8] . ";Alias=$refname";
+            if ($verbose == "true") {
+               my $evalue = @{$blastresults{$ident}}[10];
+               my $score = @{$blastresults{$ident}}[11];
+               my $pident = @{$blastresults{$ident}}[3];
+               my $blength = @{$blastresults{$ident}}[4];
+               $line[8] = $line[8] . ";blast_score=$score;blast_evalue=$evalue;blast_identity=$pident;blast_algn_length=$blength";
+            }
          }
          for(my $i=0; $i<scalar(@line)-1; $i++) {
           print $gff_out $line[$i] . "\t";
