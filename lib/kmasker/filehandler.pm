@@ -427,7 +427,7 @@ sub add_annotation_to_gff{
          if ( exists $blastresults{$ident}) {
             my $refname = @{$blastresults{$ident}}[1];
             $line[8] = $line[8] . ";Alias=$refname";
-            if ($verbose == "true") {
+            if ($verbose eq "true") {
                my $evalue = @{$blastresults{$ident}}[10];
                my $score = @{$blastresults{$ident}}[11];
                my $pident = @{$blastresults{$ident}}[3];
