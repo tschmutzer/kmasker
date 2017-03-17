@@ -204,6 +204,7 @@ sub tab_to_gff {
    open(my $outGFF, ">", $path . "/" . $name . ".gff") or die "Can not write gff (tab_to_gff) \n";
    print $outGFF "##gff-version 3". "\n";
    while(<$lengthFH>) {
+      chomp($_);
       my @line = split(/\t/, $_);
             my $source = "Kmasker";
             my $type = "Contig";
