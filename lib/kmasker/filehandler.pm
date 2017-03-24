@@ -437,7 +437,7 @@ sub add_annotation_to_gff{
                my $pident = @{$blastresults{$ident}}[3];
                $pident =~ s/^\s+|\s+$//g;
                my $blength = @{$blastresults{$ident}}[4];
-               $blength = =~ s/^\s+|\s+$//g;
+               $blength =~ s/^\s+|\s+$//g;
                $line[8] = $line[8] . ";blast_score=$score;blast_evalue=$evalue;blast_identity=$pident;blast_algn_length=$blength";
             }
          }
