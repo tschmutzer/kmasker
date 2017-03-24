@@ -8,7 +8,7 @@ our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_seque
 our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
 
 ## VERSION
-my $version_PM_filehandler 	= "0.0.1 rc170314";
+my $version_PM_filehandler 	= "0.0.1 rc170324";
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
@@ -253,7 +253,7 @@ sub tab_to_gff {
             my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
             if($lengthcheck==1){
                   print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
-             $c++;
+                  $c++;
              }
              $tabline = <$inTAB>;
          }
@@ -264,7 +264,7 @@ sub tab_to_gff {
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
-            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            my $attributes =  "ID=${type}_" .$c-1 . ";Name=${type}_". $c - 1;
             if($lengthcheck==1){
                print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             }
@@ -273,7 +273,7 @@ sub tab_to_gff {
              $score = "."; #evalue
              $strand = ".";
              $phase = ".";
-             $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${featurename}_${c}";
+             $attributes =  "ID=${type}_" . $c-1 .".${s};Name=${type}_" . $c-1 . ".${s};Parent=${featurename}_" . $c-1;
              if($lengthcheck==1){
                print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
                $s++;
@@ -287,7 +287,7 @@ sub tab_to_gff {
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
-               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${featurename}_${c}";
+               my $attributes =  "ID=${type}_". $c . ".${s};Name=${type}_". $c-1 .".${s};Parent=${featurename}_" . $c-1;
                if($lengthcheck==1){
                    print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
                    $c++;
@@ -305,7 +305,7 @@ sub tab_to_gff {
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
-               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${featurename}_${c}";
+               my $attributes =  "ID=${type}_".$c-1 . ".${s};Name=${type}_" . $c-1 . ".${s};Parent=${featurename}_" . $c-1;
                if($lengthcheck==1){
                   print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
                   $s++;
