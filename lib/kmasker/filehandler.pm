@@ -207,7 +207,7 @@ sub tab_to_gff {
       chomp($_);
       my @line = split(/\t/, $_);
             my $source = "Kmasker";
-            my $type = "Contig";
+            my $type = "Sequence_Feature";
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
@@ -250,7 +250,7 @@ sub tab_to_gff {
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
-            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
             if($lengthcheck==1){
                   print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
              $c++;
@@ -331,7 +331,7 @@ sub tab_to_gff {
          my $score = "."; #evalue
          my $strand = ".";
          my $phase = ".";
-         my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+         my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
          if(($end - $start) +1 < $minlength) { 
             print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes . "\n";
          }
@@ -347,7 +347,7 @@ sub merge_tab_seeds{ #check chomping !
    my $min = $_[2];
    open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
    my $name1 = fileparse("$seeds", qr/\.[^.]*/);
-   open(my $out , ">", "KMASKER_regions_$name1" . "_merged.tab");
+   open(my $out , ">", "$name1" . "_Regions_merged.tab");
    my @ident;
    my @start;
    my @end;
@@ -431,9 +431,13 @@ sub add_annotation_to_gff{
             $line[8] = $line[8] . ";Alias=$refname";
             if ($verbose eq "true") {
                my $evalue = @{$blastresults{$ident}}[10];
+               $evalue =~ s/^\s+|\s+$//g;
                my $score = @{$blastresults{$ident}}[11];
+               $score =~ s/^\s+|\s+$//g;
                my $pident = @{$blastresults{$ident}}[3];
+               $pident =~ s/^\s+|\s+$//g;
                my $blength = @{$blastresults{$ident}}[4];
+               $blength = =~ s/^\s+|\s+$//g;
                $line[8] = $line[8] . ";blast_score=$score;blast_evalue=$evalue;blast_identity=$pident;blast_algn_length=$blength";
             }
          }

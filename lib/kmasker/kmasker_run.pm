@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.24 rc170308";
+my $version_PM_run 	= "0.0.24 rc170324";
 
 ## subroutine
 #
@@ -60,31 +60,35 @@ sub run_kmasker_SK{
 		system("cmasker -f ".$fasta." -j ".$full_kindex_name." -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex);
        
        #clean
-		system("rm ".$full_kindex_name);
+		unlink($full_kindex_name);
         if(!(-e "KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta)) {
             print "\n .. KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." was not generated!\n";
             print "\n .. please provide a bug report!\n\n";
             exit();
         }
+        mkdir("temp", 0775);
         #make tab from masked fasta
-        kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, "temp_");
+        kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, "temp/"); #just change .fasta to .tab in temp
         kmasker::filehandler::sequence_length($fasta);
+        rename "$fasta.length" "temp/$fasta.length";
         my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
 		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 		#merge seeds
 		my $tab = $fasta;
-		$tab =~ s/\.fasta$//;
-		kmasker::filehandler::merge_tab_seeds("temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
+		$tab =~ s/\.fasta$//; #add .fa to regex?
+		kmasker::filehandler::merge_tab_seeds("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 		my $feature = "MCR_Region";
 		my $subfeature = "MCR";
-		kmasker::filehandler::tab_to_gff("KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.tab", "$fasta.length" ,$min_gff, $feature ,"temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $subfeature);
+		kmasker::filehandler::tab_to_gff("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", "temp/$fasta.length" ,$min_gff, $feature ,"temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $subfeature);
 		#Add annotation
-		kmasker::functions::add_annotation($fasta, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.tab", $BLASTDB, "KMASKER_regions_temp_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_merged.gff");
+		kmasker::functions::add_annotation($fasta, "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", $BLASTDB, "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.gff");
         #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
-        kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
+        kmasker::functions::Xtract("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
         #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
+        rename "temp/Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta "Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta;
+        rename "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged_annotation.gff" "KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_annotation.gff"
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
