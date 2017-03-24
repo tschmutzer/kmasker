@@ -68,7 +68,7 @@ sub run_kmasker_SK{
         }
         mkdir("temp", 0775);
         #make tab from masked fasta
-        system ("mv" . " *.occ temp/")
+        system ("mv" . " *.occ temp/");
         kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, "temp/"); #just change .fasta to .tab in temp
         kmasker::filehandler::sequence_length($fasta);
         system( "mv" ." $fasta.length" . " temp/$fasta.length" );
