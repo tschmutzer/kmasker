@@ -88,7 +88,7 @@ sub run_kmasker_SK{
         kmasker::functions::Xtract("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
         #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
         system("mv" . " temp/Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta . " Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
-        system("mv" . " temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged_annotation.gff" . " KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_annotation.gff"
+        system("mv" . " temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged_annotation.gff" . " KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_annotation.gff");
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
