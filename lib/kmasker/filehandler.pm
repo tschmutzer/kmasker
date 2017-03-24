@@ -172,7 +172,7 @@ sub fasta_to_tab {
    my $fasta = $_[0];
    my $prefix = $_[1];
    # Initiating Handler 
-   open( my $inFASTA, "<", "$fasta");
+   open( my $inFASTA, "<", "$fasta") or die "Can not open $fasta\n";
    (my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
    open( my $TAB, ">", $path . "/$prefix" . $name . ".tab");
       my %seqdata;   
