@@ -264,7 +264,7 @@ sub tab_to_gff {
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
-            my $attributes =  "ID=${type}_" .$c-1 . ";Name=${type}_". $c - 1;
+            my $attributes =  "ID=${type}_" .($c-1) . ";Name=${type}_". ($c-1);
             if($lengthcheck==1){
                print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             }
@@ -273,7 +273,7 @@ sub tab_to_gff {
              $score = "."; #evalue
              $strand = ".";
              $phase = ".";
-             $attributes =  "ID=${type}_" . $c-1 .".${s};Name=${type}_" . $c-1 . ".${s};Parent=${featurename}_" . $c-1;
+             $attributes =  "ID=${type}_" . ($c-1) .".${s};Name=${type}_" . ($c-1) . ".${s};Parent=${featurename}_" . ($c-1);
              if($lengthcheck==1){
                print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
                $s++;
@@ -287,7 +287,7 @@ sub tab_to_gff {
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
-               my $attributes =  "ID=${type}_". $c . ".${s};Name=${type}_". $c-1 .".${s};Parent=${featurename}_" . $c-1;
+               my $attributes =  "ID=${type}_". ($c-1) . ".${s};Name=${type}_". ($c-1) .".${s};Parent=${featurename}_" . ($c-1);
                if($lengthcheck==1){
                    print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
                    $c++;
@@ -305,7 +305,7 @@ sub tab_to_gff {
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
-               my $attributes =  "ID=${type}_".$c-1 . ".${s};Name=${type}_" . $c-1 . ".${s};Parent=${featurename}_" . $c-1;
+               my $attributes =  "ID=${type}_".($c-1) . ".${s};Name=${type}_" . ($c-1) . ".${s};Parent=${featurename}_" . ($c-1);
                if($lengthcheck==1){
                   print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
                   $s++;
