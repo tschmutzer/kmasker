@@ -70,7 +70,7 @@ sub run_kmasker_SK{
         #make tab from masked fasta
         kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, "temp/"); #just change .fasta to .tab in temp
         kmasker::filehandler::sequence_length($fasta);
-        rename "$fasta.length" "temp/$fasta.length";
+        system( "mv" ." $fasta.length" . " temp/$fasta.length" );
         my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
 		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 		#merge seeds
@@ -87,8 +87,8 @@ sub run_kmasker_SK{
         #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
         kmasker::functions::Xtract("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
         #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
-        rename "temp/Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta "Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta;
-        rename "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged_annotation.gff" "KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_annotation.gff"
+        system("mv" . " temp/Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta . " Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
+        system("mv" . " temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged_annotation.gff" . " KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_annotation.gff"
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
