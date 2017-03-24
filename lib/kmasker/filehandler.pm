@@ -346,8 +346,8 @@ sub merge_tab_seeds{ #check chomping !
    my $percent_length = $_[1];
    my $min = $_[2];
    open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
-   my $name1 = fileparse("$seeds", qr/\.[^.]*/);
-   open(my $out , ">", "$name1" . "_Regions_merged.tab");
+   my ($name1, $path1, $suffix1) = fileparse("$seeds", qr/\.[^.]*/);
+   open(my $out , ">", $path1 . "/" . $name1 . "_Regions_merged.tab");
    my @ident;
    my @start;
    my @end;
