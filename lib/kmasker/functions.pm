@@ -40,9 +40,9 @@ sub add_annotation {
         #FIXME: Give configuration hash as 5th parameter.
 
         extract_sequence_region($FASTA, $TAB);
-        system("blastn -db " . $BLAST_db . " -query " . "selected_" . $FASTA . " -perc_identity 80 -word_size 50 -evalue 0.1 -num_threads 30 -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out kmasker_blast.txt");
+        system("blastn -db " . $BLAST_db . " -query " . "selected_" . $FASTA . " -perc_identity 80 -word_size 50 -evalue 0.1 -num_threads 30 -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out temp/kmasker_blast.txt");
         #FIXME: Add exchangeable configuration to blast
-        add_annotation_to_gff($GFF, "kmasker_blast.txt");
+        add_annotation_to_gff($GFF, "temp/kmasker_blast.txt");
 }
 
 sub Xtract{
