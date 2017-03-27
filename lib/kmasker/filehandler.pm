@@ -8,7 +8,7 @@ our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_seque
 our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
 
 ## VERSION
-my $version_PM_filehandler 	= "0.0.1 rc170314";
+my $version_PM_filehandler 	= "0.0.1 rc170324";
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
@@ -172,7 +172,7 @@ sub fasta_to_tab {
    my $fasta = $_[0];
    my $prefix = $_[1];
    # Initiating Handler 
-   open( my $inFASTA, "<", "$fasta");
+   open( my $inFASTA, "<", "$fasta") or die "Can not open $fasta\n";
    (my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
    open( my $TAB, ">", $path . "/$prefix" . $name . ".tab");
       my %seqdata;   
@@ -198,15 +198,16 @@ sub tab_to_gff {
   my $featurename=$_[3];
 
    open( my $inTAB, "<", "$tab") or die "Can not read $tab (tab_to_gff) \n";
-   open( my $length, "<", "$length") or die "Can not read $length (tab_to_gff) \n";
+   open( my $lengthFH, "<", "$length") or die "Can not read $length (tab_to_gff) \n";
 
    (my $name,my $path,my $suffix) = fileparse($tab, qr/\.[^.]*/);
    open(my $outGFF, ">", $path . "/" . $name . ".gff") or die "Can not write gff (tab_to_gff) \n";
    print $outGFF "##gff-version 3". "\n";
-   while(<$length>) {
+   while(<$lengthFH>) {
+      chomp($_);
       my @line = split(/\t/, $_);
             my $source = "Kmasker";
-            my $type = "Contig";
+            my $type = "Sequence_Feature";
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
@@ -214,6 +215,7 @@ sub tab_to_gff {
             my $start = 1;
             my $end = $line[1];
             my $attributes =  "ID=$ident;Name=$ident";
+            print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
          }
    
    if (defined $_[4]) {
@@ -248,17 +250,17 @@ sub tab_to_gff {
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
-            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
             if($lengthcheck==1){
                   print $outGFF  $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
-             $c++;
+                  $c++;
              }
              $tabline = <$inTAB>;
          }
          elsif($ident_s eq $ident && $start_s == $start && $end_s != $end) { #start of subfeature 
             $insub = 1;
             my $source = "Kmasker";
-            my $type = $subfeaturename;
+            my $type = $featurename;
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
@@ -271,7 +273,7 @@ sub tab_to_gff {
              $score = "."; #evalue
              $strand = ".";
              $phase = ".";
-             $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
+             $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${featurename}_${c}";
              if($lengthcheck==1){
                print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
                $s++;
@@ -285,7 +287,7 @@ sub tab_to_gff {
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
-               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
+               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${featurename}_${c}";
                if($lengthcheck==1){
                    print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t"  . $score  . "\t" . $strand . "\t" . $phase .  "\t" . $attributes. "\n";
                    $c++;
@@ -303,7 +305,7 @@ sub tab_to_gff {
                my $score = "."; #evalue
                my $strand = ".";
                my $phase = ".";
-               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${type}_${c}";
+               my $attributes =  "ID=${type}_${c}.${s};Name=${type}_${c}.${s};Parent=${featurename}_${c}";
                if($lengthcheck==1){
                   print $outGFF $ident_s . "\t" . $source . "\t" . $type . "\t" . $start_s . "\t" . $end_s . "\t" . $score  . "\t" . $strand . "\t" . $phase ."\t" . $attributes . "\n";
                   $s++;
@@ -329,7 +331,7 @@ sub tab_to_gff {
          my $score = "."; #evalue
          my $strand = ".";
          my $phase = ".";
-         my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+         my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
          if(($end - $start) +1 < $minlength) { 
             print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t" . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes . "\n";
          }
@@ -344,8 +346,8 @@ sub merge_tab_seeds{ #check chomping !
    my $percent_length = $_[1];
    my $min = $_[2];
    open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
-   my $name1 = fileparse("$seeds", qr/\.[^.]*/);
-   open(my $out , ">", "KMASKER_regions_$name1" . "_merged.tab");
+   my ($name1, $path1, $suffix1) = fileparse("$seeds", qr/\.[^.]*/);
+   open(my $out , ">", $path1 . "/" . $name1 . "_Regions_merged.tab");
    my @ident;
    my @start;
    my @end;
@@ -427,11 +429,15 @@ sub add_annotation_to_gff{
          if ( exists $blastresults{$ident}) {
             my $refname = @{$blastresults{$ident}}[1];
             $line[8] = $line[8] . ";Alias=$refname";
-            if ($verbose == "true") {
+            if ($verbose eq "true") {
                my $evalue = @{$blastresults{$ident}}[10];
+               $evalue =~ s/^\s+|\s+$//g;
                my $score = @{$blastresults{$ident}}[11];
+               $score =~ s/^\s+|\s+$//g;
                my $pident = @{$blastresults{$ident}}[3];
+               $pident =~ s/^\s+|\s+$//g;
                my $blength = @{$blastresults{$ident}}[4];
+               $blength =~ s/^\s+|\s+$//g;
                $line[8] = $line[8] . ";blast_score=$score;blast_evalue=$evalue;blast_identity=$pident;blast_algn_length=$blength";
             }
          }
