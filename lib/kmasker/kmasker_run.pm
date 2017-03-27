@@ -134,7 +134,7 @@ sub run_kmasker_MK{
 			my $k					= $ARRAY_kindex_info[5];
 			my $md5sum				= $ARRAY_kindex_info[8]; 
 			my $absolut_path		= $ARRAY_kindex_info[10];		
-			my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta";
+			my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta"; #change me
 
 			#create symbolic link to kindex from private or global
 			my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";
@@ -165,14 +165,16 @@ sub run_kmasker_MK{
 			print "\n .. The kindex (".$kindex.") you requested is not available in repository!\n\n";
 		}	
 	}
-	
+	mkdir("temp", 0775);
+	kmasker::filehandler::sequence_length($fasta);
+    system( "mv" ." $fasta.length" . " temp/$fasta.length" );
 	#Feedback
 	print "\n .. start to generate TAB" ;#if(!defined $silent);
 		
 	#Convertion to TAB file
 	my $occ1 = $ARRAY_occ[0];
 	my $occ2 = $ARRAY_occ[1];
-	kmasker::occ::multi_occ($rept, $fold_change, $occ1, $occ2, "KMASKER_comparativ_FC".$fold_change."_");
+	kmasker::occ::multi_occ($rept, $fold_change, $occ1, $occ2, "temp/KMASKER_comparativ_FC".$fold_change."_");
 	(my $name1,my $path1,my $suffix1) = fileparse($occ1, qr/\.[^.]*/);
 	(my $name2,my $path2,my $suffix2) = fileparse($occ2, qr/\.[^.]*/);
 	
@@ -186,20 +188,27 @@ sub run_kmasker_MK{
 	$tab2 =~ s/\.occ$//;
 	my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
 	my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
-	kmasker::filehandler::merge_tab_seeds("KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
-	kmasker::filehandler::merge_tab_seeds("KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
+	kmasker::filehandler::merge_tab_seeds("temp/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
+	kmasker::filehandler::merge_tab_seeds("temp/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
 	
 	#Feedback
 	print "\n .. start to generate GFF" ;#if(!defined $silent);
 	
 	#PRODUCE GFF
 	my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
-	my $feature = "region_with_fold_change";
-	kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab", "KMASKER_comparativ_FC10_".$tab1.".tab");
-	kmasker::filehandler::tab_to_gff($feature, $min_gff, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab", "KMASKER_comparativ_FC10_".$tab2.".tab");
+	my $feature = "FC_Region";
+	my $subfeature = "Specific_FC_Region"
+	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab1.".tab", $subfeature);
+	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab2.".tab", $subfeature);
 	#Annotate GFF
-	#kmasker::functions::add_annotation($fasta, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab", $BLASTDB, "KMASKER_regions_KMASKER_comparativ_FC10_$tab1" . "_merged.tab".".gff");
-	#kmasker::functions::add_annotation($fasta, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab", $BLASTDB, "KMASKER_regions_KMASKER_comparativ_FC10_$tab2" . "_merged.tab".".gff");
+	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff");
+	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff");
+    system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff" . " KMASKER_comparativ_FC10_$tab1" . ".gff");
+    system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff" . " KMASKER_comparativ_FC10_$tab2" . ".gff");
+    #With Annotation
+    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged_annotation.tab".".gff" . " KMASKER_comparativ_FC10_$tab1" . "_annotation.gff");
+    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged_annotation.tab".".gff" . " KMASKER_comparativ_FC10_$tab2" . "_annotation.gff");
+
 }
 
 
