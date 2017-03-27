@@ -235,7 +235,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                     occnormfilestream << " " << "0";
                 }
             }
-            if(k == 26) {
+            if(k == 26 && (a != mer.k() - 1)) {
                 if (occfile) {
                     occfilestream << "\n";
                     occnormfilestream << "\n";
