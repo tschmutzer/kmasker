@@ -10,11 +10,11 @@ use Cwd  qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
-use kmasker::kmasker_build qw(build_kindex_jelly make_config remove_repository_entry);
+use kmasker::kmasker_build qw(build_kindex_jelly make_config remove_repository_entry set_kindex_global clean_repository_directory set_private_path);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.21 rc170114";
+my $version 	= "0.0.22 rc170115";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -60,9 +60,11 @@ my $help;
 my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
+my $set_private_path;
 my $remove_kindex;
 my $plot_hist_frequency;
 my $expert_setting = ""; 
+my $set_global;
 my $user_name;
 my $verbose;
 
@@ -104,6 +106,8 @@ my $result = GetOptions (	#MAIN
 							"show_repository"	=> \$show_kindex_repository,
 							"show_details=s"	=> \$show_details_for_kindex,
 							"remove_kindex=s"	=> \$remove_kindex,
+							"set_global=s"		=> \$set_global,
+							"set_private_path=s"=> \$set_private_path,
 							
 							#Houskeeping
 							"expert_setting"	=> \$expert_setting,
@@ -245,8 +249,10 @@ if(defined $build){
 	
 	if(defined $make_config){
 		&make_config;
+	}elsif(defined $set_private_path){
+		&set_private_path($set_private_path, \%HASH_repository_kindex);
 	}else{
-	
+		#INIT
 		my %HASH_info 						= ();
 		my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
 		$HASH_info{"user_name"}				= $user_name;
@@ -254,11 +260,29 @@ if(defined $build){
 		$HASH_info{"k-mer"}					= $k;
 		$HASH_info{"expert_setting"}		= $expert_setting;
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
-		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
-		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
+		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
+		$HASH_info{"path_bin"}				= $path; 
 		
-	}
-	
+		#EDIT
+		if(defined $set_global){
+			if(exists $HASH_repository_kindex{$set_global}){
+				&set_kindex_global($set_global, \%HASH_info);			
+			}else{
+				print "\n WARNING: requested kindex '".$set_global."' does not exist. Kmasker was stopped!\n\n";
+			}
+			exit();			
+		}
+		
+		#CONSTRUCT
+		if(defined $input){
+			&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
+		}
+		
+		#CLEAN
+		&read_user_repositories;
+		&clean_repository_directory(\%HASH_info, \%HASH_repository_kindex);			
+	}	
+		
 	#QUIT
 	print "\n - Thanks for using Kmasker! -\n\n";
 	exit();
@@ -275,7 +299,8 @@ if(defined $run){
 	$HASH_info{"MK_min_gff"}			= $MK_min_gff;
 	$HASH_info{"expert_setting"}		= $expert_setting; 
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
-	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
+	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
+	$HASH_info{"path_bin"}				= $path;
 	
 	if(defined $kindex){
 	#single kindex				
@@ -349,29 +374,21 @@ if(defined $remove_kindex){
 sub read_user_config(){
 	$user_name 			= `whoami`;
 	$user_name			=~ s/\n//g;
-	my $uconf 			= "/home/".$user_name."/.user_config.kmasker";
-	my $urepositories 	= "/home/".$user_name."/.user_repositories.kmasker";
-	if(-e $uconf){
-		#LOAD info
-		my $uCFG = new IO::File($uconf, "r") or die "\n unable to read user config $!";	
-		while(<$uCFG>){
+	my $gconf 			= $path."/config.kmasker";
+	my $uconf 			= $ENV{"HOME"}."/.user_config.kmasker";
+	my $urepositories 	= $ENV{"HOME"}."/.user_repositories.kmasker";
+	
+	if(-e $gconf){
+		#LOAD global info
+		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read user config $!";	
+		while(<$gCFG>){
 			next if($_ =~ /^$/);
 			next if($_ =~ /^#/);
 			my $line = $_;
 			$line =~ s/\n//;
 			my @ARRAY_tmp = split("\t", $line);
 			$PATH_kindex_global	= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_global");
-			$PATH_kindex_global .= "/" if($PATH_kindex_global !~ /\/$/);			
-			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
-			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
-			
-			#PRIVATE
-			if(-d $PATH_kindex_private){
-				#directory exists - do nothing
-			}else{
-				#directory has to be created
-				system("mkdir ".$PATH_kindex_private);
-			}
+			$PATH_kindex_global .= "/" if($PATH_kindex_global !~ /\/$/);
 			
 			#GLOBAL
 			#PRIVATE
@@ -381,6 +398,28 @@ sub read_user_config(){
 				#directory has to be created
 				system("mkdir ".$PATH_kindex_global);
 			}
+		}
+	}
+	
+	if(-e $uconf){
+		#LOAD private info
+		my $uCFG = new IO::File($uconf, "r") or die "\n unable to read user config $!";	
+		while(<$uCFG>){
+			next if($_ =~ /^$/);
+			next if($_ =~ /^#/);
+			my $line = $_;
+			$line =~ s/\n//;
+			my @ARRAY_tmp = split("\t", $line);
+			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
+			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
+			
+			#PRIVATE
+			if(-d $PATH_kindex_private){
+				#directory exists - do nothing
+			}else{
+				#directory has to be created
+				system("mkdir ".$PATH_kindex_private);
+			}			
 		}
 	}else{
 		#SETUP user
@@ -395,7 +434,7 @@ sub read_user_repositories(){
 	
 	$user_name 			= `whoami`;
 	$user_name			=~ s/\n//g;
-	my $urepositories 	= "/home/".$user_name."/.user_repositories.kmasker";
+	my $urepositories 	= $ENV{"HOME"}."/.user_repositories.kmasker";
 	if(-e $urepositories){
 		#LOAD info
 		
@@ -411,7 +450,7 @@ sub read_user_repositories(){
 		}
 		
 		#load priavte user repositories
-		my $REPO_private = new IO::File("/home/".$user_name."/.user_repositories.kmasker", "r") or die "\n unable to read user repository list $!";	
+		my $REPO_private = new IO::File($ENV{"HOME"}."/.user_repositories.kmasker", "r") or die "\n unable to read user repository list $!";	
 		while(<$REPO_private>){
 			next if($_ =~ /^$/);
 			next if($_ =~ /^#/);
@@ -436,6 +475,9 @@ sub show_repository(){
 	foreach my $kindex_this (keys %HASH_repository_kindex){
 		my @ARRAY_line = split("\t", $HASH_repository_kindex{$kindex_this});
 		print "\n\t".$ARRAY_line[0]."\t\t".$ARRAY_line[1];
+		if(defined $ARRAY_line[11]){
+			print "\t".$ARRAY_line[11];
+		}
 	}
 	print "\n\n";
 }
@@ -449,7 +491,7 @@ sub show_details_for_kindex(){
 		my $linearray = $HASH_repository_kindex{$kindex};
 		my @ARRAY_details = split("\t", $linearray);
 		
-		print "\n\n KINDEX details for ".$kindex."\n";
+		print "\n\n KINDEX details for ".$kindex." \n";
 		print "\n\tcommon_name:      ".$ARRAY_details[1];
 		print "\n\tscientific_name:  ".$ARRAY_details[2];
 		print "\n\ttype              ".$ARRAY_details[3];
@@ -459,7 +501,8 @@ sub show_details_for_kindex(){
 		print "\n\tnote:             ".$ARRAY_details[7];
 		print "\n\tmd5sum:           ".$ARRAY_details[8];
 		print "\n\tseq:              ".$ARRAY_details[9];
-		print "\n\tabsolut_path:     ".$ARRAY_details[10];	
+		print "\n\tabsolut_path:     ".$ARRAY_details[10];
+		print "\n\tstatus:           ".$ARRAY_details[11];	
 		print "\n\n";
 	}else{
 		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.\n\n";
@@ -474,14 +517,21 @@ sub initiate_user(){
 	
 	$user_name 			= `whoami`;
 	$user_name			=~ s/\n//g;
-	my $uconf 			= "/home/".$user_name."/.user_config.kmasker";
-	my $urepositories 	= "/home/".$user_name."/.user_repositories.kmasker";
+	my $uconf 			= $ENV{"HOME"}."/.user_config.kmasker";
+	my $urepositories 	= $ENV{"HOME"}."/.user_repositories.kmasker";
 	if(-e $uconf){
 		#USER already exists, do nothing
 	}else{
-		#SETUP user
-		system("cp ".$path."/config.kmasker /home/".$user_name."/.user_config.kmasker");
-		my $USER_REPOS 	= new IO::File("/home/".$user_name."/.user_repositories.kmasker", "w") or die "could not write user repository : $!\n";
+		#SETUP user conf
+		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
+		print $USER_CONF "PATH_kindex_private\t".$ENV{"HOME"}."/KINDEX/";
+		close $USER_CONF;	
+		print "\n PLEASE NOTE: \n You are writing all large data structures to your home directory [default].";
+		print "\n It is recommended to modify the path for 'PATH_kindex_private'.\n";
+		print "\n Use the following command: 'Kmasker --build --set_private_path enter/your/path'\n\n";	
+		
+		#SETUP user repo
+		my $USER_REPOS 	= new IO::File($urepositories, "w") or die "could not write user repository : $!\n";
 		
 		print $USER_REPOS "##KINDEX repository\n";
 		#1
@@ -503,7 +553,9 @@ sub initiate_user(){
 		#9
 		print $USER_REPOS "md5sum (filename)\t";
 		#10
-		print $USER_REPOS "absolut_path (filename)\n";		
+		print $USER_REPOS "absolut_path (filename)\n";
+		#11
+		print $USER_REPOS "status\n";	
 	}	
 }
 
@@ -511,11 +563,21 @@ sub initiate_user(){
 #
 sub check_settings(){
 	
+	if($PATH_kindex_private eq $ENV{"HOME"}."/KINDEX/"){
+		print "\n PLEASE NOTE: \n You are writing all large data structures to your home directory [default].";
+		print "\n It is recommended to modify the path for 'PATH_kindex_private'.\n";
+		print "\n Use the following command: 'Kmasker --build --set_private_path enter/your/path'\n\n";
+	}
+	
 	my $module_count = 0;
 	if(defined $build){
 		$module_count++;
 		
 		if(defined $make_config){
+			#nothing to do
+		}elsif(defined $set_global){
+			#nothing to do
+		}elsif(defined $set_private_path){
 			#nothing to do
 		}elsif((scalar @seq_usr) == 0){
 			print "\n .. kmasker was stopped: no input sequence provided (--seq) !";
@@ -547,8 +609,6 @@ sub check_settings(){
 		exit(0);
 	}	
 }
-
-
 
 
 1;

@@ -1,5 +1,6 @@
 ##KINDEX repository
-#short_tag	common_name	scientific_name	type (cultivar;genotype;etc.)	sequencing_depth	k-mer	sequence_type	note	md5sum (filename)	absolut_path (filename)
-As0B9x	Aegilops speltoides	Aegilops speltoides	0B	9	21	reads		8f5742d70cc8b332c4a9a873ed4c85f3	INPUT_8f5742d70cc8b332c4a9a873ed4c85f3.fastq	/data/filer/agbi/schmutzr/KINDEX/KINDEX_As0B9x/
-AsAB9x	Aegilops speltoides	Aegilops speltoides	AB	9	21	reads		a00befe24ef85e8a6435d78a9bb9921a	INPUT_a00befe24ef85e8a6435d78a9bb9921a.fastq	/data/filer/agbi/schmutzr/KINDEX/KINDEX_AsAB9x/
-Lo351	rye	secale cereale	Lo351	15	21	read		f22356231e3456fd47f56c0b1e725c54	INPUT_f22356231e3456fd47f56c0b1e725c54.fastq	/data/filer/agbi/schmutzr/KINDEX/KINDEX_Lo351/
+#short_tag	common_name	scientific_name	type (cultivar;genotype;etc.)	sequencing_depth	k-mer	sequence_type	note	md5sum (filename)	absolut_path (filename)	status
+TEST_S1	barley	hordeum vulgare	bowman	0	21	read		021e9fc3a059867fcd6ee46a14b4fcce	INPUT_021e9fc3a059867fcd6ee46a14b4fcce.mfa	/mnt/hsm_nfs/schmutzr/KINDEX/KINDEX_TEST_S1/	global
+TEST_S2	barley	hordeum vulgare	bowman	0	21	read		021e9fc3a059867fcd6ee46a14b4fcce	INPUT_021e9fc3a059867fcd6ee46a14b4fcce.mfa	/mnt/hsm_nfs/schmutzr/KINDEX/KINDEX_TEST_S2/	global
+AsAB9x	goatgrass	Aegilops spaltoides	AB	9	21	reads		a00befe24ef85e8a6435d78a9bb9921a	INPUT_a00befe24ef85e8a6435d78a9bb9921a.fastq	/mnt/hsm_nfs/schmutzr/KINDEX/KINDEX_AsAB9x/	global
+HvBow4	barley	hordeum vulgare	bowman	4	21	reads		fa3864d41db905c65de5842507ec5c39	INPUT_fa3864d41db905c65de5842507ec5c39.fastq	/mnt/hsm_nfs/schmutzr/KINDEX/KINDEX_HvBow4/	global

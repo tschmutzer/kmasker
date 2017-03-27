@@ -1,7 +1,7 @@
 package kmasker::kmasker_build;
 use Exporter qw(import);
 use File::Basename;
-use strict;
+#use strict;
 use warnings;
 use Cwd;
 
@@ -12,10 +12,10 @@ build_kindex_jelly
 make_config
 remove_repository_entry
 );
-our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry);
+our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry set_kindex_global clean_repository_directory set_private_path);
 
 ## VERSION
-my $version_PM_build 	= "0.0.1 rc170308";
+my $version_PM_build 	= "0.0.2 rc170315";
 
 sub build_kindex_jelly{	
 	my $href_info		= $_[0];
@@ -56,6 +56,7 @@ sub build_kindex_jelly{
 	my $md5sum 			= $ARRAY_tmp[0];
 	$HASH_info{"seq"}	= "INPUT_".$md5sum.".".$end;
 	$HASH_info{"md5sum"}= $md5sum;
+	$HASH_info{"status"}= "private";
 	$seq				= "INPUT_".$md5sum.".".$end;
 	system("mv INPUT.fastq INPUT_".$md5sum.".".$end);
 		
@@ -170,6 +171,7 @@ sub read_config(){
 				my @ARRAY_help = split(" ", $line);
 				if(exists $HASH_code_words{$ARRAY_help[0]}){
 					$code_word = $ARRAY_help[0];
+					$HASH_info_this{$code_word} = "";
 					$status = 1;
 				}
 			}else{
@@ -192,12 +194,6 @@ sub read_config(){
 		
 		#CEHCK for extisting entry
 		my $short_tag = $HASH_info_this{"short_tag"};
-		
-		#TEST
-#		foreach(keys %HASH_repo_this){
-#			print "\n ENTRY in repo = ".$_;
-#		}		
-		#END TEST
 		
 		if(exists $HASH_repo_this{$short_tag}){
 			#kindex with identical name exists, kmasker needs to be stopped to avoid overwriting!
@@ -227,6 +223,7 @@ sub write_repository_entry(){
 	$ARRAY_repository[8]	= $HASH_info_this{"md5sum"};
 	$ARRAY_repository[9]	= $HASH_info_this{"seq"};
 	$ARRAY_repository[10]	= $HASH_info_this{"absolut_path"};
+	$ARRAY_repository[11]	= $HASH_info_this{"status"};
 	
 	my $new_kindex_entry_in_repository = join("\t", @ARRAY_repository);
 	my $urepositories 		= "/home/".$HASH_info_this{"user_name"}."/.user_repositories.kmasker";
@@ -244,7 +241,7 @@ sub remove_repository_entry(){
 	my $href_this 						= $_[1];
 	my %HASH_info_this 					= %{$href_this};
 	my @ARRAY_repository_entries		= ();
-	my $urepositories 					= "/home/".$HASH_info_this{"user_name"}."/.user_repositories.kmasker";
+	my $urepositories 					= $ENV{"HOME"}."/.user_repositories.kmasker";
 	my $utmp							= "kmasker.tmp.file";
 	my $target_entry_details			= "";
 	
@@ -261,7 +258,7 @@ sub remove_repository_entry(){
 	}
 	
 	if($target_entry_details eq ""){
-		print "\n WARNING: the kindex ".$kindex_shorttag." does not exist!\n\n";
+		print "\n WARNING: the kindex ".$kindex_shorttag." does not exist or is global (not permitted to remove)!\n\n";
 		exit();
 	}
 	
@@ -276,9 +273,155 @@ sub remove_repository_entry(){
 	print "\n REMOVING kindex folder : ".$absolut_path."\n\n";
 	system("rm -r ".$absolut_path);
 	
+	#CLEAN
+	&clean_repository_directory($href_this);
+	
 	close $RH;	
 	close $FH;
 }
+
+
+## subroutine
+#
+sub set_kindex_global(){
+	
+	my $kindex_shorttag				= $_[0];
+	my $href_this 					= $_[1];
+	my %HASH_info_this 				= %{$href_this};
+	my @ARRAY_repository_entries	= ();	
+	my $urepositories 				= $ENV{"HOME"}."/.user_repositories.kmasker";
+	my $path 						= $HASH_info_this{"path_bin"};
+	my $grepositories				= $path."/repositories.kmasker";
+	my $path_kindex_global			= $HASH_info_this{"PATH_kindex_global"};
+	my $utmp						= "kmasker_urep.tmp.file";
+	
+	#READ & EDIT user and global repository
+	my $REPO_private 		= new IO::File($urepositories, "r") or die "\n unable to read global repository list $!";
+	my $REPO_private_edit 	= new IO::File($utmp, "w") or die "\n unable to write tmp repository list $!";
+	open(my $REPO_global, ">>", $grepositories) or die "\n unable to open global repository list in append mode $!";	
+	while(<$REPO_private>){
+		next if($_ =~ /^$/);
+		if($_ =~ /^#/){
+			print $REPO_private_edit $_;
+			next;
+		}
+		my $line = $_;
+		$line =~ s/\n$//;
+		my @ARRAY_line = split("\t", $line);
+		if($ARRAY_line[0] eq $kindex_shorttag){
+			#ADD to GLOBAL
+			my $old_path 	= $ARRAY_line[10];
+			$ARRAY_line[10] = $path_kindex_global."KINDEX_".$kindex_shorttag."/";
+			my $new_path 	= $ARRAY_line[10];
+			$ARRAY_line[11] = "global";	#status
+			$line 			= join("\t", @ARRAY_line);
+			
+			#ENTER to global repository
+			print $REPO_global $line."\n";
+			
+			#COPY and REMOVE KINDEX
+			system("mkdir ".$new_path);
+			system("cp ".$old_path."* ".$new_path);
+			system("rm -r ".$old_path);		
+			
+			print "\n Your requested kindex ".." was moved from private path ".$old_path." to global ".$new_path."\n";
+		}else{
+			#WRITE to tmp
+			print $REPO_private_edit $line."\n";
+		}
+	}
+	
+	close $REPO_private;	
+	close $REPO_private_edit;
+	close $REPO_global;
+	
+	#MOVE
+	system("mv ".$utmp." ".$urepositories);			
+}
+
+
+## subroutine
+#
+sub clean_repository_directory(){
+	my $href_this 			= $_[0];
+	my $href_repo_this 		= $_[1];
+	my %HASH_info_this 		= %{$href_this};
+	my %HASH_repo_info_this = %{$href_repo_this};
+	my $path_kindex_private = $HASH_info_this{"PATH_kindex_private"};
+	my $get = `ls $path_kindex_private`;
+	my @ARRAY_list_of_kindex = split("\n", $get);
+	foreach my $entry(@ARRAY_list_of_kindex){
+		$entry =~ s/KINDEX_//;
+		if(!(exists $HASH_repo_info_this{$entry})){
+		#ask for cleaning
+			system("rm -r ".$path_kindex_private."KINDEX_".$entry);
+		}
+	}
+}
+
+## subroutine
+#
+sub set_private_path(){
+	my $private_path 	= $_[0];
+	my $href_repo		= $_[1];
+	my $old_private_path="";
+	my $uconf 		= $ENV{"HOME"}."/.user_config.kmasker";
+	my $USER_CONF_OLD 	= new IO::File($uconf, "r") or die "could not read old user conf : $!\n";
+	while(<$USER_CONF_OLD>){
+		my $line = $_;
+		$line =~ s/\n//;
+		my @ARRAY_tmp = split("\t", $line);
+		$old_private_path	= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
+	}
+	
+	#SETUP user conf
+	my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write new user conf : $!\n";
+	print $USER_CONF "PATH_kindex_private\t".$private_path."";
+	close $USER_CONF;
+	
+	#MOVE and EDIT
+	&move_private_structures($private_path, $old_private_path, $href_repo);
+}
+
+## subroutine
+#
+sub move_private_structures(){
+	my $PPN = $_[0];
+	my $PPO = $_[1];
+	my $REP = $_[2];
+	#EDIT PRIVATE REPOSITORY
+	
+	exit if($PPN eq $PPO);
+	
+	#load priavte user repositories
+	my $REPO_private 		= new IO::File($ENV{"HOME"}."/.user_repositories.kmasker", "r") or die "\n unable to read user repository list $!";	
+	my $REPO_private_NEW 	= new IO::File($ENV{"HOME"}."/.user_repositories.kmasker.new", "w") or die "\n unable to write user repository list $!";	
+	while(<$REPO_private>){
+		next if($_ =~ /^$/);
+		if($_ =~ /^#/){
+			print $REPO_private_NEW $_;
+			next;
+		}
+		my $line = $_;
+		$line =~ s/\n//;
+		my @ARRAY_line = split("\t", $line);
+		$ARRAY_line[10] = $PPN."KINDEX_".$ARRAY_line[0]."/";
+		print $REPO_private_NEW join("\t", @ARRAY_line)."\n";
+	}
+	system("mv ".$ENV{"HOME"}."/.user_repositories.kmasker.new ".$ENV{"HOME"}."/.user_repositories.kmasker");	
+	
+	#MOVE data
+	if(-d $PPN){
+		print "\n ".$PPN." already exists and will be into ".$ENV{"HOME"}."/TMP_storage/";
+		system("mv ".$PPN." ".$ENV{"HOME"}."/TMP_storage/");
+		system("cp -r ".$PPO." ".$PPN);
+	}else{
+		system("cp -r ".$PPO." ".$PPN);
+	}	
+	system("rm -r ".$PPO);
+		
+}
+
 
 
 1;
