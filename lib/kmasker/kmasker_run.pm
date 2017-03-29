@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.24 rc170324";
+my $version_PM_run 	= "0.0.24 rc170329";
 
 ## subroutine
 #
@@ -197,17 +197,17 @@ sub run_kmasker_MK{
 	#PRODUCE GFF
 	my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 	my $feature = "FC_Region";
-	my $subfeature = "Specific_FC_Region"
+	my $subfeature = "Specific_FC_Region";
 	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab1.".tab", $subfeature);
 	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab2.".tab", $subfeature);
 	#Annotate GFF
 	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff");
 	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff");
-    system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff" . " KMASKER_comparativ_FC10_$tab1" . ".gff");
-    system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff" . " KMASKER_comparativ_FC10_$tab2" . ".gff");
+    system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab1" . ".gff");
+    system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab2" . ".gff");
     #With Annotation
-    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged_annotation.tab".".gff" . " KMASKER_comparativ_FC10_$tab1" . "_annotation.gff");
-    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged_annotation.tab".".gff" . " KMASKER_comparativ_FC10_$tab2" . "_annotation.gff");
+    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged_annotation".".gff" . " KMASKER_comparativ_FC10_$tab1" . "_annotation.gff");
+    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged_annotation".".gff" . " KMASKER_comparativ_FC10_$tab2" . "_annotation.gff");
 
 }
 
