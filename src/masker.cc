@@ -93,6 +93,18 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     sequence_parser::job j(parser);
     if(j.is_empty()) break;
     for(size_t i = 0; i < j->nb_filled; ++i) {
+         /* What we trying to archive with the code modification is:
+         -get the first kmer of the sequence string
+         -then get the next char from the sequence string by using a pointer to the chars of that string
+         -using the shift operation of the sequence-mer-class to append this char */
+        //mers = j->data[i].seq;
+        //lets start with the first kmer
+        int mershift = 0; //how often we have to shift to get rid of the++
+        jellyfish::mer_dna mer;
+        if(j->data[i].seq.length() < mer.k()){
+            cout << "Sequence is too short, skipping...\n";
+            continue;
+        }
         if(fastaflag == true) {
             fastaout << ">" << j->data[i].header << "\n";
         }
@@ -100,14 +112,6 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             occfilestream << ">" << j->data[i].header << "\n";
             occnormfilestream << ">" << j->data[i].header << "\n";
         }
-        /* What we trying to archive with the code modification is:
-         -get the first kmer of the sequence string
-         -then get the next char from the sequence string by using a pointer to the chars of that string
-         -using the shift operation of the sequence-mer-class to append this char */
-        //mers = j->data[i].seq;
-        //lets start with the first kmer
-        int mershift = 0; //how often we have to shift to get rid of the N
-        jellyfish::mer_dna mer;
         std::string firstmer = j->data[i].seq.substr(0,mer.k());
         std::replace (firstmer.begin(), firstmer.end(), 'N', 'A'); //replace all N with A for jellyfish::mer_dna
         mer = firstmer; //use the string to initalize the mer object
