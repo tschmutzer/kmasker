@@ -1,2 +1,3 @@
-#
-Kmasker.pl $@
+#!/usr/bin/env bash
+LOCATION=$(dirname `which $0`)
+$LOCATION/Kmasker.pl $@
