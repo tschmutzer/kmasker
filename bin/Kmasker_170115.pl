@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly make_config remove_repository_e
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.24 rc170504";
+my $version 	= "0.0.22 rc170115";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -28,10 +28,6 @@ my $postprocessing;
 my $repositories;
 my $build_config;
 my $make_config;
-my $genome_size = "N/A";
-my $genome_size_usr;
-my $name;
-my $name_usr;
 my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
@@ -74,7 +70,6 @@ my $verbose;
 
 #HASH
 my %HASH_repository_kindex;
-my %HASH_path;
 
 #DEFAULT: no default anymore
 my $kindex;
@@ -88,10 +83,8 @@ my $result = GetOptions (	#MAIN
 							#BUILD
 							"seq=s{1,}"   		=> \@seq_usr,  			# provide the fasta or fastqfile
 							"k=i"				=> \$k_usr,
-							"gs=i"				=> \$genome_size_usr,
 							"config=s"			=> \$build_config,
 							"make_config"		=> \$make_config,
-							"name=s"			=> \$name_usr,
 							
 							#RUN
 							"fasta=s"			=> \$fasta,	
@@ -139,8 +132,6 @@ if(defined $help){
 		print "\n\n Options:";
 		print "\n --seq\t\t fasta or fastq sequence(s) that are used to build the index";
 		print "\n --k\t\t k-mer size to build index [21]";
-		print "\n --gs\t\t genome size of species (in Mbp)";
-		print "\n --name \t\t provide name to identify the kindex (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
 		print "\n --make_config\t creates basic config file ('build_kindex.config') for completion by user";
 		print "\n --config\t configuration file providing information used for construction of kindex";
 		
@@ -220,19 +211,6 @@ if(defined $kindex_usr){
 	}	
 }	
 
-#name
-if(defined $name_usr){
-	$name = $name_usr;
-}
-
-#genome_size
-if(defined $genome_size_usr){
-	if($genome_size_usr =~ /^[+-]?\d+$/){
-		#is number
-		$genome_size = $genome_size_usr;
-	}
-}
-
 #k-mer size
 if(defined $k_usr){
 	if($k_usr =~ /^[+-]?\d+$/){
@@ -280,8 +258,6 @@ if(defined $build){
 		$HASH_info{"user_name"}				= $user_name;
 		$HASH_info{"seq"} 					= $input;
 		$HASH_info{"k-mer"}					= $k;
-		$HASH_info{"genome_size"}			= $genome_size;
-		$HASH_info{"short_tag"}				= $name;
 		$HASH_info{"expert_setting"}		= $expert_setting;
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
@@ -299,7 +275,7 @@ if(defined $build){
 		
 		#CONSTRUCT
 		if(defined $input){
-			&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex, \%HASH_path); 
+			&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex); 
 		}
 		
 		#CLEAN
@@ -405,7 +381,6 @@ sub read_user_config(){
 	if(-e $gconf){
 		#LOAD global info
 		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read user config $!";	
-		
 		while(<$gCFG>){
 			next if($_ =~ /^$/);
 			next if($_ =~ /^#/);
@@ -422,49 +397,6 @@ sub read_user_config(){
 			}else{
 				#directory has to be created
 				system("mkdir ".$PATH_kindex_global);
-			}
-			
-			#READ external tool path
-			#JELLYFISH
-			if($line =~ /^jellyfish=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("command -v jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"jellyfish"} = `command -v jellyfish`;
-					$HASH_path{"jellyfish"} =~ s/\n//;
-				}else{
-					$HASH_path{"jellyfish"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n jellyfish=".$HASH_path{"jellyfish"}."\n" if(defined $verbose);
-			}
-			
-			#FASTQ-STATs
-			if($line =~ /^fastq-stats=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("command -v fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"fastq-stats"} = `command -v fastq-stats`;
-					$HASH_path{"fastq-stats"} =~ s/\n//;
-				}else{
-					$HASH_path{"fastq-stats"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n fastq-stats=".$HASH_path{"fastq-stats"}."\n" if(defined $verbose);
-			}
-			
-			#GFFREAD
-			if($line =~ /^gffread=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("command -v gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"gffread"} = `command -v gffread`;
-					$HASH_path{"gffread"} =~ s/\n//;
-				}else{
-					$HASH_path{"gffread"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n gffread=".$HASH_path{"gffread"}."\n" if(defined $verbose);
 			}
 		}
 	}

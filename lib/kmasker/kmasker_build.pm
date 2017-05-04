@@ -15,25 +15,31 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry set_kindex_global clean_repository_directory set_private_path);
 
 ## VERSION
-my $version_PM_build 	= "0.0.2 rc170315";
+my $version_PM_build 	= "0.0.3 rc170504";
 
 sub build_kindex_jelly{	
 	my $href_info		= $_[0];
 	my $build_config 	= $_[1];
 	my $href_repos		= $_[2];
-	my $store_input		= $_[3];	
+	my $href_path		= $_[3];
+	my $store_input		= $_[4];	
 	my %HASH_info 		= %{$href_info};
 	my %HASH_repo		= %{$href_repos};
-	my $user_name 		= $HASH_info{"user_name"};
-	my $seq				= $HASH_info{"seq"};
-	my $k				= $HASH_info{"k-mer"};
-	
+	my %HASH_path		= %{$href_path};
+	my $path_fastqstats	= $HASH_path{"fastq-stats"};
+		
 	#LOAD info
 	if(defined $build_config){
 		#READ config for build
 		my $href_this = &read_config($build_config, \%HASH_info, $href_repos);	
 		%HASH_info = %{$href_this};	
 	}
+	
+	#READ info
+	my $user_name 		= $HASH_info{"user_name"};
+	my $seq				= $HASH_info{"seq"};
+	my $k				= $HASH_info{"k-mer"};
+	
 	
 	#LOAD expert setting for build
 	my $parameter_extern = $HASH_info{"expert_setting"};
@@ -45,6 +51,14 @@ sub build_kindex_jelly{
 	
 	#Create single input file and calculate md5sum for repository
 	system("cat ".$seq." >INPUT.fastq");
+	
+	#make stats
+	if($HASH_info{"genome_size"} !~ /^N/){
+		#if genome size is provided that sequenincg depth is calculated automatically
+		system($path_fastqstats." INPUT.fastq >INPUT.fastq.stats &");
+	}
+	
+	#create meta data
 	my @ARRAY_help 		= split(/\./, $seq);
 	my $end 			= pop(@ARRAY_help);
 	$end				=~ s/ //g;
@@ -60,14 +74,23 @@ sub build_kindex_jelly{
 	$seq				= "INPUT_".$md5sum.".".$end;
 	system("mv INPUT.fastq INPUT_".$md5sum.".".$end);
 		
-	#FILL with default if inforomation is not provided	
-	$HASH_info{"absolut_path"} = getcwd if(!exists $HASH_info{"absolut_path"});
-	$HASH_info{"sequencing_depth"} = 1 if(!exists $HASH_info{"sequencing_depth"});
 	
 	#BUILD JELLY index	
 	print "\n ... start construction of kindex with the following parameters ".$setting." \n"; 
 	system("jellyfish count -m ".$k." ".$setting." -o KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$seq."");
 	print "\n ... finished kindex construction!\n";
+	
+	#FILL with default if information is not provided	
+	$HASH_info{"absolut_path"} = getcwd if(!exists $HASH_info{"absolut_path"});	
+	#
+	if($HASH_info{"genome_size"} !~ /^N/){
+		#calculate sequening depth
+		my $caculated_sequencing_depth 	= 1;
+		$caculated_sequencing_depth 	= &read_stats($HASH_info{"genome_size"});
+		$HASH_info{"sequencing_depth"} 	= $caculated_sequencing_depth;
+	}
+	$HASH_info{"sequencing_depth"} = 1 if((!exists $HASH_info{"sequencing_depth"})|| ($HASH_info{"sequencing_depth"} < 1));
+	
 	
 	#MOVE: make folder in directory and move jelly index
 	system("mkdir ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
@@ -121,18 +144,20 @@ sub make_config(){
 		#1
 		print $USER_kindex_info "#short_tag [mandatory]\n\n";
 		#2
-		print $USER_kindex_info "#common_name [mandatory]\n\n";
+		print $USER_kindex_info "#common_name [obligarory]\n\n";
 		#3
 		print $USER_kindex_info "#scientific_name [obligarory]\n\n";
 		#4
-		print $USER_kindex_info "#type (cultivar;genotype;etc.) [obligarory]\n\n";
+		print $USER_kindex_info "#genome_size [mandatory]\n\n";
 		#5
-		print $USER_kindex_info "#sequencing_depth [mandatory]\n\n";
+		print $USER_kindex_info "#type (cultivar;genotype;etc.) [obligarory]\n\n";
 		#6
-		print $USER_kindex_info "#k-mer [obligatory]\n\n";
+		print $USER_kindex_info "#sequencing_depth [mandatory]\n\n";
 		#7
-		print $USER_kindex_info "#sequence_type (reads or assembly) [obligatory]\n\n";
+		print $USER_kindex_info "#k-mer [obligatory]\n\n";
 		#8
+		print $USER_kindex_info "#sequence_type (reads or assembly) [obligatory]\n\n";
+		#9
 		print $USER_kindex_info "#note [obligarory]\n\n";
 
 		print $USER_kindex_info "\n";		
@@ -158,6 +183,7 @@ sub read_config(){
 		$HASH_code_words{"k-mer"}			= 1;
 		$HASH_code_words{"sequence_type"}	= 1;
 		$HASH_code_words{"note"}			= 1;
+		$HASH_code_words{"genome_size"}		= 1;
 		
 		my $INPUT_kindex_info 	= new IO::File($build_config, "r") or die "could not read file for repository information (parameter '--config'): $!\n";
 		my $code_word 	= "";
@@ -205,6 +231,29 @@ sub read_config(){
 		#RETURN
 		return \%HASH_info_this;			
 }
+
+
+## subroutine
+#
+sub read_stats(){
+	my $gs = $_[0];
+	my $INPUT_stats 	= new IO::File("INPUT.fastq.stats", "r") or die "could not read INPUT.fastq.stats $!\n";
+	my $calculation 	= 1;
+	while(<$INPUT_stats>){
+		my $line = $_;
+		next if($line =~ /^$/);
+		$line =~ s/\n$//;
+		if($line =~ /^total bases/){
+			my @ARRAY_tmp 	= split("\t", $line);
+			$calculation 	= $gs * 1000000 / $ARRAY_tmp[1];
+			print "\n CALC 	= ".$gs * 1000000 / $ARRAY_tmp[1];
+			print "\n RES  	= ".$calculation;
+		}
+	}
+	
+	return $calculation;
+}
+
 
 ## subroutine
 #

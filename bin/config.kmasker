@@ -4,5 +4,5 @@ PATH_kindex_private	/data/filer/agbi/schmutzr/KINDEX/
 
 #external tools
 jellyfish=
-ea-utils=
+fastq-stats=/opt/Bio/ea-utils/20141006/bin/fastq-stats
 gffread=
