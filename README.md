@@ -47,7 +47,7 @@ Kmasker --show_details At1
 ### [BUILD]:
 
 The build module is used to construct a k-mer index structure. It has its own help section (type '--help'). 
-One either can provide parameters using the command line or use the option '--config' to provide a config file with detailed meta data.
+One either can provide parameters using the command line or use the option '--config' to provide a config file with detailed meta data. If parameters are defined twice, the config file will overwrite parameters given at the command line.
 
 ### [RUN]:
 
