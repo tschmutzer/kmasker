@@ -44,17 +44,17 @@ Kmasker --show_repository
 Kmasker --show_details At1
 
 
-### --build:
+### [BUILD]:
 
 The build module is used to construct a k-mer index structure. It has its own help section (type '--help'). 
 One either can provide parameters using the command line or use the option '--config' to provide a config file with detailed meta data.
 
-### --run:
+### [RUN]:
 
-The run module starts the core process of Kmasker. Your input sequence is provided 
+The run module starts the core process of Kmasker. There are two general options. 1.) Analyze input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
 
-There are two general options. 1.) Analyze input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
-
-### --postprocessing:
+### [POSTPROCESSING]:
 
 The postprocessing module provides additional analysis that can be performed using the constructed KINDEX structures e.g. vizualisations.
+
+
