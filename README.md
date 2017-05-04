@@ -51,7 +51,12 @@ One either can provide parameters using the command line or use the option '--co
 
 ### [RUN]:
 
-The run module starts the core process of Kmasker. There are two general options. 1.) Analyze input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
+The run module starts the core process of Kmasker. There are two general options. 1.) Analyse input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
+
+SINGLE
+
+MULTIPLE
+
 
 ### [POSTPROCESSING]:
 
