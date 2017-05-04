@@ -10,14 +10,20 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
 ### Modules:
 
  --build                 construction of new index (requires --indexfiles)
+ 
  --run                   run k-mer repeat detection and masking (requires --fasta)
+ 
  --postprocessing        perform downstream analysis with constructed index and detected repeats
+ 
 
 ### General options:
 
  --show_repository       shows complete list of global and private k-mer indices
+ 
  --show_details          shows details for a requested kindex
+ 
  --remove_kindex         remove kindex from repository
+ 
  --expert_setting        submit individual parameter to Kmasker (e.g. on memory usage for index construction)
 
 
@@ -28,9 +34,13 @@ Here, we provide a list of external tools that are used within Kmasker. Please m
 
 ### Quick command overview:
 Kmasker --help
+
 Kmasker --build --seq sequence.fastq --gs 135 --name At1
+
 Kmasker --run --fasta query.fasta --kindex At1
+
 Kmasker --show_repository
+
 Kmasker --show_details At1
 
 
