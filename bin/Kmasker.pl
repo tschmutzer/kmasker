@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly make_config remove_repository_e
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.24 rc170504";
+my $version 	= "0.0.24 rc170505";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -562,6 +562,7 @@ sub show_details_for_kindex(){
 		print "\n\n KINDEX details for ".$kindex." \n";
 		print "\n\tcommon_name:      ".$ARRAY_details[1];
 		print "\n\tscientific_name:  ".$ARRAY_details[2];
+		print "\n\tgenome_size       ".$ARRAY_details[12]." [Mbp]";
 		print "\n\ttype              ".$ARRAY_details[3];
 		print "\n\tsequencing_depth: ".$ARRAY_details[4];
 		print "\n\tk-mer:            ".$ARRAY_details[5];

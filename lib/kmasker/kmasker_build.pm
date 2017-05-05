@@ -15,7 +15,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry set_kindex_global clean_repository_directory set_private_path);
 
 ## VERSION
-my $version_PM_build 	= "0.0.3 rc170504";
+my $version_PM_build 	= "0.0.3 rc170505";
 
 sub build_kindex_jelly{	
 	my $href_info		= $_[0];
@@ -96,12 +96,22 @@ sub build_kindex_jelly{
 	system("mkdir ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
 	if(-e "KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf"){
 		system("mv KINDEX_".$HASH_info{"short_tag"}."_".$md5sum."_k".$k.".jf ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
-		system("cp ".$build_config." ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"});
+		system("cp ".$build_config." ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}) if(defined $build_config);
 	}
 	$HASH_info{"absolut_path"} = $HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}."/";
 	
 	#SAVE info of build
-	&write_repository_entry(\%HASH_info);
+	
+	#ONLY WRITE entry if KINDEX was constructed sucessfully
+	my $path_kindex_file = $HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}."/KINDEX_".$HASH_info{"short_tag"}."_".$HASH_info{"md5sum"}."_k".$HASH_info{"k-mer"}.".jf";
+	if(-e $path_kindex_file){
+		#EXISTS
+		&write_repository_entry(\%HASH_info);
+	}else{
+		#ABORT
+		print "\n .. it looks like no KINDEX was created. Thus no repository entry will be written\n\n".
+		print "\n PATH for KINDEX: ".$HASH_info{"PATH_kindex_private"}."KINDEX_".$HASH_info{"short_tag"}."\n";		
+	}	
 	
 	#STORE input sequence as gzip -9 compressed files???
 	if(defined $store_input){
@@ -245,7 +255,7 @@ sub read_stats(){
 		$line =~ s/\n$//;
 		if($line =~ /^total bases/){
 			my @ARRAY_tmp 	= split("\t", $line);
-			$calculation 	= $gs * 1000000 / $ARRAY_tmp[1];
+			$calculation 	= sprintf("%.1f", $gs * 1000000 / $ARRAY_tmp[1]);
 			print "\n CALC 	= ".$gs * 1000000 / $ARRAY_tmp[1];
 			print "\n RES  	= ".$calculation;
 		}
@@ -273,12 +283,21 @@ sub write_repository_entry(){
 	$ARRAY_repository[9]	= $HASH_info_this{"seq"};
 	$ARRAY_repository[10]	= $HASH_info_this{"absolut_path"};
 	$ARRAY_repository[11]	= $HASH_info_this{"status"};
+	$ARRAY_repository[12]	= $HASH_info_this{"genome_size"};
+	
+	#check for undefined entries
+	for(my $i=0;$i<scalar(@ARRAY_repository); $i++){
+		if(!(defined $ARRAY_repository[$i])){
+			$ARRAY_repository[$i] = "-";
+		}
+	}
 	
 	my $new_kindex_entry_in_repository = join("\t", @ARRAY_repository);
 	my $urepositories 		= "/home/".$HASH_info_this{"user_name"}."/.user_repositories.kmasker";
 	open(my $RH, '>>', $urepositories) or die "Could not open file '$urepositories' $!";
 	say $RH $new_kindex_entry_in_repository;
-	close $RH;	
+	close $RH;
+	
 }
 
 
