@@ -28,13 +28,14 @@ sub read_sequence { #works for fasta
 
       if (/^>/) { # fasta header line
          my $h = $_;    
-         $h =~ s/^>//;  
+         $h =~ s/^>//;
+         my @splitline = split(/(\s|\t)/ ,$h); #ignore any comments
          if ($seq_info->{header}) {
-            $seq_info->{next_header} = $h;
+            $seq_info->{next_header} = $splitline[0];
             return $seq_info;   
          }              
          else { # first time through only
-            $seq_info->{header} = $h;
+            $seq_info->{header} = $splitline[0];
          }              
       }         
       else {    
@@ -70,14 +71,15 @@ sub read_occ { #works for occ
       chomp;    
 
       if (/^>/) { # fasta header line
-         my $h = $_;    
-         $h =~ s/^>//;  
+         my $h = $_;
+         $h =~ s/^>//;
+         my @splitline = split(/(\s|\t)/ ,$h); #ignore any comments
          if ($seq_info->{header}) {
-            $seq_info->{next_header} = $h;
+            $seq_info->{next_header} = $splitline[0];
             return $seq_info;   
          }              
          else { # first time through only
-            $seq_info->{header} = $h;
+            $seq_info->{header} = $splitline[0];
          }              
       }         
       else {    

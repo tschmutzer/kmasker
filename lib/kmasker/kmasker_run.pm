@@ -76,12 +76,12 @@ sub run_kmasker_SK{
 		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 		#merge seeds
 		my $tab = $fasta;
-		$tab =~ s/\.fasta$//; #add .fa to regex?
+		$tab =~ s/(\.fasta$)|(\.fa$)//; #add .fa to regex?
 		kmasker::filehandler::merge_tab_seeds("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
-		my $feature = "MCR_Region";
-		my $subfeature = "MCR";
+		my $feature = "KRC";
+		my $subfeature = "KRR";
 		kmasker::filehandler::tab_to_gff("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", "temp/$fasta.length" ,$min_gff, $feature ,"temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $subfeature);
 		#Add annotation
 		kmasker::functions::add_annotation($fasta, "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", $BLASTDB, "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.gff");
