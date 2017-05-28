@@ -15,7 +15,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly make_config remove_repository_entry set_kindex_global clean_repository_directory set_private_path);
 
 ## VERSION
-my $version_PM_build 	= "0.0.3 rc170505";
+my $version_PM_build 	= "0.0.3 rc170522";
 
 sub build_kindex_jelly{	
 	my $href_info		= $_[0];
@@ -188,6 +188,7 @@ sub read_config(){
 		$HASH_code_words{"short_tag"}		= 1;
 		$HASH_code_words{"common_name"}		= 1;
 		$HASH_code_words{"scientific_name"}	= 1;
+		$HASH_code_words{"genome_size"}		= 1;
 		$HASH_code_words{"type"}			= 1;
 		$HASH_code_words{"sequencing_depth"}= 1;
 		$HASH_code_words{"k-mer"}			= 1;
@@ -255,8 +256,8 @@ sub read_stats(){
 		$line =~ s/\n$//;
 		if($line =~ /^total bases/){
 			my @ARRAY_tmp 	= split("\t", $line);
-			$calculation 	= sprintf("%.1f", $gs * 1000000 / $ARRAY_tmp[1]);
-			print "\n CALC 	= ".$gs * 1000000 / $ARRAY_tmp[1];
+			$calculation 	= sprintf("%.1f", $ARRAY_tmp[1] / ($gs * 1000000));
+			print "\n CALC 	= ".($ARRAY_tmp[1] / ($gs * 1000000));
 			print "\n RES  	= ".$calculation;
 		}
 	}
