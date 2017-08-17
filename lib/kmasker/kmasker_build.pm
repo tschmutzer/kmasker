@@ -5,7 +5,9 @@ use warnings;
 use POSIX; 
 
 my $loctime = localtime;
+my $loctime2= localtime;
 $loctime = strftime('%Y%m%d',localtime); ## outputs 120817
+
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -17,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory);
 
 ## VERSION
-my $version_PM_build 	= "0.0.4 rc170816";
+my $version_PM_build 	= "0.0.4 rc170817";
 
 
 sub build_kindex_jelly{	
@@ -44,6 +46,12 @@ sub build_kindex_jelly{
 	if(defined $go_interactiv){
 		my $href_info_update = &make_config($HASH_info{"PATH_kindex_private"}, $HASH_info{"PATH_kindex_global"}, \%HASH_info);
 		%HASH_info = %{$href_info_update};
+		$build_config = "repository.info";
+	}
+	
+	#
+	if(!-e "repository.info"){
+		&make_minimal_info_config(\%HASH_info);
 		$build_config = "repository.info";
 	}
 	
@@ -91,9 +99,10 @@ sub build_kindex_jelly{
 	
 	#UPDATE repository information	
 	$HASH_info{"absolut_path"} 			= getcwd if(!exists $HASH_info{"absolut_path"});	
-	$HASH_info{"version_kmasker_build"}	= $version_PM_build;
-	$HASH_info{"sequencing_depth"} 		= &read_stats($HASH_info{"genome size"});
+	$HASH_info{"version BUILD"}			= $version_PM_build;
+	$HASH_info{"sequencing depth"} 		= &read_stats($HASH_info{"genome size"});
 	$HASH_info{"file"}					= $FILE_jelly;
+	$HASH_info{"created"}				= $loctime2;
 	&update_repository_information(\%HASH_info);
 	
 	
@@ -146,13 +155,13 @@ sub update_repository_information{
 		if($key =~ /^kindex name/)		{ 	$HASH_info{"kindex name"} 		= $value if(($HASH_info{"kindex name"} eq "")		||(!exists $HASH_info{"kindex name"})); 	}
 		if($key =~ /^status/)     		{	$HASH_info{"status"}    		= $value if(($HASH_info{"status"} eq "")			||(!exists $HASH_info{"status"})); 	}
 		if($key =~ /^common name/)		{	$HASH_info{"common name"}   	= $value if(($HASH_info{"common name"} eq "")		||(!exists $HASH_info{"common name"})); 	}
-		if($key =~ /^scienftific name/)	{	$HASH_info{"scienftific name"}  = $value if(($HASH_info{"scienftific name"} eq "")	||(!exists $HASH_info{"scienftific name"})); 	}
+		if($key =~ /^scientific name/)	{	$HASH_info{"scientific name"}  	= $value if(($HASH_info{"scientific name"} eq "")	||(!exists $HASH_info{"scientific name"})); 	}
 		if($key =~ /^type/)				{	$HASH_info{"type"}  			= $value if(($HASH_info{"type"} eq "")				||(!exists $HASH_info{"type"})); 	}
 		if($key =~ /^genome size/)		{	$HASH_info{"genome size"}  		= $value if(($HASH_info{"genome size"} eq "")		||(!exists $HASH_info{"genome size"})); 	}
 		if($key =~ /^sequencing depth/)	{	$HASH_info{"sequencing depth"}  = $value if(($HASH_info{"sequencing depth"} eq "")	||(!exists $HASH_info{"sequencing depth"})); 	}
 		if($key =~ /^k-mer/)			{	$HASH_info{"k-mer"}				= $value if(($HASH_info{"k-mer"} eq "")				||(!exists $HASH_info{"k-mer"})); 	}
 		if($key =~ /^sequence type/)	{	$HASH_info{"sequence type"}  	= $value if(($HASH_info{"sequence type"} eq "")		||(!exists $HASH_info{"sequence type"})); 	}
-		if($key =~ /^geneal notes/)		{	$HASH_info{"geneal notes"}  	= $value if(($HASH_info{"geneal notes"} eq "")		||(!exists $HASH_info{"geneal notes"})); 	}
+		if($key =~ /^general notes/)	{	$HASH_info{"general notes"}  	= $value if(($HASH_info{"general notes"} eq "")		||(!exists $HASH_info{"general notes"})); 	}
 		if($key =~ /^file/)				{	$HASH_info{"file"}  			= $value if(($HASH_info{"file"} eq "")				||(!exists $HASH_info{"file"})); 	}
 		if($key =~ /^created/)			{	$HASH_info{"created"}  			= $value if(($HASH_info{"created"} eq "")			||(!exists $HASH_info{"created"})); 	}
 		if($key =~ /^version KMASKER/)	{	$HASH_info{"version KMASKER"}  	= $value if(($HASH_info{"version KMASKER"} eq "")	||(!exists $HASH_info{"version KMASKER"})); 	}
@@ -165,13 +174,13 @@ sub update_repository_information{
 	print $REPO_update sprintf("%-15s %s", "kindex name :", " ")."\t". 		$HASH_info{"kindex name"} ."\n";
 	print $REPO_update sprintf("%-15s %s", "status :", " ")."\t".			$HASH_info{"status"}."\n";
 	print $REPO_update sprintf("%-15s %s", "common name :", " ")."\t".		$HASH_info{"common name"}."\n";
-	print $REPO_update sprintf("%-15s %s", "scienftific name :", " ")."\t".	$HASH_info{"scienftific name"}."\n";
+	print $REPO_update sprintf("%-15s %s", "scientific name :", " ")."\t".	$HASH_info{"scientific name"}."\n";
 	print $REPO_update sprintf("%-15s %s", "type :", " ")."\t".				$HASH_info{"type"}."\n";
 	print $REPO_update sprintf("%-15s %s", "genome size :", " ")."\t".		$HASH_info{"genome size"} ."\n";
 	print $REPO_update sprintf("%-15s %s", "sequencing depth :", " ")."\t".	$HASH_info{"sequencing depth"}."\n";
 	print $REPO_update sprintf("%-15s %s", "k-mer :", " ")."\t".			$HASH_info{"k-mer"}	."\n";
 	print $REPO_update sprintf("%-15s %s", "sequence type :", " ")."\t".	$HASH_info{"sequence type"}."\n";
-	print $REPO_update sprintf("%-15s %s", "geneal notes :", " ")."\t".		$HASH_info{"geneal notes"}."\n";
+	print $REPO_update sprintf("%-15s %s", "general notes :", " ")."\t".		$HASH_info{"general notes"}."\n";
 	print $REPO_update sprintf("%-15s %s", "file :", " ")."\t".				$HASH_info{"file"}."\n";
 	print $REPO_update sprintf("%-15s %s", "created :", " ")."\t".			$HASH_info{"created"}."\n";
 	print $REPO_update sprintf("%-15s %s", "version KMASKER :", " ")."\t".	$HASH_info{"version KMASKER"}."\n";
@@ -265,24 +274,21 @@ sub make_config(){
 		$HASH_info{"sequence type"} = &promptUser("\n\tSequence_type (e.g. WGS, RNAseq, assembly)\n\t", "WGS");
 		
 		#9
-		$HASH_info{"geneal notes"} = &promptUser("\n\tGeneral notes\n\t", "");
-		
-		#10
-		my $created = $loctime;
+		$HASH_info{"general notes"} = &promptUser("\n\tGeneral notes\n\t", "");
 		
 		#CREATE configuratio file
 		print $USER_kindex_info sprintf("%-15s %s", "kindex name :", " ")."\t".$HASH_info{"kindex name"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "status :", " ")."\t".$HASH_info{"status"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "common name :", " ")."\t".$HASH_info{"common name"}."\n";
-		print $USER_kindex_info sprintf("%-15s %s", "scienftific name :", " ")."\t".$HASH_info{"scientific name"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "scientific name :", " ")."\t".$HASH_info{"scientific name"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "type :", " ")."\t".$HASH_info{"type"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "genome size :", " ")."\t".$HASH_info{"genome size"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "sequencing depth :", " ")."\t\n";
 		print $USER_kindex_info sprintf("%-15s %s", "k-mer :", " ")."\t".$HASH_info{"k-mer"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "sequence type :", " ")."\t".$HASH_info{"sequence type"}."\n";
-		print $USER_kindex_info sprintf("%-15s %s", "geneal notes :", " ")."\t".$HASH_info{"geneal notes"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "general notes :", " ")."\t".$HASH_info{"general notes"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "file :", " ")."\t\n";
-		print $USER_kindex_info sprintf("%-15s %s", "created :", " ")."\t".$loctime."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "created :", " ")."\t".$loctime2."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "version KMASKER :", " ")."\t\n";
 		print $USER_kindex_info sprintf("%-15s %s", "version BUILD :", " ")."\t".$version_PM_build."\n";
 				
@@ -306,6 +312,35 @@ sub make_config(){
 
 ## subroutine
 #
+sub make_minimal_info_config(){
+	my $href 				= $_[0];
+	
+	my %HASH_info			= %{$href};
+	my $USER_kindex_info 	= new IO::File("repository.info", "w") or die "could not write file for repository.info file: $!\n";		
+	
+	print "\n Creating configuration file\n";		
+	#CREATE configuratio file
+		print $USER_kindex_info sprintf("%-15s %s", "kindex name :", " ")."\t".$HASH_info{"kindex name"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "status :", " ")."\t".$HASH_info{"status"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "common name :", " ")."\t".$HASH_info{"common name"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "scientific name :", " ")."\t".$HASH_info{"scientific name"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "type :", " ")."\t".$HASH_info{"type"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "genome size :", " ")."\t".$HASH_info{"genome size"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "sequencing depth :", " ")."\t\n";
+		print $USER_kindex_info sprintf("%-15s %s", "k-mer :", " ")."\t".$HASH_info{"k-mer"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "sequence type :", " ")."\t".$HASH_info{"sequence type"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "general notes :", " ")."\t".$HASH_info{"general notes"}."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "file :", " ")."\t\n";
+		print $USER_kindex_info sprintf("%-15s %s", "created :", " ")."\t".$loctime."\n";
+		print $USER_kindex_info sprintf("%-15s %s", "version KMASKER :", " ")."\t\n";
+		print $USER_kindex_info sprintf("%-15s %s", "version BUILD :", " ")."\t".$version_PM_build."\n";
+		print $USER_kindex_info "\n";	
+	$USER_kindex_info->close();
+
+}
+
+## subroutine
+#
 sub read_config(){
 		my $build_config 	= $_[0];
 		my $href_info		= $_[1];
@@ -323,7 +358,8 @@ sub read_config(){
 		$HASH_code_words{"sequencing depth"}= 1;
 		$HASH_code_words{"k-mer"}			= 1;
 		$HASH_code_words{"sequence type"}	= 1;
-		$HASH_code_words{"note"}			= 1;
+		$HASH_code_words{"general notes"}	= 1;
+		$HASH_code_words{"status"}			= 1;
 		
 		my $INPUT_kindex_info 	= new IO::File($build_config, "r") or die "could not read file for repository information (parameter '--config'): $!\n";
 		while(<$INPUT_kindex_info>){
@@ -393,62 +429,39 @@ sub read_stats(){
 		$INPUT_stats->close();
 	}
 	
-	$calculation 	= sprintf("%.1f", $ARRAY_tmp[1] / ($gs * 1000000));
-	print "\n CALC 	= ".($ARRAY_tmp[1] / ($gs * 1000000));
+	$calculation 	= sprintf("%.1f", $total_bases / ($gs * 1000000));
+	print "\n CALC 	= ".($total_bases / ($gs * 1000000));
 	print "\n RES  	= ".$calculation;			
-	$calculation 	= 1 if($calculation < 1);		
+	if($calculation < 1){
+		print "\n Notification: The calulated sequenicng depth of your dataset is below 1-fold, which is very low.";
+		print "\n               The normalisation factor of the constrcuted index is set to 1x";
+		$calculation 	= 1;		
+	}	
 	return $calculation;
 }
 
 ## subroutine
 #
-sub remove_kindex(){
+sub remove_kindex(){	
+	my $kindex_shorttag			= $_[0];
+	my $href_this 				= $_[1];
+	my %HASH_repository_kindex	= %{$href_this};	
 	
-	my $kindex_shorttag					= $_[0];
-	my $href_this 						= $_[1];
-	my %HASH_repository_kindex_this		= %{$href_this};	
-	my @ARRAY_repository				= split("\t", $HASH_repository_kindex_this{$kindex_shorttag});
-	
-	
-	my %HASH_info_this 					= %{$href_this};
-	my @ARRAY_repository_entries		= ();
-	my $urepositories 					= $ENV{"HOME"}."/.user_repositories.kmasker";
-	my $utmp							= "kmasker.tmp.file";
-	my $target_entry_details			= "";
-	
-	#READ
-	open(my $RH, '<', $urepositories) or die "Could not open file '$urepositories' $!";
-	open(my $FH, '>', $utmp) or die "Could not write file ".$utmp." $!";
-	while (<$RH>) {
-		my @ARRAY_tmp = split("\t", $_);
-		if($ARRAY_tmp[0] ne $kindex_shorttag){
-  			print $FH $_;
+	if(exists $HASH_repository_kindex{$kindex_shorttag}){
+		my @ARRAY_kindex_overview	= split("\t", $HASH_repository_kindex{$kindex_shorttag});
+		my $status 		= $ARRAY_kindex_overview[2];
+		my $abs_path_kindex_dir	= $ARRAY_kindex_overview[3];
+		
+		if($status eq "global"){
+			print "\n WARNING: the kindex ".$kindex_shorttag." is global (not permitted to remove)!\n\n";
 		}else{
-			$target_entry_details = $_;
-		}
+			#REMOVE DATA
+			print "\n REMOVING the complete directory of KINDEX '$kindex_shorttag' :\n ".$abs_path_kindex_dir."\n\n";
+			system("rm -r ".$abs_path_kindex_dir);	
+		}			
+	}else{
+		print "\n WARNING: the kindex ".$kindex_shorttag." does not exist!\n\n";
 	}
-	
-	if($target_entry_details eq ""){
-		print "\n WARNING: the kindex ".$kindex_shorttag." does not exist or is global (not permitted to remove)!\n\n";
-		exit();
-	}
-	
-	#MOVE
-	system("mv ".$utmp." ".$urepositories);
-	
-	#REMOVE DATA
-	chomp $target_entry_details;
-	$target_entry_details =~ s/\n$//;	
-	my @ARRAY_entry_details = split("\t", $target_entry_details);
-	my $absolut_path = $ARRAY_entry_details[10];
-	print "\n REMOVING kindex folder : ".$absolut_path."\n\n";
-	system("rm -r ".$absolut_path);
-	
-	#CLEAN
-	&clean_repository_directory($href_this);
-	
-	close $RH;	
-	close $FH;
 }
 
 
@@ -508,7 +521,9 @@ sub clean_repository_directory(){
 	#routinly check if KINDEX datasets exist, that are not complete
 	# e.g. repository,file is missing or is empty
 	
-	
+	#general cleaning
+	system("rm \.kmasker_background_process");
+	system("rm repository.info");
 }
 
 ## subroutine

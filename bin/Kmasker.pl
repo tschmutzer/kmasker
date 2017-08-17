@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.25 rc170816";
+my $version 	= "0.0.25 rc170817";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -226,14 +226,6 @@ if(defined $kindex_usr){
 	}	
 }	
 
-#BLOCK
-#if(-e ".kmasker.blocked"){
-#	print "\n WARNING: another Kmasker instance is running in this directory. Kmasker has been stopped!!!\n\n";
-#	exit();
-#}else{
-#	system("cp ".$path."/.kmasker.blocked .");
-#}
-
 #index name
 if(defined $index_name_usr){
 	$index_name = $index_name_usr;
@@ -305,10 +297,13 @@ if(defined $build){
 		my %HASH_info 						= ();
 		my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
 		$HASH_info{"user name"}				= $user_name;
-		$HASH_info{"seq"} 					= $input;
+		$HASH_info{"seq"} 					= $input;		
+		#REQUIRED
 		$HASH_info{"k-mer"}					= $k 			if(defined $k);
 		$HASH_info{"genome size"}			= $genome_size	if(defined $genome_size);
 		$HASH_info{"kindex name"}			= $index_name	if(defined $index_name);
+		$HASH_info{"common name"}			= $common_name if(defined $common_name);
+		#ADDITIONAL
 		$HASH_info{"expert setting"}		= $expert_setting;
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
@@ -316,8 +311,11 @@ if(defined $build){
 		$HASH_info{"version KMASKER"}		= $version;
 		$HASH_info{"version BUILD"} 		= "";
 		$HASH_info{"status"}				= "";
-		$HASH_info{"common name"}			= $common_name if(defined $common_name);
-		$HASH_info{"scienftific name"}		= "";
+		$HASH_info{"scientific name"}		= "";
+		$HASH_info{"sequence type"}			= "";
+		$HASH_info{"general notes"}			= "";
+		$HASH_info{"type"}					= "";
+		$HASH_info{"sequencing depth"}		= "";
 		
 		#CONSTRUCT
 		if(defined $input){
@@ -406,11 +404,7 @@ if(defined $show_details_for_kindex){
 }
 
 if(defined $remove_kindex){
-	my %HASH_info 						= ();
-	$HASH_info{"user_name"}				= $user_name;
-	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
-	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private; 
-	&remove_kindex($remove_kindex,\%HASH_info);
+	&remove_kindex($remove_kindex,\%HASH_repository_kindex);
 	exit();
 }				
 
@@ -519,8 +513,6 @@ sub read_user_config(){
 	}
 }
 
-#RELEASE blocking
-system("rm .kmasker.blocked .");
 
 ## subroutine
 #
@@ -572,16 +564,15 @@ sub read_repository(){
 			}		
 		}
 	}
+	
 	close $DIR_G;
 }
 
 
 ## subroutine
 #
-sub show_repository(){
-	
-	print "\n\nREPOSITORY of available kindex structures:\n";
-		
+sub show_repository(){	
+	print "\n\nREPOSITORY of available kindex structures:\n";		
 	#PRINT
 	foreach my $kindex_this (keys %HASH_repository_kindex){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_this});
