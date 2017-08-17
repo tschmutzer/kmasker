@@ -28,14 +28,14 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
 
 
 ### Requirements:
-Here, we provide a list of external tools that are used within Kmasker. Please make sure, that these are in your PATH environemnt. If not please specify them in the 'config.kmasker' file.
+Here, we provide a list of external tools that are used within Kmasker. Please make sure, that these are in your PATH environemnt. If not please specify them in the 'kmasker.config' file.
 
 ## Commands:
 
 ### Quick command overview:
 Kmasker --help
 
-Kmasker --build --seq sequence.fastq --gs 135 --name At1
+Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 Kmasker --run --fasta query.fasta --kindex At1
 
