@@ -16,10 +16,10 @@ build_kindex_jelly
 make_config
 remove_repository_entry
 );
-our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory);
+our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.4 rc170817";
+my $version_PM_build 	= "0.0.4 rc170818";
 
 
 sub build_kindex_jelly{	
@@ -36,7 +36,7 @@ sub build_kindex_jelly{
 	#LOAD info
 	if(defined $build_config){
 		#READ config for build
-		my $href_this = &read_config($build_config, \%HASH_info, $href_repos);	
+		my $href_this = &read_config($build_config, \%HASH_info, $href_repos, "build");	
 		%HASH_info = %{$href_this};	
 	}
 	
@@ -148,10 +148,12 @@ sub update_repository_information{
 	#READ available info from repository.info into HASH_info (ONLY if HASH is empty)
 	while(<$REPO>){
 		my $line 	= $_;
+		next if($line =~ /^$/);
 		$line		=~ s/\n$//;
 		my $key	 	= +(split(":", $line))[0];
 		my $value 	= +(split("\t", $line))[1];
-		
+		$value		= "" if(!defined $value);
+			
 		if($key =~ /^kindex name/)		{ 	$HASH_info{"kindex name"} 		= $value if(($HASH_info{"kindex name"} eq "")		||(!exists $HASH_info{"kindex name"})); 	}
 		if($key =~ /^status/)     		{	$HASH_info{"status"}    		= $value if(($HASH_info{"status"} eq "")			||(!exists $HASH_info{"status"})); 	}
 		if($key =~ /^common name/)		{	$HASH_info{"common name"}   	= $value if(($HASH_info{"common name"} eq "")		||(!exists $HASH_info{"common name"})); 	}
@@ -180,7 +182,7 @@ sub update_repository_information{
 	print $REPO_update sprintf("%-15s %s", "sequencing depth :", " ")."\t".	$HASH_info{"sequencing depth"}."\n";
 	print $REPO_update sprintf("%-15s %s", "k-mer :", " ")."\t".			$HASH_info{"k-mer"}	."\n";
 	print $REPO_update sprintf("%-15s %s", "sequence type :", " ")."\t".	$HASH_info{"sequence type"}."\n";
-	print $REPO_update sprintf("%-15s %s", "general notes :", " ")."\t".		$HASH_info{"general notes"}."\n";
+	print $REPO_update sprintf("%-15s %s", "general notes :", " ")."\t".	$HASH_info{"general notes"}."\n";
 	print $REPO_update sprintf("%-15s %s", "file :", " ")."\t".				$HASH_info{"file"}."\n";
 	print $REPO_update sprintf("%-15s %s", "created :", " ")."\t".			$HASH_info{"created"}."\n";
 	print $REPO_update sprintf("%-15s %s", "version KMASKER :", " ")."\t".	$HASH_info{"version KMASKER"}."\n";
@@ -345,6 +347,7 @@ sub read_config(){
 		my $build_config 	= $_[0];
 		my $href_info		= $_[1];
 		my $href_repos_this = $_[2];
+		my $call_process	= $_[3];
 		my %HASH_info_this 	= %{$href_info};
 		my %HASH_repo_this	= %{$href_repos_this};	
 		
@@ -375,28 +378,30 @@ sub read_config(){
 			}
 		}		
 		
-		#CHECK if mandatory field are set correctly
-		my $check = 1;
-		
-		$check = 0 if((!exists $HASH_info_this{"kindex name"}) 	|| ($HASH_info_this{"kindex name"} eq ""));
-		$check = 0 if((!exists $HASH_info_this{"k-mer"}) 		|| ($HASH_info_this{"k-mer"} eq ""));
-		$check = 0 if((!exists $HASH_info_this{"common name"}) 	|| ($HASH_info_this{"common name"} eq ""));
-		$check = 0 if((!exists $HASH_info_this{"genome size"})	|| ($HASH_info_this{"genome size"} eq ""));
-		if($check == 0){
-			#STOP
-			print "\n\n WARNING: Kmasker (build) was stopped!!!\
-				     \n Missing information in configuration!\n\n";
-			exit(0);
-		}
-		
-		#CEHCK for extisting entry
-		my $short_tag = $HASH_info_this{"kindex name"};
-		
-		if(exists $HASH_repo_this{$short_tag}){
-			#kindex with identical name exists, kmasker needs to be stopped to avoid overwriting!
-			print "\n\n WARNING: Kmasker (build) was stopped!!!\
-				     \n A kindex with identical name already exists in repository\n\n";
-			exit(0);
+		if($call_process eq "build"){
+			#CHECK if mandatory field are set correctly
+			my $check = 1;
+			
+			$check = 0 if((!exists $HASH_info_this{"kindex name"}) 	|| ($HASH_info_this{"kindex name"} eq ""));
+			$check = 0 if((!exists $HASH_info_this{"k-mer"}) 		|| ($HASH_info_this{"k-mer"} eq ""));
+			$check = 0 if((!exists $HASH_info_this{"common name"}) 	|| ($HASH_info_this{"common name"} eq ""));
+			$check = 0 if((!exists $HASH_info_this{"genome size"})	|| ($HASH_info_this{"genome size"} eq ""));
+			if($check == 0){
+				#STOP
+				print "\n\n WARNING: Kmasker (build) was stopped!!!\
+					     \n Missing information in configuration!\n\n";
+				exit(0);
+			}
+			
+			#CEHCK for extisting entry
+			my $short_tag = $HASH_info_this{"kindex name"};
+			
+			if(exists $HASH_repo_this{$short_tag}){
+				#kindex with identical name exists, kmasker needs to be stopped to avoid overwriting!
+				print "\n\n WARNING: Kmasker (build) was stopped!!!\
+					     \n A kindex with identical name already exists in repository\n\n";
+				exit(0);
+			}
 		}		
 		
 		#RETURN
@@ -430,8 +435,8 @@ sub read_stats(){
 	}
 	
 	$calculation 	= sprintf("%.1f", $total_bases / ($gs * 1000000));
-	print "\n CALC 	= ".($total_bases / ($gs * 1000000));
-	print "\n RES  	= ".$calculation;			
+#	print "\n CALC 	= ".($total_bases / ($gs * 1000000));
+#	print "\n RES  	= ".$calculation;			
 	if($calculation < 1){
 		print "\n Notification: The calulated sequenicng depth of your dataset is below 1-fold, which is very low.";
 		print "\n               The normalisation factor of the constrcuted index is set to 1x";
@@ -522,8 +527,8 @@ sub clean_repository_directory(){
 	# e.g. repository,file is missing or is empty
 	
 	#general cleaning
-	system("rm \.kmasker_background_process");
-	system("rm repository.info");
+	system("rm \.kmasker_background_process") if(-e "\.kmasker_background_process");
+	system("rm repository.info") if(-e "repository.info");
 }
 
 ## subroutine

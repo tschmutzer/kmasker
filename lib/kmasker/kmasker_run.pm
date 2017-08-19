@@ -18,37 +18,53 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.24 rc170329";
+my $version_PM_run 	= "0.0.25 rc170818";
 
 ## subroutine
 #
 sub run_kmasker_SK{
 	# SINGLE KINDEX (SK)
-	my $fasta 		= $_[0];
-	my $kindex		= $_[1];
-	my $href_info	= $_[2];
-	my $href_repo 	= $_[3];
-	my %HASH_repo_this = %{$href_repo};
+	my $fasta 			= $_[0];
+	my $kindex			= $_[1];
+	my $href_info		= $_[2];
+	my $href_repo 		= $_[3];
+	
+	my %HASH_info_this 			= %{$href_info};
+	my %HASH_repository_kindex 	= %{$href_repo};
    	
-	if(exists $HASH_repo_this{$kindex}){
+	if(exists $HASH_repository_kindex{$kindex}){
 		
 		# GET info from repository
-		my %HASH_info_this 		= %{$href_info};
-		
-		# GET info
 		my $rept 				= $HASH_info_this{"rept"};
 		my $length_threshold 	= $HASH_info_this{"min_length"};
+		my $seq_depth			= sprintf("%.0f" , $HASH_info_this{"sequencing depth"});
+		my $k					= $HASH_info_this{"k-mer"};		
+			
+		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
+		my $absolut_path		= $ARRAY_repository[3];
 		
-		my @ARRAY_kindex_info 	= split("\t", $HASH_repo_this{$kindex});
-		my $seq_depth			= $ARRAY_kindex_info[4];
-		my $k					= $ARRAY_kindex_info[5];
-		my $md5sum				= $ARRAY_kindex_info[8]; 
-		my $absolut_path		= $ARRAY_kindex_info[10];	
-		#FIXME: PATH TO BLASTDB
-		my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta";	
+		my $BLASTDB_redat 	= "";
+		my $BLASTDB_repbase = "";
+		my $BLASTDB_trep	= "";
+		
+		#REPEAT analytics -should be done with REdat, RepBase and TREP FASTA
+		if(-e $ENV{"HOME"}."/repeats/REdat/mipsREdat_9.3p_ALL.fasta"){
+			$BLASTDB_redat		= $ENV{"HOME"}."/repeats/REdat/mipsREdat_9.3p_ALL.fasta";
+		}
+		
+		if(-e $ENV{"HOME"}."/repeats/RepBase/RepBase22.07_plants.fasta"){
+			my $BLASTDB_repbase	= $ENV{"HOME"}."/repeats/RepBase/RepBase22.07_plants.fasta";
+		}
+		
+		if(-e $ENV{"HOME"}."/repeats/TREP/trep-db_nr_Rel-16.fasta"){
+			$BLASTDB_trep		= $ENV{"HOME"}."/repeats/TREP/trep-db_nr_Rel-16.fasta";
+		}
+		
+		system("cat ".$BLASTDB_redat." ".$BLASTDB_repbase." ".$BLASTDB_trep." >repeats.fasta");
+		my $BLASTDB = "repeats.fasta";
 		
 		#create symbolic link to kindex from private or global
-		my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";		
+		my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";		
 		if(-e $absolut_path."/".$full_kindex_name){
 			system("ln -s ".$absolut_path."/".$full_kindex_name);
 		}else{
@@ -106,8 +122,9 @@ sub run_kmasker_MK{
 	my $aref_mkindex	= $_[1];
 	my $href_info		= $_[2];
 	my $href_repo 		= $_[3];
-	my %HASH_repo_this 	= %{$href_repo};
-	my @ARRAY_kindex 	= @{$aref_mkindex};
+	
+	my %HASH_repository_kindex 	= %{$href_repo};
+	my @ARRAY_kindex 			= @{$aref_mkindex};
 	
 	# GET info from repository
 	my %HASH_info_this 		= %{$href_info};
@@ -127,17 +144,18 @@ sub run_kmasker_MK{
 	
 	foreach(@ARRAY_kindex){
    		my $kindex = $_;
-		if(exists $HASH_repo_this{$kindex}){		
+		if(exists $HASH_repository_kindex{$kindex}){		
 			
-			my @ARRAY_kindex_info 	= split("\t", $HASH_repo_this{$kindex});
-			my $seq_depth			= $ARRAY_kindex_info[4];
-			my $k					= $ARRAY_kindex_info[5];
-			my $md5sum				= $ARRAY_kindex_info[8]; 
-			my $absolut_path		= $ARRAY_kindex_info[10];		
-			my $BLASTDB				="/data/filer/agbi/ulpinnis/kmasker/mipsREdat_9.3p_ALL.fasta"; #change me
+			my @ARRAY_repository 	= split("\t", $HASH_repository_kindex{$kindex});
+			my $seq_depth			= $HASH_info_this{"sequencing depth"};
+			my $k					= $HASH_info_this{"k-mer"};	
+			my $absolut_path		= $ARRAY_repository[3];
+				
+			#REPEAT analytics
+			my $BLASTDB				= $ENV{"HOME"}."/repeats/REdat/mipsREdat_9.3p_ALL.fasta";
 
 			#create symbolic link to kindex from private or global
-			my $full_kindex_name = "KINDEX_".$kindex."_".$md5sum."_k".$k.".jf";
+			my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";
 			push(@ARRAY_full_kindex_names, $full_kindex_name);
 			push(@ARRAY_seq_depth, $seq_depth);
 			if(-e $absolut_path."/".$full_kindex_name){

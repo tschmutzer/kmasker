@@ -10,11 +10,11 @@ use Cwd  qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
-use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory);
+use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.25 rc170817";
+my $version 	= "0.0.25 rc170818";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -347,6 +347,19 @@ if(defined $run){
 	$HASH_info{"path_bin"}				= $path;
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
+	
+	
+	#READ repository.info
+	my $FILE_repository_info = "";
+	if(exists $HASH_repository_kindex{$kindex}){
+		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
+		$FILE_repository_info 	= $ARRAY_repository[3]."repository.info";
+	}else{
+		exit ();
+	}
+	
+	my $href_info 	= &read_config($FILE_repository_info, \%HASH_info, \%HASH_repository_kindex, "run");
+	%HASH_info		= %{$href_info};
 	
 	if(defined $kindex){
 	#single kindex				
