@@ -16,10 +16,10 @@ build_kindex_jelly
 make_config
 remove_repository_entry
 );
-our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory read_config);
+our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.4 rc170818";
+my $version_PM_build 	= "0.0.4 rc170823";
 
 
 sub build_kindex_jelly{	
@@ -435,8 +435,6 @@ sub read_stats(){
 	}
 	
 	$calculation 	= sprintf("%.1f", $total_bases / ($gs * 1000000));
-#	print "\n CALC 	= ".($total_bases / ($gs * 1000000));
-#	print "\n RES  	= ".$calculation;			
 	if($calculation < 1){
 		print "\n Notification: The calulated sequenicng depth of your dataset is below 1-fold, which is very low.";
 		print "\n               The normalisation factor of the constrcuted index is set to 1x";
@@ -535,7 +533,7 @@ sub clean_repository_directory(){
 #
 sub set_private_path(){
 	my $private_path 	= $_[0];
-	my $href_repo		= $_[1];
+	
 	my $old_private_path="";
 	$private_path 		.= "/" if($private_path !~ /\/$/ );
 	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
@@ -545,8 +543,8 @@ sub set_private_path(){
 		my $line = $_;
 		$line =~ s/\n//;
 		if($line =~ /^PATH_kindex_private/){
-			print $USER_CONF "PATH_kindex_private\t".$private_path."\n";
-			$old_private_path = +(split("\t", $line))[1];
+			print $USER_CONF "PATH_kindex_private=".$private_path."\n";
+			$old_private_path = +(split("=", $line))[1];
 		}else{
 			print $USER_CONF $line."\n";
 		}		
@@ -558,6 +556,60 @@ sub set_private_path(){
 	#MOVE and EDIT
 	&move_private_structures($private_path, $old_private_path);
 }
+
+## subroutine
+#
+sub set_global_path(){
+	#INPUT
+	my $path 			= $_[0];
+	my $called_status	= $_[1];
+	my $path_bin		= $_[2];
+	my $href_repository	= $_[3];
+	
+	if(($called_status ne "private") && ($called_status ne "global")){
+		print "\n Unknown status in procedure 'set_global_path'\n";
+		exit();
+	}	
+
+	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
+	my $user_name	= `whoami`;
+	$user_name		=~ s/\n$//;
+	my $abs			= $path_bin."/kmasker.config";
+	my $installed_by= `stat -c "%U" $abs`;
+	$installed_by 	=~ s/\n//;
+	if($installed_by ne $user_name){
+		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
+		print "\n U = (".$user_name.") I = (".$installed_by.")\n";
+		exit();	
+	}
+
+	my $old_path	="";
+	$path 			.= "/" if($path !~ /\/$/ );
+	my $conf		= "";
+	$conf 			= $ENV{"HOME"}."/.kmasker_user.config" if($called_status eq "private");
+	$conf 			= $path_bin."/kmasker.config" if($called_status eq "global");
+	
+	my $CONF_OLD 	= new IO::File($conf, "r") or die "could not read old conf : $!\n";
+	my $CONF 		= new IO::File($conf.".tmp", "w") or die "could not write new conf : $!\n";
+	while(<$CONF_OLD>){
+		my $line = $_;
+		$line =~ s/\n//;
+		my $pattern = "PATH_kindex_".$called_status;
+		if($line =~ /^($pattern)/){
+			print $CONF "PATH_kindex_".$pattern."=".$path."\n";
+			$old_path = +(split("=", $line))[1];
+		}else{
+			print $CONF $line."\n";
+		}		
+	}
+	system("mv ".$conf.".tmp ".$conf);
+	$CONF->close();
+	$CONF_OLD->close();
+	
+	#MOVE and EDIT
+	&move_kindex_structures($path, $old_path, $href_repository) if($old_path ne "");
+}
+
 
 ## subroutine
 #
@@ -577,6 +629,29 @@ sub move_private_structures(){
 		system("cp -r ".$PPO." ".$PPN);
 	}	
 	system("rm -r ".$PPO);		
+}
+
+## subroutine
+#
+sub move_kindex_structures(){
+	my $PATH_kindex_NEW = $_[0];
+	my $PATH_kindex_OLD = $_[1];
+	my $href_repository = $_[2];
+	
+	#quit if same
+	exit if($PATH_kindex_NEW eq $PATH_kindex_OLD);
+	
+	my %HASH_repository_kindex_this = %{$href_repository};	
+	#integrate into HASH
+	#$HASH_repository_kindex{$kindex_name} = $kindex_name."\t".$common_name."\t".$status."\t".$kindex_path;
+	
+	foreach my $kindex_name (keys %HASH_repository_kindex_this){
+		my @ARRAY_info = split("\t", $HASH_repository_kindex_this{$kindex_name});
+		#ALL KINDEX that start with $PATH_kindex_OLD
+		if($ARRAY_info[3] =~ /^$PATH_kindex_OLD/){
+			print "This is detected to be moved to new location";
+		}
+	}
 }
 
 

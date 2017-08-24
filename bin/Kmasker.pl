@@ -10,11 +10,11 @@ use Cwd  qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
-use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path clean_repository_directory read_config);
+use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.25 rc170818";
+my $version 	= "0.0.25 rc170823";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -67,6 +67,8 @@ my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
 my $set_private_path;
+my $set_global_path;
+my $check_install;
 my $remove_kindex;
 my $plot_hist_frequency;
 my $expert_setting = ""; 
@@ -119,6 +121,8 @@ my $result = GetOptions (	#MAIN
 							"remove_kindex=s"	=> \$remove_kindex,
 							"set_global=s"		=> \$set_global,
 							"set_private_path=s"=> \$set_private_path,
+							"set_global_path=s"	=> \$set_global_path,
+							"check_install"		=> \$check_install,	
 							
 							#Houskeeping
 							"expert_setting"	=> \$expert_setting,
@@ -210,10 +214,28 @@ if(defined $help){
 
 ##MAIN
 
-#load global settings
+
+#CHECK settings
+if(defined $check_install){
+	&check_install();
+	exit();
+}
+
+#READ global settings
 &read_user_config;
 &read_repository;
 
+#SET private path
+if(defined $set_private_path){
+	&set_private_path();
+	exit();
+}
+
+#SET global path
+if(defined $set_global_path){
+	&set_global_path($set_global_path, "global", $path, \%HASH_repository_kindex);
+	exit();
+}
 
 #USER specification
 #kindex
@@ -442,7 +464,7 @@ sub read_user_config(){
 			next if($_ =~ /^#/);
 			my $line = $_;
 			$line =~ s/\n//;
-			my @ARRAY_tmp = split("\t", $line);
+			my @ARRAY_tmp = split("=", $line);
 			$PATH_kindex_global	= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_global");
 			$PATH_kindex_global .= "/" if($PATH_kindex_global !~ /\/$/);
 			
@@ -508,7 +530,7 @@ sub read_user_config(){
 			next if($_ =~ /^#/);
 			my $line = $_;
 			$line =~ s/\n//;
-			my @ARRAY_tmp = split("\t", $line);
+			my @ARRAY_tmp = split("=", $line);
 			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
 			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
 			
@@ -631,7 +653,7 @@ sub initiate_user(){
 	}else{
 		#SETUP user conf
 		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
-		print $USER_CONF "PATH_kindex_private\t".$ENV{"HOME"}."/KINDEX/";
+		print $USER_CONF "PATH_kindex_private=".$ENV{"HOME"}."/KINDEX/";
 		close $USER_CONF;	
 		
 		#SHOW INFO
@@ -690,6 +712,126 @@ sub check_settings(){
 		print "\n Kmasker was stopped. Multiple modules (build, run or postprocessing were used!\n";
 		exit(0);
 	}	
+}
+
+
+## subroutine
+#
+sub check_install(){
+
+	$user_name 			= `whoami`;
+	$user_name			=~ s/\n//g;
+	my $gconf 			= $path."/kmasker.config";
+	
+	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
+	my $fp			 =  $path."/kmasker.config";
+	my $installed_by = `stat -c "%U" $fp`;
+	$installed_by =~ s/\n//;
+	if($installed_by ne $user_name){
+		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
+		print "I=(".$installed_by.") U=(".$user_name.")\n";
+		exit();	
+	}
+	
+	#REQUIREMENTs
+	my %HASH_requirments	= ("PATH_kindex_global" => $ENV{"HOME"}."/KINDEX/",
+								"jellyfish" => "",
+								"fastq-stats" => "",
+								"gffread" => "");
+			
+	#SET default path if tool is detected
+	foreach my $tool (keys %HASH_requirments){
+		if($HASH_requirments{$tool} eq ""){
+			$HASH_requirments{$tool} = `command -v $tool`;
+			$HASH_requirments{$tool} =~ s/\n//;
+			print "\n DEFAULT (".$tool.")= ".$HASH_requirments{$tool};
+		}
+	}
+	
+	#GLOBAL
+	if(-e $gconf){
+		#LOAD global info
+		my $gCFG_old 	= new IO::File($gconf, "r") or die "\n unable to read user config $!";	
+		my $gCFG 		= new IO::File($gconf.".tmp", "w") or die "\n unable to update user config $!";
+		
+		my %HASH_provided = ();
+		while(<$gCFG_old>){
+			next if($_ =~ /^$/);
+			next if($_ =~ /^#/);
+			my $line = $_;
+			$line =~ s/\n//;
+			my @ARRAY_tmp = split("=", $line);
+			
+			#PATH
+			if($line =~ /^PATH_kindex_global/){
+				if(defined $ARRAY_tmp[1]){
+					$HASH_requirments{"PATH_kindex_global"} = $ARRAY_tmp[1];
+					$HASH_requirments{"PATH_kindex_global"}	.= "/" if($HASH_requirments{"PATH_kindex_global"} !~ /\/$/ );
+				}
+			}
+			
+			$HASH_provided{"jellyfish"} 	= $line if($line =~ /^jellyfish=/);
+			$HASH_provided{"fastq-stats"} 	= $line if($line =~ /^fastq-stats=/);
+			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);			
+		}
+		
+		
+		#CHECK tool requirments
+		#JELLYFISH
+		$HASH_requirments{"jellyfish"} = &check_routine_for_requirement("jellyfish", $HASH_provided{"jellyfish"}, $HASH_requirments{"jellyfish"});
+		
+		#FASTQ-STATs
+		$HASH_requirments{"fastq-stats"} = &check_routine_for_requirement("fastq-stats", $HASH_provided{"fastq-stats"}, $HASH_requirments{"fastq-stats"});
+		
+		#GFFREAD
+		$HASH_requirments{"gffread"} = &check_routine_for_requirement("gffread", $HASH_provided{"gffread"}, $HASH_requirments{"gffread"});
+				
+		#WRITE
+		print $gCFG "#path requirements\n";
+		print $gCFG "PATH_kindex_global=".$HASH_requirments{"PATH_kindex_global"}."\n\n";
+		print $gCFG "#external tool requirements\n";
+		foreach my $required (keys %HASH_requirments){
+			if($required !~ /^PATH_kindex/){
+				system("command -v $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
+				print $gCFG $required."=".$HASH_requirments{$required}."\n";
+				print "\n write ".$required." --> ".$HASH_requirments{$required};
+			}			
+		}
+		
+		if($HASH_requirments{"PATH_kindex_global"} eq $ENV{"HOME"}."/KINDEX/"){					
+			print "\n PATH_kindex_global=".$ENV{"HOME"}."/KINDEX/\n\n";
+			print "\n The global path variable is not defined and was automatically set to your home directory."; 
+			print "\n Its recommended to use another directoty because large data volumes will be produced and stored in that directory.";
+			print "\n Please edit the global path variable for storage of constructed KINDEX by using the following command";
+			print "\n\n  Kmasker --set_global_path /global_path/\n\n"; 
+		}
+		
+		$gCFG_old->close();
+		$gCFG->close();
+		system("mv ".$gconf.".tmp ".$gconf)	
+	}
+}
+
+sub check_routine_for_requirement(){
+	my $requirement = $_[0];
+	my $line 		= $_[1];
+	my $default		= $_[2];
+	
+	if($line =~ /^$requirement=/){
+		my @ARRAY_tmp = split("=", $line);
+		if(defined $ARRAY_tmp[1]){
+			#CHECK if path is correct
+			my $path_given 	= $ARRAY_tmp[1];
+			my $path_check 	= `command -v $path_given`;
+			$path_check		=~ s/\n$//;
+			if($path_check eq ""){
+				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
+			}else{
+				$default = $path_check;
+			}					
+		}
+	}	
+	return $default;
 }
 
 
