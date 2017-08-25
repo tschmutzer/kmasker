@@ -7,6 +7,7 @@ spec=matrix(c(
   'input', 'i', 1, "character",
   'help', 'h', 0, "logical",
   'force', 'f', 0, "logical",
+  'window_size', 'w', 0, "numeric",
   'list', 'l', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
@@ -23,6 +24,12 @@ force=FALSE
 if( !is.null(opt$force)) {
   force=TRUE
 }
+wsize=500
+if( !is.null(opt$window_size)) {
+  wsize=opt$window_size
+}
+
+
 
 #pharse quality-data
 qual_file <- readLines(file(file.path(opt$input), open="r"))
@@ -77,7 +84,7 @@ for (pos in opentags){
       }
     }
     #png(paste(id, ".png", sep=""), width=2048, height=1024)
-    mean10 <- rollmean(occs, 500, align= 'center', fill=0)
+    mean10 <- rollmean(occs, wsize, align= 'center', fill=0)
     positions <- 1:length(occs);
     dataframe <- data.frame(positions, occs, mean10)
     dataframe<-as.data.frame(apply(dataframe, c(1,2), function(x) if(x<1){return(1)}else{return(x)}))
