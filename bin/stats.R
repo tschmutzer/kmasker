@@ -15,6 +15,7 @@ if ( !is.null(opt$help) ) {
   q(status=1);
 }
 options(scipen = 999)
+#https://stat.ethz.ch/pipermail/bioconductor/2008-October/024669.html
 gffRead <- function(gffFile, nrows = -1) {
   cat("Reading ", gffFile, ": ", sep="")
   gff = read.table(gffFile, sep="\t", as.is=TRUE, quote="",
@@ -83,7 +84,7 @@ for (pos in opentags){
       #Our OCC format specification definies 80 characters per line at maximum (but mostly they are about 30 long)
       #This check will be tricked out by a file which is not in the specification
       occs<-as.numeric(unlist(strsplit(qual_file[(pos+1):(next_pos_in_text[1] - 1)], " ")))
-      occsub<-data.frame(Name = id , Start=gff_feature[which(gff_feature[,"seqname"]==id),"start"] , End=gff_feature[which(gff_feature[,"seqname"]==id),"end"], Min = 0, Max=0, Avg=0, "zero_pos"=0, "Q25"=0, "Q50"=0, "Q75"=0)
+      occsub<-data.frame(Name = id, ID=getAttributeField(gff_feature[which(gff_feature[,"seqname"]==id),"attributes"], "ID") ,Start=gff_feature[which(gff_feature[,"seqname"]==id),"start"] , End=gff_feature[which(gff_feature[,"seqname"]==id),"end"], Min = 0, Max=0, Avg=0, "zero_pos"=0, "Q25"=0, "Q50"=0, "Q75"=0)
       for(i in 1:nrow(occsub)){
         occs_temp<-occs[(occsub[i,"Start"]):(occsub[i,"End"])]
         occsub[i,"Min"]=min(occs_temp)
