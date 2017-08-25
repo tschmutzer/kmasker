@@ -209,7 +209,7 @@ sub tab_to_gff {
       chomp($_);
       my @line = split(/\t/, $_);
             my $source = "Kmasker";
-            my $type = "Sequence_Feature";
+            my $type = "Sequence";
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
