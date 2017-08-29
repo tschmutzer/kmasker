@@ -155,6 +155,43 @@ sub extract_sequence_region {
    }
 }
 
+sub extract_feature_gff {
+   my $seqfile = $_[0];
+   my $list = $_[1];
+   my $feature = $_[2];
+   my $offset = 1;
+   open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
+   (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
+   open(my $listfh, "<", "$list") or die "Can not open $list\n";
+   my @start;
+   my @stop;
+   my @ident;
+   while(<$listfh>) {
+      my @line = split(/\t/, $_);
+      if($line[2] eq $feature) {
+         push(@ident, $line[0]);
+         push(@start, ($line[3] - $offset));
+         push(@stop , ($line[4] - $offset));
+      }
+   }
+   my %seqdata;
+   open(my $seql, ">", "$path/selected_$name$suffix") or die "Can not write to $path/selected_$name$suffix\n";
+   my $oldi = 0;
+   while (read_sequence($seqfh, \%seqdata)) {
+      for(my $i = $oldi; $i < scalar(@ident); $i++) {
+         if($seqdata{header} eq $ident[$i]) {
+            print $seql ">" . $seqdata{header} . "_" . $start[$i] . "_" . $stop[$i] . "\n";
+            my $temp = substr($seqdata{seq}, $start[$i], (($stop[$i] - $start[$i]) + 1));
+            print $seql $temp . "\n";
+         }
+         if($seqdata{header} ne $ident[$i]) {
+            $oldi = $i;
+            last;
+         }
+      }
+   }
+}
+
 sub occ_length {
    my $seqfile = $_[0]; #just the filename of the sequence file
    open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
