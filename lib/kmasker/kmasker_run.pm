@@ -60,8 +60,10 @@ sub run_kmasker_SK{
 			$BLASTDB_trep		= $ENV{"HOME"}."/repeats/TREP/trep-db_nr_Rel-16.fasta";
 		}
 		
-		system("cat ".$BLASTDB_redat." ".$BLASTDB_repbase." ".$BLASTDB_trep." >repeats.fasta");
-		my $BLASTDB = "repeats.fasta";
+		if(! -e $ENV{"HOME"}."/repeats/repeats.fasta") {
+			system("cat ".$BLASTDB_redat." ".$BLASTDB_repbase." ".$BLASTDB_trep." >." . $ENV{"HOME"}  . "repeats/repeats.fasta");
+		}
+		my $BLASTDB = $ENV{"HOME"} ."/repeats/repeats.fasta";
 		
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";		
