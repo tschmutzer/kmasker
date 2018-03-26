@@ -378,7 +378,7 @@ if(defined $run){
 		my $FILE_repository_info = "";
 		if(exists $HASH_repository_kindex{$kindex}){
 			my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-			$FILE_repository_info 	= $ARRAY_repository[3]."repository_".$kindex.".info";
+			$FILE_repository_info 	= $ARRAY_repository[4]."repository_".$kindex.".info";
 		}else{
 			print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
 			exit ();
@@ -397,23 +397,21 @@ if(defined $run){
 		for(my $k=0;$k<scalar(@multi_kindex);$k++){
 			my %HASH_info_Kx = %HASH_info;
 			$ARRAY_HASH_info_aref[$k] = \%HASH_info_Kx;
-		my %HASH_info_K2 = %HASH_info;
-		foreach my $kindex_K (@multi_kindex){
+		}
 		
+		foreach my $kindex_K (@multi_kindex){
 			#READ repository.info
 			my $FILE_repository_info = "";
-			if(exists $HASH_repository_kindex{$kindex}){
-				my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-				$FILE_repository_info 	= $ARRAY_repository[3]."repository_".$kindex.".info";
+			if(exists $HASH_repository_kindex{$kindex_K}){
+				my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_K});
+				$FILE_repository_info 	= $ARRAY_repository[4]."repository_".$kindex_K.".info";
 			}else{
 				print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
 				exit ();
-			}
-			
-			
+			}			
 		}
 	
-		&run_kmasker_MK($fasta, \@multi_kindex, @ARRAY_HASH_info_aref, \%HASH_repository_kindex);
+		&run_kmasker_MK($fasta, \@multi_kindex, \@ARRAY_HASH_info_aref, \%HASH_repository_kindex);
 	}
 	
 	#QUIT
@@ -578,49 +576,58 @@ sub read_user_config(){
 #
 sub read_repository(){
 	
+	#PRIVATE
 	opendir( my $DIR_P, $PATH_kindex_private );
 	my $status 				= "";
 	my $common_name_this 	= "";
-	my $kindex_name			= "";
-	my $kindex_path			= "";
-	while ( $kindex_name = readdir $DIR_P ) {
+	my $file_name			= "";
+	my $kmer				= "";
+	while ( $file_name = readdir $DIR_P ) {
 		$status 			= "private";
 		$common_name_this 	= "";		
-		if($kindex_name =~ /^KINDEX_/){
-			my $BUILD_file 	= new IO::File($PATH_kindex_private.$kindex_name."/repository.info", "r") or print " ... could not read repository info for $kindex_name : $!\n";
-			if(-e $PATH_kindex_private.$kindex_name."/repository.info"){;
-				$kindex_path	= $PATH_kindex_private.$kindex_name."/";
-				$kindex_name 	=~ s/KINDEX_//;
+		if($file_name =~ /^repository_/){
+			$file_name =~ s/repository_//;
+			my @ARRAY_name 	= split(/\./, $file_name);
+			my $kindex_id 			= $ARRAY_name[0]; 
+			my $BUILD_file 	= new IO::File($PATH_kindex_private."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
+			if(-e $PATH_kindex_private."/repository_".$kindex_id.".info"){;
 				while(<$BUILD_file>){
 					if($_ =~ /^common_name/){
 						$common_name_this = +(split("\t", $_))[1];
-					}	
+					}					
+					if($_ =~ /^k-mer/){
+						$kmer = +(split("\t", $_))[1];
+					}					
 				}
 				#integrate into HASH
-				$HASH_repository_kindex{$kindex_name} = $kindex_name."\t".$common_name."\t".$status."\t".$kindex_path;
+				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name."\t".$status."\t".$PATH_kindex_private;
 			}
 		}
 	}
 	close $DIR_P;
 	
-
+	#GLOBAL
 	opendir( my $DIR_G, $PATH_kindex_global );
 	$common_name_this = "";
-	while ( $kindex_name = readdir $DIR_G ) {
+	while ( $file_name = readdir $DIR_G ) {
 		$status 			= "global";
 		$common_name_this 	= "";	
-		if($kindex_name =~ /^KINDEX_/){
-			my $BUILD_file 	= new IO::File($PATH_kindex_global.$kindex_name."/repository.info", "r") or print " ... could not read repository info for $kindex_name : $!\n";
-			if(-e $PATH_kindex_global.$kindex_name."/repository.info"){;
-				$kindex_path	= $PATH_kindex_global.$kindex_name."/";
-				$kindex_name =~ s/KINDEX_//;
+		if($file_name =~ /^repository_/){
+			$file_name =~ s/repository_//;
+			my @ARRAY_name 	= split(/\./, $file_name);
+			my $kindex_id 			= $ARRAY_name[0]; 
+			my $BUILD_file 	= new IO::File($PATH_kindex_global."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
+			if(-e $PATH_kindex_global."repository.info"){;
 				while(<$BUILD_file>){
 					if($_ =~ /^common_name/){
 						$common_name_this = +(split("\t", $_))[1];
 					}	
+					if($_ =~ /^k-mer/){
+						$kmer = +(split("\t", $_))[1];
+					}	
 				}
 				#integrate into HASH
-				$HASH_repository_kindex{$kindex_name} = $kindex_name."\t".$common_name."\t".$status."\t".$kindex_path;
+				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name."\t".$status."\t".$PATH_kindex_global;
 			}		
 		}
 	}
@@ -636,7 +643,7 @@ sub show_repository(){
 	#PRINT
 	foreach my $kindex_this (keys %HASH_repository_kindex){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_this});
-		print "\n\t".$kindex_this."\t".$ARRAY_repository[1]."\t".$ARRAY_repository[2];
+		print "\n\t".$kindex_this."\t".$ARRAY_repository[1]."\t".$ARRAY_repository[2]."\t".$ARRAY_repository[3];
 	}
 	print "\n\n";
 }
@@ -647,8 +654,8 @@ sub show_details_for_kindex(){
 	my $kindex = $_[0];
 	if(exists $HASH_repository_kindex{$kindex}){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-		if($ARRAY_repository[3] ne "global"){
-			my $BUILD_file 		= new IO::File($ARRAY_repository[3]."repository.info") or die " ... can not read repository.info file for '$kindex' details : $!\n\n";
+		if($ARRAY_repository[4] ne "global"){
+			my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository.info") or die " ... can not read repository.info file for '$kindex' details : $!\n\n";
 			print "\n\n  KINDEX details for ".$kindex.": \n";
 			while(<$BUILD_file>){
 				print "\t".$_;

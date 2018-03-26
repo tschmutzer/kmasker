@@ -133,12 +133,12 @@ sub run_kmasker_MK{
 	my @ARRAY_kindex 			= @{$aref_mkindex};
 	
 	# GET info from repository
-	my @ARRAY_INFO_Kx		= @{$aref_info_Kx}
-	my %HASH_info_basis		= %{$ARRAY_INFO_Kx[0]};
+	my @ARRAY_INFO_Kx		= @{$aref_info_Kx};
+	my %HASH_info_task		= %{$ARRAY_INFO_Kx[0]};
 		
 	# GET info
-	my $rept 				= $HASH_info_basis{"rept"};
-	my $length_threshold 	= $HASH_info_basis{"min_length"};
+	my $rept 				= $HASH_info_task{"rept"};
+	my $length_threshold 	= $HASH_info_task{"min_length"};
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
 	
@@ -214,8 +214,8 @@ sub run_kmasker_MK{
 	my $tab2 = $occ2;
 	$tab1 =~ s/\.occ$//;
 	$tab2 =~ s/\.occ$//;
-	my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
-	my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
+	my $percent 	= $HASH_info_task{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
+	my $min_seed	= $HASH_info_task{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 	kmasker::filehandler::merge_tab_seeds("temp/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
 	kmasker::filehandler::merge_tab_seeds("temp/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
 	
@@ -223,7 +223,7 @@ sub run_kmasker_MK{
 	print "\n .. start to generate GFF" ;#if(!defined $silent);
 	
 	#PRODUCE GFF
-	my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
+	my $min_gff	= $HASH_info_task{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 	my $feature = "FC_Region";
 	my $subfeature = "Specific_FC_Region";
 	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab1.".tab", $subfeature);
