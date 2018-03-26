@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.26 rc180326";
+my $version_PM_run 	= "0.0.27 rc180326";
 
 ## subroutine
 #
@@ -85,6 +85,7 @@ sub run_kmasker_SK{
             exit();
         }
         mkdir("temp", 0775);
+       
         #make tab from masked fasta
         system ("mv" . " *.occ temp/");
         kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, "temp/"); #just change .fasta to .tab in temp
@@ -92,15 +93,18 @@ sub run_kmasker_SK{
         system( "mv" ." $fasta.length" . " temp/$fasta.length" );
         my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
 		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
+		
 		#merge seeds
 		my $tab = $fasta;
 		$tab =~ s/(\.fasta$)|(\.fa$)//; #add .fa to regex?
 		kmasker::filehandler::merge_tab_seeds("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
+		
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 		my $feature = "KRC";
 		my $subfeature = "KRR";
 		kmasker::filehandler::tab_to_gff("temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", "temp/$fasta.length" ,$min_gff, $feature ,"temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $subfeature);
+		
 		#Add annotation
 		kmasker::functions::add_annotation($fasta, "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", $BLASTDB, "temp/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.gff");
         #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
@@ -122,18 +126,19 @@ sub run_kmasker_MK{
 	# MULTIPLE KINDEX (MK)
 	my $fasta 			= $_[0];
 	my $aref_mkindex	= $_[1];
-	my $href_info		= $_[2];
+	my $aref_info_Kx	= $_[2];
 	my $href_repo 		= $_[3];
 	
 	my %HASH_repository_kindex 	= %{$href_repo};
 	my @ARRAY_kindex 			= @{$aref_mkindex};
 	
 	# GET info from repository
-	my %HASH_info_this 		= %{$href_info};
+	my @ARRAY_INFO_Kx		= @{$aref_info_Kx}
+	my %HASH_info_basis		= %{$ARRAY_INFO_Kx[0]};
 		
 	# GET info
-	my $rept 				= $HASH_info_this{"rept"};
-	my $length_threshold 	= $HASH_info_this{"min_length"};
+	my $rept 				= $HASH_info_basis{"rept"};
+	my $length_threshold 	= $HASH_info_basis{"min_length"};
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
 	
@@ -143,9 +148,11 @@ sub run_kmasker_MK{
 	#USER info
 	my $fold_change = 10;
 	
-	
-	foreach(@ARRAY_kindex){
-   		my $kindex = $_;
+	for(my $k=0;$k<scalar(@ARRAY_kindex);$k++){
+   		my $kindex 				= $ARRAY_kindex[$k];   		
+   		my %HASH_info_this		= %{$ARRAY_INFO_Kx[$k]};
+   		
+   		#READ repository.info   		
 		if(exists $HASH_repository_kindex{$kindex}){		
 			
 			my @ARRAY_repository 	= split("\t", $HASH_repository_kindex{$kindex});
@@ -184,7 +191,8 @@ sub run_kmasker_MK{
 			print "\n .. Kmasker was stopped!\n";
 			print "\n .. The kindex (".$kindex.") you requested is not available in repository!\n\n";
 		}	
-	}
+	} ## close foreach LOOP	
+	
 	mkdir("temp", 0775);
 	kmasker::filehandler::sequence_length($fasta);
     system( "mv" ." $fasta.length" . " temp/$fasta.length" );

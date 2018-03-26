@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.4 rc170823";
+my $version_PM_build 	= "0.0.5 rc180326";
 
 
 sub build_kindex_jelly{	
@@ -40,19 +40,23 @@ sub build_kindex_jelly{
 		%HASH_info = %{$href_this};	
 	}
 	
+	#INFO
+	print "\n .. building kindex for ".$HASH_info{"kindex name"}."\n";
+	
+	
 	#CHECK minimal requirement
 	my $go_interactiv;
 	$go_interactiv = 1 if(!exists $HASH_info{"genome size"}||!exists $HASH_info{"kindex name"}||!exists $HASH_info{"k-mer"}||!exists $HASH_info{"common name"});
 	if(defined $go_interactiv){
 		my $href_info_update = &make_config($HASH_info{"PATH_kindex_private"}, $HASH_info{"PATH_kindex_global"}, \%HASH_info);
 		%HASH_info = %{$href_info_update};
-		$build_config = "repository.info";
+		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
 	
 	#
-	if(!-e "repository.info"){
+	if(!-e "repository_".$HASH_info{"kindex name"}.".info"){
 		&make_minimal_info_config(\%HASH_info);
-		$build_config = "repository.info";
+		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
 	
 	#READ info
@@ -141,8 +145,8 @@ sub update_repository_information{
 	my $href 		= $_[0];
 	my %HASH_info 	= %{$href};
 	
-	my $REPO 		= new IO::File("repository.info", "r") or die "could not read file for repository.info file: $!\n";
-	my $REPO_update = new IO::File("repository.info_update", "w") or die "could not write file for repository.info file: $!\n";
+	my $REPO 		= new IO::File("repository_".$HASH_info{"kindex name"}.".info", "r") or die "could not read file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
+	my $REPO_update = new IO::File("repository_".$HASH_info{"kindex name"}.".info_update", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
 	
 	#1
 	#READ available info from repository.info into HASH_info (ONLY if HASH is empty)
@@ -191,7 +195,7 @@ sub update_repository_information{
 	$REPO->close();
 	$REPO_update->close();
 	
-	system("mv repository.info_update repository.info");	
+	system("mv repository_".$HASH_info{"kindex name"}.".info_update repository_".$HASH_info{"kindex name"}.".info");	
 }
 
 ## subroutine
@@ -202,7 +206,7 @@ sub make_config(){
 	my $PATH_kindex_global	= $_[1];
 	my $href				= $_[2];
 	my %HASH_info			= %{$href};
-	my $USER_kindex_info 	= new IO::File("repository.info", "w") or die "could not write file for repository.info file: $!\n";
+	my $USER_kindex_info 	= new IO::File("repository_".$HASH_info{"kindex name"}.".info", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
 		
 		#Start interactiv mode
 		
@@ -318,7 +322,7 @@ sub make_minimal_info_config(){
 	my $href 				= $_[0];
 	
 	my %HASH_info			= %{$href};
-	my $USER_kindex_info 	= new IO::File("repository.info", "w") or die "could not write file for repository.info file: $!\n";		
+	my $USER_kindex_info 	= new IO::File("repository_".$HASH_info{"kindex name"}.".info", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";		
 	
 	print "\n Creating configuration file\n";		
 	#CREATE configuratio file

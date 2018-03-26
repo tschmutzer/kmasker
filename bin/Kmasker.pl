@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.26 rc180326";
+my $version 	= "0.0.27 rc180326";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -378,8 +378,9 @@ if(defined $run){
 		my $FILE_repository_info = "";
 		if(exists $HASH_repository_kindex{$kindex}){
 			my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-			$FILE_repository_info 	= $ARRAY_repository[3]."repository.info";
+			$FILE_repository_info 	= $ARRAY_repository[3]."repository_".$kindex.".info";
 		}else{
+			print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
 			exit ();
 		}
 	
@@ -391,7 +392,28 @@ if(defined $run){
 
 	}elsif(scalar(@multi_kindex > 1)){
 	#multiple kindex
-		&run_kmasker_MK($fasta, \@multi_kindex, \%HASH_info, \%HASH_repository_kindex);
+	
+		my @ARRAY_HASH_info_aref = ();
+		for(my $k=0;$k<scalar(@multi_kindex);$k++){
+			my %HASH_info_Kx = %HASH_info;
+			$ARRAY_HASH_info_aref[$k] = \%HASH_info_Kx;
+		my %HASH_info_K2 = %HASH_info;
+		foreach my $kindex_K (@multi_kindex){
+		
+			#READ repository.info
+			my $FILE_repository_info = "";
+			if(exists $HASH_repository_kindex{$kindex}){
+				my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
+				$FILE_repository_info 	= $ARRAY_repository[3]."repository_".$kindex.".info";
+			}else{
+				print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
+				exit ();
+			}
+			
+			
+		}
+	
+		&run_kmasker_MK($fasta, \@multi_kindex, @ARRAY_HASH_info_aref, \%HASH_repository_kindex);
 	}
 	
 	#QUIT
