@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.25 rc170818";
+my $version_PM_run 	= "0.0.26 rc180326";
 
 ## subroutine
 #
