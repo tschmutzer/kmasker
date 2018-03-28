@@ -18,7 +18,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.27 rc180326";
+my $version_PM_run 	= "0.0.27 rc180328";
 
 ## subroutine
 #
@@ -41,7 +41,7 @@ sub run_kmasker_SK{
 		my $k					= $HASH_info_this{"k-mer"};		
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-		my $absolut_path		= $ARRAY_repository[3];
+		my $absolut_path		= $ARRAY_repository[4];
 		
 		my $BLASTDB_redat 	= "";
 		my $BLASTDB_repbase = "";
@@ -70,7 +70,7 @@ sub run_kmasker_SK{
 		if(-e $absolut_path."/".$full_kindex_name){
 			system("ln -s ".$absolut_path."/".$full_kindex_name);
 		}else{
-			print "\n WARNING: KINDEX not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
+			print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 			exit();
 		}
 		
@@ -142,23 +142,30 @@ sub run_kmasker_MK{
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
 	
+	print "\n parameter setting: rept = ".$rept;
+	print "\n parameter setting: min_length = ".$length_threshold;
+	print "\n";
+	
 	#ADD info
 	my @ARRAY_occ = ();
 	
 	#USER info
 	my $fold_change = 10;
 	
-	for(my $k=0;$k<scalar(@ARRAY_kindex);$k++){
-   		my $kindex 				= $ARRAY_kindex[$k];   		
-   		my %HASH_info_this		= %{$ARRAY_INFO_Kx[$k]};
-   		
+	for(my $i=0;$i<scalar(@ARRAY_kindex);$i++){
+		
+		my $kindex 				= $ARRAY_kindex[$i];   		
+		my $aref_kindexhash		= $ARRAY_INFO_Kx[$i];
+   		my %HASH_info_this		= %{$aref_kindexhash};
+   		print "\n .. starting multi kindex processing on ".$kindex."\n\n";
+   		   		
    		#READ repository.info   		
 		if(exists $HASH_repository_kindex{$kindex}){		
 			
 			my @ARRAY_repository 	= split("\t", $HASH_repository_kindex{$kindex});
 			my $seq_depth			= $HASH_info_this{"sequencing depth"};
 			my $k					= $HASH_info_this{"k-mer"};	
-			my $absolut_path		= $ARRAY_repository[3];
+			my $absolut_path		= $ARRAY_repository[4];
 				
 			#REPEAT analytics
 			my $BLASTDB				= $ENV{"HOME"}."/repeats/REdat/mipsREdat_9.3p_ALL.fasta";
@@ -183,7 +190,8 @@ sub run_kmasker_MK{
     			system("rm ".$full_kindex_name);
 				
 			}else{
-				print "\n WARNING: KINDEX not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
+				print "\n ... using path ".$absolut_path;
+				print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 				exit();
 			}
 		}else{

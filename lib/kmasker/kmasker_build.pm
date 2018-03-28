@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.5 rc180326";
+my $version_PM_build 	= "0.0.5 rc180327";
 
 
 sub build_kindex_jelly{	
@@ -113,8 +113,9 @@ sub build_kindex_jelly{
 	#STORE constructed kindex and repository.info
 	my $PATH_final = $HASH_info{"PATH_kindex_private"};
 	$PATH_final = $HASH_info{"PATH_kindex_global"} if($HASH_info{"status"} eq "global");
-	$PATH_final = $PATH_final."KINDEX_".$HASH_info{"kindex name"}."/";
-	system("mkdir ".$PATH_final);
+	if(!(-d $PATH_final)){
+		system("mkdir ".$PATH_final);
+	}
 	if(-e $FILE_jelly){
 		system("mv $FILE_jelly ".$PATH_final);
 		system("mv ".$build_config." ".$PATH_final);

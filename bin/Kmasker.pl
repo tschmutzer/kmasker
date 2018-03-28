@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.27 rc180326";
+my $version 	= "0.0.27 rc180328";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -358,8 +358,9 @@ if(defined $run){
 	
 	my %HASH_info 						= ();
 	$HASH_info{"user_name"}				= $user_name;
-	$HASH_info{"kindex name"}			= $index_name;
-	$HASH_info{"rept"}					= $repeat_threshold; 
+	$HASH_info{"kindex name"}			= $kindex;
+	$HASH_info{"rept"}					= $repeat_threshold;
+	$HASH_info{"min_length"}			= $length_threshold; 
 	$HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
 	$HASH_info{"MK_min_seed"}			= $MK_min_seed;
 	$HASH_info{"MK_min_gff"}			= $MK_min_gff;
@@ -394,19 +395,28 @@ if(defined $run){
 	#multiple kindex
 	
 		my @ARRAY_HASH_info_aref = ();
-		for(my $k=0;$k<scalar(@multi_kindex);$k++){
-			my %HASH_info_Kx = %HASH_info;
-			$ARRAY_HASH_info_aref[$k] = \%HASH_info_Kx;
-		}
+#		for(my $k=0;$k<scalar(@multi_kindex);$k++){
+#			my %HASH_info_Kx = %HASH_info;
+#			my $href_info 	= &read_config($FILE_repository_info, \%HASH_info_Kx, \%HASH_repository_kindex, "run");
+#			$ARRAY_HASH_info_aref[$k] = \%HASH_info_Kx;
+#		}
 		
-		foreach my $kindex_K (@multi_kindex){
+		for(my $ki=0;$ki<scalar(@multi_kindex);$ki++){
 			#READ repository.info
+			my $kindex_K = $multi_kindex[$ki];
 			my $FILE_repository_info = "";
 			if(exists $HASH_repository_kindex{$kindex_K}){
-				my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_K});
-				$FILE_repository_info 	= $ARRAY_repository[4]."repository_".$kindex_K.".info";
+				my %HASH_info_Kx 				= %HASH_info;
+				$HASH_info_Kx{"kindex name"}	= $kindex_K;
+				my @ARRAY_repository			= split("\t", $HASH_repository_kindex{$kindex_K});
+				$HASH_info_Kx{"k-mer"}			= $ARRAY_repository[1];
+				$FILE_repository_info 			= $ARRAY_repository[4]."repository_".$kindex_K.".info";				
+				
+				#get all infos for repository
+				my $href_info_Kx 	= &read_config($FILE_repository_info, \%HASH_info_Kx, \%HASH_repository_kindex, "run");
+				$ARRAY_HASH_info_aref[$ki] 		= $href_info_Kx;
 			}else{
-				print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
+				print "\n .. Kmasker was stopped. Info for kindex (".$kindex_K.") does not exists!\n";
 				exit ();
 			}			
 		}
@@ -590,17 +600,19 @@ sub read_repository(){
 			my @ARRAY_name 	= split(/\./, $file_name);
 			my $kindex_id 			= $ARRAY_name[0]; 
 			my $BUILD_file 	= new IO::File($PATH_kindex_private."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
-			if(-e $PATH_kindex_private."/repository_".$kindex_id.".info"){;
+			if(-e $PATH_kindex_private."repository_".$kindex_id.".info"){;
 				while(<$BUILD_file>){
-					if($_ =~ /^common_name/){
+					if($_ =~ /^common name/){
 						$common_name_this = +(split("\t", $_))[1];
+						$common_name_this =~ s/\n//;
 					}					
 					if($_ =~ /^k-mer/){
 						$kmer = +(split("\t", $_))[1];
+						$kmer =~ s/\n//;
 					}					
 				}
 				#integrate into HASH
-				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name."\t".$status."\t".$PATH_kindex_private;
+				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name_this."\t".$status."\t".$PATH_kindex_private;
 			}
 		}
 	}
@@ -619,15 +631,17 @@ sub read_repository(){
 			my $BUILD_file 	= new IO::File($PATH_kindex_global."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
 			if(-e $PATH_kindex_global."repository.info"){;
 				while(<$BUILD_file>){
-					if($_ =~ /^common_name/){
+					if($_ =~ /^common name/){
 						$common_name_this = +(split("\t", $_))[1];
+						$common_name_this =~ s/\n//;
 					}	
 					if($_ =~ /^k-mer/){
 						$kmer = +(split("\t", $_))[1];
+						$kmer =~ s/\n//;
 					}	
 				}
 				#integrate into HASH
-				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name."\t".$status."\t".$PATH_kindex_global;
+				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name_this."\t".$status."\t".$PATH_kindex_global;
 			}		
 		}
 	}
@@ -643,7 +657,12 @@ sub show_repository(){
 	#PRINT
 	foreach my $kindex_this (keys %HASH_repository_kindex){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_this});
-		print "\n\t".$kindex_this."\t".$ARRAY_repository[1]."\t".$ARRAY_repository[2]."\t".$ARRAY_repository[3];
+		#formatted print
+		print "\n\t";
+		printf "%-14s", $kindex_this;				
+		print "\t".$ARRAY_repository[1]."\t";
+		printf "%-14s", $ARRAY_repository[2];
+		print "\t".$ARRAY_repository[3];
 	}
 	print "\n\n";
 }
