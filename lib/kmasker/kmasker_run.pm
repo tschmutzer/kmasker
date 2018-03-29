@@ -67,8 +67,8 @@ sub run_kmasker_SK{
 		
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";		
-		if(-e $absolut_path."/".$full_kindex_name){
-			system("ln -s ".$absolut_path."/".$full_kindex_name);
+		if(-e $absolut_path.$full_kindex_name){
+			system("ln -s ".$absolut_path.$full_kindex_name);
 		}else{
 			print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 			exit();
@@ -174,8 +174,8 @@ sub run_kmasker_MK{
 			my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";
 			push(@ARRAY_full_kindex_names, $full_kindex_name);
 			push(@ARRAY_seq_depth, $seq_depth);
-			if(-e $absolut_path."/".$full_kindex_name){
-				system("ln -s ".$absolut_path."/".$full_kindex_name);
+			if(-e $absolut_path.$full_kindex_name){
+				system("ln -s ".$absolut_path.$full_kindex_name);
 				
 				#PRODUCE OCC
 				system("cmasker -f ".$fasta." -j ".$full_kindex_name." -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex." -s");
