@@ -3,15 +3,13 @@ use Getopt::Long;
 use IO::File;
 use POSIX; 
 
-my $version = "0.0.1";
-
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # author:       Thomas Schmutzer
 # date:         2016_08_10
-# last update:	2016_11_30
+# last update:	2018_03_29
 # institute:    @IPK Gatersleben
-# version:		0.0.02
+my $version = "0.0.3 rc180329";
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 my @ARRAY_occ;
@@ -21,12 +19,14 @@ my $occ_file2;
 my $foldchange = 5;
 my $frame;
 my $foldchange_usr;
+my $header_normal;
 my $help;
 
 GetOptions(	'occ1=s' 	=>	\$occ_file1,
 			'occ2=s' 	=>	\$occ_file2,
 			'fc=s'		=>	\$foldchange_usr,
 			'frame=i'	=>	\$frame,
+			'hn'		=>	\$header_normal,
 			'help' 		=> 	\$help);
 
 #######################
@@ -44,6 +44,8 @@ if(defined $foldchange_usr){
 
 my $loctime = localtime;
 $loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
+
+my $longest_ID = 1;
 
 &read_OCC1();
 &read_OCC2();
@@ -73,7 +75,11 @@ sub read_OCC1(){
 				$occline = "";
 				my @linearray = split(" ", $line);
 				$oid = $linearray[0];
-				$index++;				
+				$index++;	
+				#get length
+				if($longest_ID < length($oid)){
+					$longest_ID = length($oid);
+				}			
 			}else{
 				my @linearray = split(" ", $line);
 				$oid = $linearray[0];
@@ -104,14 +110,57 @@ sub read_OCC2(){
 	
 	my $OUT;
 	if(defined $frame){
-		$OUT = new IO::File("KMASKER_comparitive_analysis_FC".$foldchange."_frame".$frame."_".$loctime.".stats", "w") or die "\n unable to read list $!";	
+		$OUT = new IO::File("KMASKER_comparative_descriptives_FC".$foldchange."_frame".$frame."_".$loctime.".stats", "w") or die "\n unable to read list $!";	
 	}else{
-		$OUT = new IO::File("KMASKER_comparitive_analysis_FC".$foldchange."_".$loctime.".stats", "w") or die "\n unable to read list $!";	
+		$OUT = new IO::File("KMASKER_comparative_descriptives_FC".$foldchange."_".$loctime.".stats", "w") or die "\n unable to read list $!";	
 	} 
 	
-	print $OUT "sid\tlength\tstart\tend\tsum1\tsum2\tavg1\tavg2\t#pos. with ".$foldchange."-fold increase D1\tpositions with ".$foldchange."-fold in D1 [%]";
-	print $OUT "\t".$foldchange."-fold increase D2\tpositions with ".$foldchange."-fold in D2 [%]";
-	print $OUT "\tpositions absent D1\tpositions absent D1 [%]\tpositions absent D2\tpositions absent D2 [%]\n";
+	if(!defined $header_normal){
+		# HEADER format is numeric
+		
+		print $OUT "## KMASKER descriptive statistics of comparative analysis \n";
+		print $OUT "##\n";
+		print $OUT "## INPUT 1:".$occ_file1."\n";
+		print $OUT "## INPUT 2:".$occ_file2."\n";
+		print $OUT "##\n";
+		
+		print $OUT "##\t1\tsid\n";
+		print $OUT "##\t2\tlength\n";
+		print $OUT "##\t3\tstart\n";
+		print $OUT "##\t4\tend\n";
+		print $OUT "##\t5\tsum1\n";
+		print $OUT "##\t6\tsum2\n";
+		print $OUT "##\t7\tavg1\n";
+		print $OUT "##\t8\tavg2\n";
+		print $OUT "##\t9\t#pos. with ".$foldchange."-fold increase D1\n";
+		print $OUT "##\t10\tpositions with ".$foldchange."-fold in D1 [%]\n";
+		print $OUT "##\t11\t".$foldchange."-fold increase D2\n";
+		print $OUT "##\t12\tpositions with ".$foldchange."-fold in D2 [%]\n";
+		print $OUT "##\t13\tpositions absent D1\n";
+		print $OUT "##\t14\tpositions absent D1 [%]\n";
+		print $OUT "##\t15\tpositions absent D2\n";
+		print $OUT "##\t16\tpositions absent D2 [%]\n";		
+		print $OUT "##\n";
+		
+		print $OUT "#";
+		printf $OUT "%-".$longest_ID."s", "1";
+		print $OUT "\t2\t3\t4\t5\t6\t7\t8\t9\t10\t11\t12\t13\t14\t15\t16\n";		
+		
+	}else{
+		# HEADER format is normal
+		
+		print $OUT "## KMASKER descriptive statistics of comparative analysis \n";
+		print $OUT "##\n";
+		print $OUT "## INPUT 1:".$occ_file1."\n";
+		print $OUT "## INPUT 2:".$occ_file2."\n";
+		print $OUT "##\n";
+		
+		print $OUT "#";
+		printf $OUT "%-".$longest_ID."s", "sid";
+		print $OUT "\tlength\tstart\tend\tsum1\tsum2\tavg1\tavg2\t#pos. with ".$foldchange."-fold increase D1\tpositions with ".$foldchange."-fold in D1 [%]";
+		print $OUT "\t".$foldchange."-fold increase D2\tpositions with ".$foldchange."-fold in D2 [%]";
+		print $OUT "\tpositions absent D1\tpositions absent D1 [%]\tpositions absent D2\tpositions absent D2 [%]\n";
+	}	
 	
 	
 	my $OCCin2 	 = new IO::File($occ_file2, "r") or die "\n unable to read list $occ_file2 $!";	
