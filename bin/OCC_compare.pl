@@ -259,9 +259,10 @@ sub compare(){
 	my $ABS1 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D1*100/scalar(@ARRAY_occ1)));
 	my $ABS2 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D2*100/scalar(@ARRAY_occ2)));
 	
-	print $HANDLER $this_oid."\t".scalar(@ARRAY_occ1)."\t1\t".scalar(@ARRAY_occ1)."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/scalar(@ARRAY_occ1)));
-	print $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/scalar(@ARRAY_occ2)));
-	print $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
+	printf $HANDLER "%-".$longest_ID."s", $this_oid;	
+	print  $HANDLER "\t".scalar(@ARRAY_occ1)."\t1\t".scalar(@ARRAY_occ1)."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/scalar(@ARRAY_occ1)));
+	print  $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/scalar(@ARRAY_occ2)));
+	print  $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
 	
 }
 
@@ -295,8 +296,9 @@ sub compare_frames(){
 		if($i==0){
 			#INIT sequence
 			my $default = "-";
-			print $HANDLER $this_oid."\t".scalar(@ARRAY_occ1)."\t1\t".scalar(@ARRAY_occ1)."\t".$default."\t".$default."\t".$default."\t".$default."\t".$default."\t".$default;
-			print $HANDLER "\t".$default."\t".$default."\t".$default."\t".$default."\t".$default."\t".$default."\n";	
+			printf $HANDLER "%-".$longest_ID."s", $this_oid;
+			print  $HANDLER "\t".scalar(@ARRAY_occ1)."\t1\t".scalar(@ARRAY_occ1)."\t".$default."\t".$default."\t".$default."\t".$default."\t".$default."\t".$default;
+			print  $HANDLER "\t".$default."\t".$default."\t".$default."\t".$default."\t".$default."\t".$default."\n";	
 		}
 		
 		if($frame_count == $frame){
@@ -305,9 +307,10 @@ sub compare_frames(){
 			my $AVG2 = sprintf("%.2f", ($SUM2/$frame_count));
 			my $ABS1 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D1*100/$frame_count));
 			my $ABS2 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D2*100/$frame_count));			
-			print $HANDLER $this_oid."\t".$frame_count."\t".$start."\t".$i."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/$frame_count));
-			print $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/$frame_count));
-			print $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
+			printf $HANDLER "%-".$longest_ID."s", $this_oid;	
+			print  $HANDLER "\t".$frame_count."\t".$start."\t".$i."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/$frame_count));
+			print  $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/$frame_count));
+			print  $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
 			
 			#RESET
 			$SUM1 = 0;
@@ -351,10 +354,11 @@ sub compare_frames(){
 	my $AVG1 = sprintf("%.2f", ($SUM1/$frame_count));
 	my $AVG2 = sprintf("%.2f", ($SUM2/$frame_count));
 	my $ABS1 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D1*100/$frame_count));
-	my $ABS2 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D2*100/$frame_count));		
-	print $HANDLER $this_oid."\t".$frame_count."\t".$start."\t".($start+$frame_count-1)."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/$frame_count));
-	print $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/$frame_count));
-	print $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
+	my $ABS2 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D2*100/$frame_count));	
+	printf $HANDLER "%-".$longest_ID."s", $this_oid;		
+	print  $HANDLER "\t".$frame_count."\t".$start."\t".($start+$frame_count-1)."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/$frame_count));
+	print  $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/$frame_count));
+	print  $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
 		
 	
 	
