@@ -793,7 +793,7 @@ sub check_install(){
 	#SET default path if tool is detected
 	foreach my $tool (keys %HASH_requirments){
 		if($HASH_requirments{$tool} eq ""){
-			$HASH_requirments{$tool} = `command -v $tool`;
+			$HASH_requirments{$tool} = `which $tool`;
 			$HASH_requirments{$tool} =~ s/\n//;
 			print "\n DEFAULT (".$tool.")= ".$HASH_requirments{$tool};
 		}
@@ -873,7 +873,7 @@ sub check_routine_for_requirement(){
 		if(defined $ARRAY_tmp[1]){
 			#CHECK if path is correct
 			my $path_given 	= $ARRAY_tmp[1];
-			my $path_check 	= `command -v $path_given`;
+			my $path_check 	= `which $path_given`;
 			$path_check		=~ s/\n$//;
 			if($path_check eq ""){
 				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
