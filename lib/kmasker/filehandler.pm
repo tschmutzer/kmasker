@@ -456,7 +456,7 @@ sub add_annotation_to_gff{
          $blastresults{$line[0]} = \@line;
       }
       else{
-         print "Please run blast with -max_targer_seqs=1. I will skip all entries exept the first one\n";
+         print "Please run blast with -max_targer_seqs=1. I will skip all entries except the first one\n";
       }
    }
    print $gff_out "##gff-version 3\n";

@@ -38,6 +38,7 @@ my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
 #RUN
+my $repeat_lib_path 	= $ENV{"HOME"}."/repeats/";
 my $kindex_usr;
 my $k_usr;
 my $k 					= 21;
@@ -75,6 +76,7 @@ my $expert_setting = "";
 my $set_global;
 my $user_name;
 my $verbose;
+my $temp_path			= "./temp/";
 
 #HASH
 my %HASH_repository_kindex;
@@ -389,7 +391,7 @@ if(defined $run){
 		%HASH_info		= %{$href_info};
 		
 		#START RUN			
-		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
+		&run_kmasker_SK($fasta, $kindex, $repeat_lib_path, $temp_path, \%HASH_info, \%HASH_repository_kindex);
 
 	}elsif(scalar(@multi_kindex > 1)){
 	#multiple kindex
@@ -587,7 +589,7 @@ sub read_user_config(){
 sub read_repository(){
 	
 	#PRIVATE
-	opendir( my $DIR_P, $PATH_kindex_private );
+	opendir( my $DIR_P, $PATH_kindex_private ) or die "Can not open $PATH_kindex_private\n";
 	my $status 				= "";
 	my $common_name_this 	= "";
 	my $file_name			= "";
@@ -619,7 +621,7 @@ sub read_repository(){
 	close $DIR_P;
 	
 	#GLOBAL
-	opendir( my $DIR_G, $PATH_kindex_global );
+	opendir( my $DIR_G, $PATH_kindex_global ) or die "Can not open $PATH_kindex_private\n"; ;
 	$common_name_this = "";
 	while ( $file_name = readdir $DIR_G ) {
 		$status 			= "global";

@@ -1,0 +1,5 @@
+env = Environment()
+cxxflags=''
+cxxflags=cxxflags+'-std=c++0x -Wall -O3'
+env.Append(CXXFLAGS=cxxflags)
+env.Program(target = 'cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'])
