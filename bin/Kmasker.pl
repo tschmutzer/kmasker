@@ -38,6 +38,7 @@ my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
 #RUN
+my $repeat_lib_path 	= $ENV{"HOME"}."/repeats/";
 my $kindex_usr;
 my $k_usr;
 my $k 					= 21;
@@ -75,6 +76,7 @@ my $expert_setting = "";
 my $set_global;
 my $user_name;
 my $verbose;
+my $temp_path			= "./temp/";
 
 #HASH
 my %HASH_repository_kindex;
@@ -389,7 +391,7 @@ if(defined $run){
 		%HASH_info		= %{$href_info};
 		
 		#START RUN			
-		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
+		&run_kmasker_SK($fasta, $kindex, $repeat_lib_path, $temp_path, \%HASH_info, \%HASH_repository_kindex);
 
 	}elsif(scalar(@multi_kindex > 1)){
 	#multiple kindex
@@ -587,7 +589,7 @@ sub read_user_config(){
 sub read_repository(){
 	
 	#PRIVATE
-	opendir( my $DIR_P, $PATH_kindex_private );
+	opendir( my $DIR_P, $PATH_kindex_private ) or die "Can not open $PATH_kindex_private\n";
 	my $status 				= "";
 	my $common_name_this 	= "";
 	my $file_name			= "";
@@ -619,7 +621,7 @@ sub read_repository(){
 	close $DIR_P;
 	
 	#GLOBAL
-	opendir( my $DIR_G, $PATH_kindex_global );
+	opendir( my $DIR_G, $PATH_kindex_global ) or die "Can not open $PATH_kindex_private\n"; ;
 	$common_name_this = "";
 	while ( $file_name = readdir $DIR_G ) {
 		$status 			= "global";
@@ -793,7 +795,7 @@ sub check_install(){
 	#SET default path if tool is detected
 	foreach my $tool (keys %HASH_requirments){
 		if($HASH_requirments{$tool} eq ""){
-			$HASH_requirments{$tool} = `command -v $tool`;
+			$HASH_requirments{$tool} = `which $tool`;
 			$HASH_requirments{$tool} =~ s/\n//;
 			print "\n DEFAULT (".$tool.")= ".$HASH_requirments{$tool};
 		}
@@ -873,7 +875,7 @@ sub check_routine_for_requirement(){
 		if(defined $ARRAY_tmp[1]){
 			#CHECK if path is correct
 			my $path_given 	= $ARRAY_tmp[1];
-			my $path_check 	= `command -v $path_given`;
+			my $path_check 	= `which  $path_given`;
 			$path_check		=~ s/\n$//;
 			if($path_check eq ""){
 				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
