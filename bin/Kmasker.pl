@@ -875,7 +875,7 @@ sub check_routine_for_requirement(){
 		if(defined $ARRAY_tmp[1]){
 			#CHECK if path is correct
 			my $path_given 	= $ARRAY_tmp[1];
-			my $path_check 	= `which  $path_given`;
+			my $path_check 	= `which $path_given`;
 			$path_check		=~ s/\n$//;
 			if($path_check eq ""){
 				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
