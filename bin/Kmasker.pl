@@ -517,12 +517,12 @@ sub read_user_config(){
 			if($line =~ /^jellyfish=/){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
-					system("command -v jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"jellyfish"} = `command -v jellyfish`;
+					system("which jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					$HASH_path{"jellyfish"} = `which jellyfish`;
 					$HASH_path{"jellyfish"} =~ s/\n//;
 				}else{
 					$HASH_path{"jellyfish"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
+					system("which ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n jellyfish=".$HASH_path{"jellyfish"}."\n" if(defined $verbose);
 			}
@@ -531,12 +531,12 @@ sub read_user_config(){
 			if($line =~ /^fastq-stats=/){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
-					system("command -v fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"fastq-stats"} = `command -v fastq-stats`;
+					system("which fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					$HASH_path{"fastq-stats"} = `which fastq-stats`;
 					$HASH_path{"fastq-stats"} =~ s/\n//;
 				}else{
 					$HASH_path{"fastq-stats"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n fastq-stats=".$HASH_path{"fastq-stats"}."\n" if(defined $verbose);
 			}
@@ -545,12 +545,12 @@ sub read_user_config(){
 			if($line =~ /^gffread=/){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
-					system("command -v gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"gffread"} = `command -v gffread`;
+					system("which gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					$HASH_path{"gffread"} = `which gffread`;
 					$HASH_path{"gffread"} =~ s/\n//;
 				}else{
 					$HASH_path{"gffread"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n gffread=".$HASH_path{"gffread"}."\n" if(defined $verbose);
 			}
@@ -845,7 +845,7 @@ sub check_install(){
 		print $gCFG "#external tool requirements\n";
 		foreach my $required (keys %HASH_requirments){
 			if($required !~ /^PATH_kindex/){
-				system("command -v $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
+				system("which $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
 				print $gCFG $required."=".$HASH_requirments{$required}."\n";
 				print "\n write ".$required." --> ".$HASH_requirments{$required};
 			}			
