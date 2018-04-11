@@ -518,7 +518,7 @@ sub read_user_config(){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
 					system("command -v jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"jellyfish"} = `command -v jellyfish`;
+					$HASH_path{"jellyfish"} = `which jellyfish`;
 					$HASH_path{"jellyfish"} =~ s/\n//;
 				}else{
 					$HASH_path{"jellyfish"} = $ARRAY_tmp[1];
@@ -532,7 +532,7 @@ sub read_user_config(){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
 					system("command -v fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"fastq-stats"} = `command -v fastq-stats`;
+					$HASH_path{"fastq-stats"} = `which fastq-stats`;
 					$HASH_path{"fastq-stats"} =~ s/\n//;
 				}else{
 					$HASH_path{"fastq-stats"} = $ARRAY_tmp[1];
@@ -546,7 +546,7 @@ sub read_user_config(){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
 					system("command -v gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"gffread"} = `command -v gffread`;
+					$HASH_path{"gffread"} = `which gffread`;
 					$HASH_path{"gffread"} =~ s/\n//;
 				}else{
 					$HASH_path{"gffread"} = $ARRAY_tmp[1];
@@ -875,7 +875,7 @@ sub check_routine_for_requirement(){
 		if(defined $ARRAY_tmp[1]){
 			#CHECK if path is correct
 			my $path_given 	= $ARRAY_tmp[1];
-			my $path_check 	= `which  $path_given`;
+			my $path_check 	= `which $path_given`;
 			$path_check		=~ s/\n$//;
 			if($path_check eq ""){
 				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
