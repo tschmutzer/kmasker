@@ -55,18 +55,18 @@ sub run_kmasker_SK{
 		
 		#REPEAT analytics -should be done with REdat, RepBase and TREP FASTA
 		if(-e $repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta"){
-			$BLASTDB_redat		= $repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta"; #CHANGEME
+			$BLASTDB_redat		= "\"".$repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta\""; #CHANGEME
 			print "Using REdat: " . $BLASTDB_redat . "\n";
 		}
 		
 		if(-e $repeat_lib_path."/RepBase/RepBase22.07_plants.fasta"){
-			my $BLASTDB_repbase	= $repeat_lib_path."/RepBase/RepBase22.07_plants.fasta"; #CHANGEME
+			my $BLASTDB_repbase	= "\"".$repeat_lib_path."/RepBase/RepBase22.07_plants.fasta\""; #CHANGEME
 			print "Using RepBase: " . $BLASTDB_repbase . "\n";
 
 		}
 		
 		if(-e $repeat_lib_path ."/TREP/trep-db_nr_Rel-16.fasta"){
-			$BLASTDB_trep		= $repeat_lib_path."/TREP/trep-db_nr_Rel-16.fasta"; #CHANGEME
+			$BLASTDB_trep		= "\"".$repeat_lib_path."/TREP/trep-db_nr_Rel-16.fasta\""; #CHANGEME
 			print "Using TREP: " . $BLASTDB_trep . "\n";
 
 		}
@@ -77,7 +77,7 @@ sub run_kmasker_SK{
 		my $BLASTDB = $repeat_lib_path ."/repeats.fasta";
 		if(((! -e $repeat_lib_path."/repeats.fasta.nhr") || (-z $repeat_lib_path."/repeats.fasta.nhr")) || ((! -e $repeat_lib_path."/repeats.fasta.nin") || (-z $repeat_lib_path."/repeats.fasta.nin")) || ((! -e $repeat_lib_path."/repeats.fasta.nsq") || (-z $repeat_lib_path."/repeats.fasta.nsq"))) {
 			print("BLASTDB is missing...rebuilding it!\n");
-			system("makeblastdb -in ".$BLASTDB." -dbtype nucl ");
+			system("makeblastdb -in \"".$BLASTDB."\" -dbtype nucl ");
 			print("BLASTDB was rebuilt.\n");
 		}
 		print "Using BLASTDB: " . $BLASTDB . "\n";
@@ -85,19 +85,19 @@ sub run_kmasker_SK{
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";		
 		if(-e $absolut_path.$full_kindex_name){
-			system("ln -s ".$absolut_path.$full_kindex_name);
+			system("ln -s \"".$absolut_path.$full_kindex_name."\"");
 		}else{
 			print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 			exit();
 		}
 		
 		#start
-		system("$path/cmasker -f ".$fasta." -j ".$full_kindex_name." -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex);
+		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex);
        
        #clean
 		unlink($full_kindex_name);
-        if(!(-e "KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta)) {
-            print "\n .. KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." was not generated!\n";
+        if(!(-e "KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta)) {
+            print "\n .. KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta." was not generated!\n";
             print "\n .. please provide a bug report!\n\n";
             exit();
         }
@@ -105,7 +105,7 @@ sub run_kmasker_SK{
        
         #make tab from masked fasta
         system ("mv" . " *.occ \"$temp_path\"");
-        kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta, $temp_path); #just change .fasta to .tab in temp
+        kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta, $temp_path); #just change .fasta to .tab in temp
         kmasker::filehandler::sequence_length($fasta);
         system( "mv" ." $fasta.length" . " \"$temp_path/$fasta.length\"" );
         my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
@@ -114,21 +114,21 @@ sub run_kmasker_SK{
 		#merge seeds
 		my $tab = $fasta;
 		$tab =~ s/(\.fasta$)|(\.fa$)//; 
-		kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $percent, $min_seed);
+		kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $percent, $min_seed);
 		
 		#PRODUCE GFF
 		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 		my $feature = "KRC";
 		my $subfeature = "KRR";
-		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $subfeature);
+		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $subfeature);
 		
 		#Add annotation
-		kmasker::functions::add_annotation($fasta, "$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", $BLASTDB, "$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.gff", $threads);
+		kmasker::functions::add_annotation($fasta, "$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", $BLASTDB, "$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff", $threads);
         #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
-        kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
+        kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
         #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
         #system("mv" . " temp/Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta . " Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
-        system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged_annotation.gff" . " KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_annotation.gff");
+        system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged_annotation.gff" . " KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_annotation.gff");
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
