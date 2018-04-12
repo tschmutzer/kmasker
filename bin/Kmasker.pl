@@ -567,7 +567,7 @@ sub read_user_config(){
 				#directory exists - do nothing
 			}else{
 				#directory has to be created
-				system("mkdir ".$PATH_kindex_global);
+				system("mkdir "."\"".$PATH_kindex_global."\"");
 			}
 			
 			#READ external tool path
@@ -632,7 +632,7 @@ sub read_user_config(){
 				#directory exists - do nothing
 			}else{
 				#directory has to be created
-				system("mkdir ".$PATH_kindex_private);
+				system("mkdir "."\"".$PATH_kindex_private."\"");
 			}			
 		}
 	}else{
