@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.27 rc180328";
+my $version 	= "0.0.27 rc180412";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -397,11 +397,6 @@ if(defined $run){
 	#multiple kindex
 	
 		my @ARRAY_HASH_info_aref = ();
-#		for(my $k=0;$k<scalar(@multi_kindex);$k++){
-#			my %HASH_info_Kx = %HASH_info;
-#			my $href_info 	= &read_config($FILE_repository_info, \%HASH_info_Kx, \%HASH_repository_kindex, "run");
-#			$ARRAY_HASH_info_aref[$k] = \%HASH_info_Kx;
-#		}
 		
 		for(my $ki=0;$ki<scalar(@multi_kindex);$ki++){
 			#READ repository.info
@@ -675,16 +670,12 @@ sub show_details_for_kindex(){
 	my $kindex = $_[0];
 	if(exists $HASH_repository_kindex{$kindex}){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-		if($ARRAY_repository[4] ne "global"){
-			my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository.info") or die " ... can not read repository.info file for '$kindex' details : $!\n\n";
-			print "\n\n  KINDEX details for ".$kindex.": \n";
-			while(<$BUILD_file>){
-				print "\t".$_;
-			}
-			print "\n\n";
-		}else{
-			 print " ... not permitted to delete the global KINDEX '$kindex' from repository!\n\n";
+		my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository_".$kindex.".info") or die " ... can not read/find repository_".$kindex.".info file in ".$ARRAY_repository[4]." details : $!\n\n";
+		print "\n  KINDEX details for ".$kindex.": \n";
+		while(<$BUILD_file>){
+			print "\t".$_;
 		}
+		print "\n\n";
 		
 	}else{
 		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.\n\n";
