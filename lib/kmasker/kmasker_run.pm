@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.27 rc180329";
+my $version_PM_run 	= "0.0.27 rc180412";
 
 ## subroutine
 #
@@ -43,7 +43,8 @@ sub run_kmasker_SK{
 		my $rept 				= $HASH_info_this{"rept"};
 		my $length_threshold 	= $HASH_info_this{"min_length"};
 		my $seq_depth			= sprintf("%.0f" , $HASH_info_this{"sequencing depth"});
-		my $k					= $HASH_info_this{"k-mer"};		
+		my $k					= $HASH_info_this{"k-mer"};
+		my $threads				= $HASH_info_this{"threads"};
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
 		my $absolut_path		= $ARRAY_repository[4];
@@ -122,7 +123,7 @@ sub run_kmasker_SK{
 		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab.".tab", $subfeature);
 		
 		#Add annotation
-		kmasker::functions::add_annotation($fasta, "$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", $BLASTDB, "$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.gff");
+		kmasker::functions::add_annotation($fasta, "$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.tab", $BLASTDB, "$temp_path/KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$tab."_Regions_merged.gff", $threads);
         #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
         kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
         #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
@@ -253,8 +254,8 @@ sub run_kmasker_MK{
 	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab1.".tab", $subfeature);
 	kmasker::filehandler::tab_to_gff("temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", "temp/$fasta.length", $min_gff, $feature, "temp/KMASKER_comparativ_FC10_".$tab2.".tab", $subfeature);
 	#Annotate GFF
-	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff");
-	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff");
+	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff", $threads);
+	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff", $threads);
     system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab1" . ".gff");
     system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab2" . ".gff");
     #With Annotation

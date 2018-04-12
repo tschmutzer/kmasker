@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.5 rc180327";
+my $version_PM_build 	= "0.0.5 rc180412";
 
 
 sub build_kindex_jelly{	
@@ -65,12 +65,13 @@ sub build_kindex_jelly{
 	my $k				= $HASH_info{"k-mer"};
 	my $short_tag		= $HASH_info{"kindex name"};
 	my $path			= $HASH_info{"path_bin"};
+	my $threads			= $HASH_info{"threads"};
+	my $mem				= $HASH_info{"memory"};
 	
 	
 	#LOAD expert setting for build
 	my $parameter_extern = $HASH_info{"expert setting"};
-	#my $setting = "-s 2G -t 1";	#notebook setting
-	my $setting = "-s 24G -t 10";	#server setting
+	my $setting = "-s ".$mem."G -t ".$threads;	#server setting
 	if($parameter_extern ne ""){
 		$setting = $parameter_extern;
 	}

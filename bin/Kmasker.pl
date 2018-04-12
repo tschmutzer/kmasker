@@ -34,6 +34,8 @@ my $common_name 		= "";
 my $common_name_usr ;
 my $index_name;
 my $index_name_usr;
+my $threads = 4;
+my $mem		= 24;
 my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
@@ -61,6 +63,12 @@ my $repeat_lib			= "REdat";
 my $clist;
 my $occ;
 my $stats;
+my $custom_annotate;
+my $blastableDB;
+my $dbfasta;
+#vis
+my $hist;
+my $volcano;
 
 #GENERAL parameter
 my $help;
@@ -71,7 +79,6 @@ my $set_private_path;
 my $set_global_path;
 my $check_install;
 my $remove_kindex;
-my $plot_hist_frequency;
 my $expert_setting = ""; 
 my $set_global;
 my $user_name;
@@ -110,11 +117,14 @@ my $result = GetOptions (	#MAIN
 #							"tol_length=s"		=> \$tolerant_length_threshold_usr,
 												
 							#POSTPROCESSING
-							"plot_hist"			=> \$plot_hist_frequency,
+							"hist"				=> \$hist,
 							"clist=s"			=> \$clist,
 							"occ=s"				=> \$occ,
 							"stats"				=> \$stats,
-#							"gff"				=> \$gff,
+							"annotate"			=> \$custom_annotate,
+							"gff=s"				=> \$gff,
+							"db=s"				=> \$blastableDB,
+							"dbfasta=s"			=> \$dbfasta,
 #							"repeat_library=s"	=> \$repeat_lib_user,							
 							
 							#GLOBAL
@@ -125,6 +135,8 @@ my $result = GetOptions (	#MAIN
 							"set_private_path=s"=> \$set_private_path,
 							"set_global_path=s"	=> \$set_global_path,
 							"check_install"		=> \$check_install,	
+							"threads=i"			=> \$threads,
+							"mem=i"				=> \$mem,
 							
 							#Houskeeping
 							"expert_setting"	=> \$expert_setting,
@@ -154,6 +166,7 @@ if(defined $help){
 		print "\n --cn \t\t provide common name of species (e.g. barley)";
 #		print "\n --make_config\t creates basic config file ('build_kindex.config') for completion by user";
 		print "\n --config\t configuration file providing information used for construction of kindex";
+		print "\n --mem\t set memory limit in gigabyte [24]";
 		
 		print "\n\n";
 		exit();
@@ -180,11 +193,17 @@ if(defined $help){
 	if(defined $postprocessing){
 		#HELP section postprocessing
 		print "\n Command:";
-		print "\n\t Kmasker --postprocessing --plot_history --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --postprocessing --hist --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --postprocessing --hexviz --occ file.occ --clist list_of_contigs.txt";
 		
 		print "\n\n Options:";
+		print "\n --annotate\t\t use featured elements of GFF to create custom annotation (requires --gff, --fasta, --db or --dbfasta)";
+		print "\n --hex\t\t create a hexamer plot comparing application of multiple k-mer indices on query sequence";
+		print "\n --violin\t\t create violin plot ";
+		print "\n --volcano\t\t create vulcano plot ";
+		print "\n --tertiary\t\t create tertiary plot comparing 3 kindex";
+		print "\n --hist\t\t create histogram (requires --clist and --occ)";
 		print "\n --occ\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --plot_hist\t\t create graphical output as histogram (requires --clist)";
 		print "\n --clist\t\t file containing a list of contig identifier that are used in postprocessing";	
 
 #		print "\n --stats\t\t\t calculate basic statistics like avegare k-mer frequency per contig etc. (requires --occ)";	
@@ -208,6 +227,7 @@ if(defined $help){
 	print "\n --show_details\t\t shows details for a requested kindex";
 	print "\n --remove_kindex\t remove kindex from repository";
 	print "\n --expert_setting\t submit individual parameter to Kmasker (e.g. on memory usage for index construction)";
+	print "\n --threads\t set number of threads [4]";
 	
 	print "\n\n";
 	exit();
@@ -340,6 +360,8 @@ if(defined $build){
 		$HASH_info{"general notes"}			= "";
 		$HASH_info{"type"}					= "";
 		$HASH_info{"sequencing depth"}		= "";
+		$HASH_info{"mem"}			 		= $mem;
+		$HASH_info{"threads"}		 		= $threads;
 		
 		#CONSTRUCT
 		if(defined $input){
@@ -372,6 +394,8 @@ if(defined $run){
 	$HASH_info{"path_bin"}				= $path;
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
+	$HASH_info{"mem"}			 		= $mem;
+	$HASH_info{"threads"}		 		= $threads;
 	
 	
 	if(defined $kindex){
@@ -429,26 +453,65 @@ if(defined $run){
 if(defined $postprocessing){
 	#USE POSTPROCESSING MODULE
 	
-	if(defined $occ){
-	# postprocessing requires an OCC file
+	#ANNOTATION
+	if(defined $custom_annotate){
+		# POSTPROCESSING ANNOTATE by GFF
 		
-		my $missing_parameter = "";
-	
-		if(defined $plot_hist_frequency){
-			if(defined $clist){
-				&plot_histogram($occ, $clist);
-			}else{
-				$missing_parameter .= " --clist";
-			}
-		}		
-		
-		if($missing_parameter ne ""){
-			#GIVE warning note for missing parameter
-			print "\n ERROR: missing parameter (".$missing_parameter.") !\n\n";
+		#START annotation of sequence features, provided in GFF with custome FASTA sequence or blastableDB
+		my $check_settings = 1;
+		$check_settings = 0 if(!defined $gff);
+		$check_settings = 0 if(!defined $fasta);
+		if(defined $dbfasta){
+			#create blastabl_DB
+			#todo
+			
+		}elsif(defined $blastableDB){
+			#check if file is a blastable DB
+			#todo
+			
+		}else{
+			$check_settings = 0;
 		}
 		
-	}else{
-		print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
+		if($check_settings == 1){
+			&post_custom_annotation();
+		}else{
+			print "\n WARNING: Required parameter are missing. Kmasker was stopped.\n\n";
+			exit;
+		}		
+	}
+	
+	
+	my $visualisation;
+	$visualisation = 1 if(defined $hist);
+	$visualisation = 1 if(defined $volcano);
+	## ...
+	
+	#HISTOGRAM
+	if(defined $visualisation){
+		# POSTPROCESSING VIZUALISATIONS
+	
+		if(defined $occ){
+		# postprocessing requires an OCC file
+			
+			my $missing_parameter = "";
+		
+			if(defined $hist){
+				if(defined $clist){
+					&plot_histogram($occ, $clist);
+				}else{
+					$missing_parameter .= " --clist";
+				}
+			}		
+			
+			if($missing_parameter ne ""){
+				#GIVE warning note for missing parameter
+				print "\n ERROR: missing parameter (".$missing_parameter.") !\n\n";
+			}
+			
+		}else{
+			print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
+		}
 	}
 	
 	#QUIT
