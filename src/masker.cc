@@ -38,7 +38,7 @@ namespace err = jellyfish::err;
 using jellyfish::mer_dna;
 using jellyfish::mer_dna_bloom_counter;
 
-int IntDivRoundUp(int n, int d) {
+/*int IntDivRoundUp(int n, int d) {
     // If n and d are the same sign ...
     if ((n < 0) == (d < 0)) {
         // If n (and d) are negative ...
@@ -52,13 +52,14 @@ int IntDivRoundUp(int n, int d) {
     else {
         return n/d;
     }
-} //http://stackoverflow.com/questions/17005364/dividing-two-integers-and-rounding-up-the-result-without-using-floating-pont
+}*/ //http://stackoverflow.com/questions/17005364/dividing-two-integers-and-rounding-up-the-result-without-using-floating-pont
+
 
 typedef jellyfish::whole_sequence_parser<jellyfish::stream_manager<char**> > sequence_parser;
 
 template<typename PathIterator, typename Database>
 void query_from_sequence(PathIterator file_begin, PathIterator file_end, const Database& db,
-                         bool canonical, bool occfile, int rt, int norm, char* prefix, bool fastaflag) {
+                         bool canonical, bool occfile, int rt, double norm, char* prefix, bool fastaflag) {
     jellyfish::stream_manager<PathIterator> streams(file_begin, file_end);
     sequence_parser                         parser(4, 100, 1, streams);
     ofstream occfilestream;
@@ -71,7 +72,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     string filename = file.substr(0, lastindex);
     //cout << dir << "/" << file << "\n";
     if(occfile == true){
-        string occnormoutname = dir + "/KMASKER_" + prefix + "_N" + to_string(norm) + "_" + filename + ".occ";
+        string occnormoutname = dir + "/KMASKER_" + prefix + "_NORM" + "_" + filename + ".occ";
         cout << "Out normalized OCC is: " << occnormoutname << "\n";
         string occoutname = dir + "/KMASKER_" + prefix + "_" + filename + ".occ";
         cout << "Out OCC is: " << occoutname << "\n";
@@ -79,7 +80,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         occnormfilestream.open(occnormoutname);
     }
     if(fastaflag == true) {
-        string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_N" + to_string(norm) + "_" + file;
+        string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_NORM" + "_" + file;
         cout << "Out FASTA is: " << fastaoutname << "\n";
         fastaout.open(fastaoutname);
     }
@@ -132,10 +133,10 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             //std::cout << db.check(mer) << " : " << mer.to_str()<< " : " << mershift;
             mershift = 0; //necessary because mershift is std::string::npos after the above condition
             if(occfile){
-                occnormfilestream << IntDivRoundUp(db.check(mer),norm);
+                occnormfilestream << (int) ceil( (double) db.check(mer)/norm);
                 occfilestream << db.check(mer);
             }
-            if(IntDivRoundUp(db.check(mer),norm) > rt) {
+            if((int) ceil( (double) db.check(mer)/norm) > rt) {
                 if(fastaflag == true) {
                     fastaout << "X";
                 }
@@ -197,10 +198,10 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                     /*std::cout << db.check(mer) << " : " << mer.to_str()<< " : " << mershift;
                     std::cout << "\n";*/
                     if (occfile) {
-                        occnormfilestream << IntDivRoundUp(db.check(mer),norm);
+                        occnormfilestream << (int) ceil( (double) db.check(mer)/norm);
                         occfilestream << db.check(mer);
                     }
-                    if (IntDivRoundUp(db.check(mer),norm) > rt) {
+                    if ((int) ceil( (double) db.check(mer)/norm) > rt) {
                         if(fastaflag == true) {
                             fastaout << "X";
                         }
@@ -274,12 +275,12 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
 int main(int argc, char *argv[])
 {
     bool occflag = false;
-    int norm = 1;
+    double norm = 1.0;
     int rt = 40;
     int opt;
     char* fasta = NULL;
     char* jellydb = NULL;
-    char* prefix = "masked";
+    char* prefix = (char*)"masked";
     int index;
     bool fastaout = true;
     
@@ -307,7 +308,7 @@ int main(int argc, char *argv[])
                 cout << "Jellyfishdb is: " << jellydb << "\n";
                 break;
             case 'n':
-                norm = atoi(optarg);
+                norm = atof(optarg);
                 break;
             case 'r':
                 rt = atoi(optarg);
