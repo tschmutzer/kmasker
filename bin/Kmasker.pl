@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_postprocessing qw(plot_histogram);
 
-my $version 	= "0.0.27 rc180328";
+my $version 	= "0.0.27 rc180412";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $fastq;
@@ -34,6 +34,8 @@ my $common_name 		= "";
 my $common_name_usr ;
 my $index_name;
 my $index_name_usr;
+my $threads = 4;
+my $mem		= 24;
 my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
@@ -61,6 +63,12 @@ my $repeat_lib			= "REdat";
 my $clist;
 my $occ;
 my $stats;
+my $custom_annotate;
+my $blastableDB;
+my $dbfasta;
+#vis
+my $hist;
+my $volcano;
 
 #GENERAL parameter
 my $help;
@@ -71,7 +79,6 @@ my $set_private_path;
 my $set_global_path;
 my $check_install;
 my $remove_kindex;
-my $plot_hist_frequency;
 my $expert_setting = ""; 
 my $set_global;
 my $user_name;
@@ -110,11 +117,14 @@ my $result = GetOptions (	#MAIN
 #							"tol_length=s"		=> \$tolerant_length_threshold_usr,
 												
 							#POSTPROCESSING
-							"plot_hist"			=> \$plot_hist_frequency,
+							"hist"				=> \$hist,
 							"clist=s"			=> \$clist,
 							"occ=s"				=> \$occ,
 							"stats"				=> \$stats,
-#							"gff"				=> \$gff,
+							"annotate"			=> \$custom_annotate,
+							"gff=s"				=> \$gff,
+							"db=s"				=> \$blastableDB,
+							"dbfasta=s"			=> \$dbfasta,
 #							"repeat_library=s"	=> \$repeat_lib_user,							
 							
 							#GLOBAL
@@ -125,6 +135,8 @@ my $result = GetOptions (	#MAIN
 							"set_private_path=s"=> \$set_private_path,
 							"set_global_path=s"	=> \$set_global_path,
 							"check_install"		=> \$check_install,	
+							"threads=i"			=> \$threads,
+							"mem=i"				=> \$mem,
 							
 							#Houskeeping
 							"expert_setting"	=> \$expert_setting,
@@ -154,6 +166,7 @@ if(defined $help){
 		print "\n --cn \t\t provide common name of species (e.g. barley)";
 #		print "\n --make_config\t creates basic config file ('build_kindex.config') for completion by user";
 		print "\n --config\t configuration file providing information used for construction of kindex";
+		print "\n --mem\t set memory limit in gigabyte [24]";
 		
 		print "\n\n";
 		exit();
@@ -180,11 +193,17 @@ if(defined $help){
 	if(defined $postprocessing){
 		#HELP section postprocessing
 		print "\n Command:";
-		print "\n\t Kmasker --postprocessing --plot_history --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --postprocessing --hist --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --postprocessing --hexviz --occ file.occ --clist list_of_contigs.txt";
 		
 		print "\n\n Options:";
+		print "\n --annotate\t\t use featured elements of GFF to create custom annotation (requires --gff, --fasta, --db or --dbfasta)";
+		print "\n --hex\t\t create a hexamer plot comparing application of multiple k-mer indices on query sequence";
+		print "\n --violin\t\t create violin plot ";
+		print "\n --volcano\t\t create vulcano plot ";
+		print "\n --tertiary\t\t create tertiary plot comparing 3 kindex";
+		print "\n --hist\t\t create histogram (requires --clist and --occ)";
 		print "\n --occ\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --plot_hist\t\t create graphical output as histogram (requires --clist)";
 		print "\n --clist\t\t file containing a list of contig identifier that are used in postprocessing";	
 
 #		print "\n --stats\t\t\t calculate basic statistics like avegare k-mer frequency per contig etc. (requires --occ)";	
@@ -208,6 +227,7 @@ if(defined $help){
 	print "\n --show_details\t\t shows details for a requested kindex";
 	print "\n --remove_kindex\t remove kindex from repository";
 	print "\n --expert_setting\t submit individual parameter to Kmasker (e.g. on memory usage for index construction)";
+	print "\n --threads\t set number of threads [4]";
 	
 	print "\n\n";
 	exit();
@@ -340,6 +360,10 @@ if(defined $build){
 		$HASH_info{"general notes"}			= "";
 		$HASH_info{"type"}					= "";
 		$HASH_info{"sequencing depth"}		= "";
+		#$HASH_info{"mem"}			 		= $mem;
+		#$HASH_info{"threads"}		 		= $threads;
+		$HASH_info{"temp_path"}				= $temp_path;
+		#$HASH_info{"repeat_lib_path"}		= $repeat_lib_path;
 		
 		#CONSTRUCT
 		if(defined $input){
@@ -372,7 +396,9 @@ if(defined $run){
 	$HASH_info{"path_bin"}				= $path;
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
-	
+	#$HASH_info{"mem"}			 		= $mem;
+	#$HASH_info{"threads"}		 		= $threads;
+	$HASH_info{"temp_path"}				= $temp_path;
 	
 	if(defined $kindex){
 	#single kindex		
@@ -391,17 +417,12 @@ if(defined $run){
 		%HASH_info		= %{$href_info};
 		
 		#START RUN			
-		&run_kmasker_SK($fasta, $kindex, $repeat_lib_path, $temp_path, \%HASH_info, \%HASH_repository_kindex);
+		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
 
 	}elsif(scalar(@multi_kindex > 1)){
 	#multiple kindex
 	
 		my @ARRAY_HASH_info_aref = ();
-#		for(my $k=0;$k<scalar(@multi_kindex);$k++){
-#			my %HASH_info_Kx = %HASH_info;
-#			my $href_info 	= &read_config($FILE_repository_info, \%HASH_info_Kx, \%HASH_repository_kindex, "run");
-#			$ARRAY_HASH_info_aref[$k] = \%HASH_info_Kx;
-#		}
 		
 		for(my $ki=0;$ki<scalar(@multi_kindex);$ki++){
 			#READ repository.info
@@ -434,26 +455,65 @@ if(defined $run){
 if(defined $postprocessing){
 	#USE POSTPROCESSING MODULE
 	
-	if(defined $occ){
-	# postprocessing requires an OCC file
+	#ANNOTATION
+	if(defined $custom_annotate){
+		# POSTPROCESSING ANNOTATE by GFF
 		
-		my $missing_parameter = "";
-	
-		if(defined $plot_hist_frequency){
-			if(defined $clist){
-				&plot_histogram($occ, $clist);
-			}else{
-				$missing_parameter .= " --clist";
-			}
-		}		
-		
-		if($missing_parameter ne ""){
-			#GIVE warning note for missing parameter
-			print "\n ERROR: missing parameter (".$missing_parameter.") !\n\n";
+		#START annotation of sequence features, provided in GFF with custome FASTA sequence or blastableDB
+		my $check_settings = 1;
+		$check_settings = 0 if(!defined $gff);
+		$check_settings = 0 if(!defined $fasta);
+		if(defined $dbfasta){
+			#create blastabl_DB
+			#todo
+			
+		}elsif(defined $blastableDB){
+			#check if file is a blastable DB
+			#todo
+			
+		}else{
+			$check_settings = 0;
 		}
 		
-	}else{
-		print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
+		if($check_settings == 1){
+			&post_custom_annotation();
+		}else{
+			print "\n WARNING: Required parameter are missing. Kmasker was stopped.\n\n";
+			exit;
+		}		
+	}
+	
+	
+	my $visualisation;
+	$visualisation = 1 if(defined $hist);
+	$visualisation = 1 if(defined $volcano);
+	## ...
+	
+	#HISTOGRAM
+	if(defined $visualisation){
+		# POSTPROCESSING VIZUALISATIONS
+	
+		if(defined $occ){
+		# postprocessing requires an OCC file
+			
+			my $missing_parameter = "";
+		
+			if(defined $hist){
+				if(defined $clist){
+					&plot_histogram($occ, $clist);
+				}else{
+					$missing_parameter .= " --clist";
+				}
+			}		
+			
+			if($missing_parameter ne ""){
+				#GIVE warning note for missing parameter
+				print "\n ERROR: missing parameter (".$missing_parameter.") !\n\n";
+			}
+			
+		}else{
+			print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
+		}
 	}
 	
 	#QUIT
@@ -509,7 +569,7 @@ sub read_user_config(){
 				#directory exists - do nothing
 			}else{
 				#directory has to be created
-				system("mkdir ".$PATH_kindex_global);
+				system("mkdir "."\"".$PATH_kindex_global."\"");
 			}
 			
 			#READ external tool path
@@ -517,12 +577,12 @@ sub read_user_config(){
 			if($line =~ /^jellyfish=/){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
-					system("command -v jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 					$HASH_path{"jellyfish"} = `which jellyfish`;
 					$HASH_path{"jellyfish"} =~ s/\n//;
 				}else{
 					$HASH_path{"jellyfish"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
+					system("which ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n jellyfish=".$HASH_path{"jellyfish"}."\n" if(defined $verbose);
 			}
@@ -531,12 +591,12 @@ sub read_user_config(){
 			if($line =~ /^fastq-stats=/){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
-					system("command -v fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 					$HASH_path{"fastq-stats"} = `which fastq-stats`;
 					$HASH_path{"fastq-stats"} =~ s/\n//;
 				}else{
 					$HASH_path{"fastq-stats"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n fastq-stats=".$HASH_path{"fastq-stats"}."\n" if(defined $verbose);
 			}
@@ -545,12 +605,12 @@ sub read_user_config(){
 			if($line =~ /^gffread=/){
 				my @ARRAY_tmp = split("=", $line);
 				if(!defined $ARRAY_tmp[1]){
-					system("command -v gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 					$HASH_path{"gffread"} = `which gffread`;
 					$HASH_path{"gffread"} =~ s/\n//;
 				}else{
 					$HASH_path{"gffread"} = $ARRAY_tmp[1];
-					system("command -v ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+					system("which ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n gffread=".$HASH_path{"gffread"}."\n" if(defined $verbose);
 			}
@@ -574,7 +634,7 @@ sub read_user_config(){
 				#directory exists - do nothing
 			}else{
 				#directory has to be created
-				system("mkdir ".$PATH_kindex_private);
+				system("mkdir "."\"".$PATH_kindex_private."\"");
 			}			
 		}
 	}else{
@@ -675,16 +735,12 @@ sub show_details_for_kindex(){
 	my $kindex = $_[0];
 	if(exists $HASH_repository_kindex{$kindex}){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-		if($ARRAY_repository[4] ne "global"){
-			my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository.info") or die " ... can not read repository.info file for '$kindex' details : $!\n\n";
-			print "\n\n  KINDEX details for ".$kindex.": \n";
-			while(<$BUILD_file>){
-				print "\t".$_;
-			}
-			print "\n\n";
-		}else{
-			 print " ... not permitted to delete the global KINDEX '$kindex' from repository!\n\n";
+		my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository_".$kindex.".info") or die " ... can not read/find repository_".$kindex.".info file in ".$ARRAY_repository[4]." details : $!\n\n";
+		print "\n  KINDEX details for ".$kindex.": \n";
+		while(<$BUILD_file>){
+			print "\t".$_;
 		}
+		print "\n\n";
 		
 	}else{
 		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.\n\n";
@@ -845,7 +901,7 @@ sub check_install(){
 		print $gCFG "#external tool requirements\n";
 		foreach my $required (keys %HASH_requirments){
 			if($required !~ /^PATH_kindex/){
-				system("command -v $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
+				system("which $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
 				print $gCFG $required."=".$HASH_requirments{$required}."\n";
 				print "\n write ".$required." --> ".$HASH_requirments{$required};
 			}			

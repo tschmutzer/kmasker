@@ -427,10 +427,10 @@ sub merge_tab_seeds{ #check chomping !
       #print $i . "\n";
    }
    #seperate output for the last element
-   #if($start[$old_end] != $end[$old_end]) {
+   if($length > 0) {
       #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
       print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
-   #}
+   }
    #foreach (@output) {
     #  print $out "$_";
    #}
