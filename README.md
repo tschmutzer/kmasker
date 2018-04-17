@@ -67,7 +67,7 @@ Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
 
 The explore module provides additional functionality for downstream analysisi e.g. vizualisations or annotation. 
 
-## [EXPLORE - ANNOTATION]
+#### [EXPLORE - ANNOTATION]
 
 Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --dbfasta mipsREdat_9.3p_ALL.fasta
 
@@ -80,7 +80,7 @@ TREP:
 http://botserv2.uzh.ch/kelldata/trep-db/
 
 
-## [EXPLORE - VISUALISATION]
+#### [EXPLORE - VISUALISATION]
 
 
 HEXPLOT
