@@ -1,7 +1,7 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.23 rc170504)
+ (version:  0.0.24 rc180417)
 
 ## Description:
 
@@ -13,7 +13,7 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
  
  --run                   run k-mer repeat detection and masking (requires --fasta)
  
- --postprocessing        perform downstream analysis with constructed index and detected repeats
+ --explore               perform downstream analysis with constructed index and detected repeats
  
 
 ### General options:
@@ -39,6 +39,8 @@ Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 Kmasker --run --fasta query.fasta --kindex At1
 
+Kmasker --explore --hexplot --multi_kindex At1 Hv1
+
 Kmasker --show_repository
 
 Kmasker --show_details At1
@@ -55,11 +57,41 @@ The run module starts the core process of Kmasker. There are two general options
 
 SINGLE
 
+Kmasker --run --fasta query.fasta --kindex At1
+
 MULTIPLE
 
+Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
 
-### [POSTPROCESSING]:
+### [EXPLORE]:
 
-The postprocessing module provides additional analysis that can be performed using the constructed KINDEX structures e.g. vizualisations.
+The explore module provides additional functionality for downstream analysisi e.g. vizualisations or annotation. 
+
+ANNOTATION
+
+Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --dbfasta mipsREdat_9.3p_ALL.fasta
+
+For repeat studies in plant species we recommend using curated libraries:
+
+PGSB-REdat
+Link: http://pgsb.helmholtz-muenchen.de/plant/recat/
+
+TREP:
+http://botserv2.uzh.ch/kelldata/trep-db/
+
+
+VISUALISATION
+
+HEXPLOT
+
+Kmasker --explore --hexplot --multi_kindex At1 Hv1
+
+This visualisation is can be used for comparitve inspection of 2(!) k-mer index structures (e.g. to study two species by comparing the correpsonding WGS data).
+
+TRIPLOT
+
+Kmasker --explore --triplot --multi_kindex At1 Hv1 Sc1
+
+This visualisation is comparing 3(!) k-mer index structures in a triangular plot using the R package ('ggtern' [LINK]). It provides a broader perspective which k-mers are shared with equal (centered) or different (outer regions) abundances throuout the investigated datasets (e.g. three different species).
 
 
