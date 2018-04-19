@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.27 rc180412";
+my $version_PM_run 	= "0.0.28 rc180419";
 
 ## subroutine
 #
@@ -43,48 +43,21 @@ sub run_kmasker_SK{
 		my $seq_depth			= sprintf("%.0f" , $HASH_info_this{"sequencing depth"});
 		my $k					= $HASH_info_this{"k-mer"};
 		my $threads				= $HASH_info_this{"threads"};
-		my $temp_path       = $HASH_info_this{"temp_path"};
-		#my $repeat_lib_path = $HASH_info_this{"repeat_lib_path"};
+		my $temp_path       	= $HASH_info_this{"temp_path"};
+		my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
+		my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
+		my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
 		my $absolut_path		= $ARRAY_repository[4];
 
-		print "\n parameter setting: rept = ".$rept;
+		print "\n parameter setting: rept       = ".$rept;
 		print "\n parameter setting: min_length = ".$length_threshold;
+		print "\n parameter setting: minseed    = ".$min_seed;
+		print "\n parameter setting: pctgap     = ".$percent;
+		print "\n parameter setting: mingff     = ".$min_gff;
 		print "\n temp path: $temp_path";
 		print "\n\n";
-		# my $BLASTDB_redat 	= "";
-		# my $BLASTDB_repbase = "";
-		# my $BLASTDB_trep	= "";
-		
-		# #REPEAT analytics -should be done with REdat, RepBase and TREP FASTA
-		# if(-e $repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta"){
-		# 	$BLASTDB_redat		= "\"".$repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta\""; #CHANGEME
-		# 	print "Using REdat: " . $BLASTDB_redat . "\n";
-		# }
-		
-		# if(-e $repeat_lib_path."/RepBase/RepBase22.07_plants.fasta"){
-		# 	my $BLASTDB_repbase	= "\"".$repeat_lib_path."/RepBase/RepBase22.07_plants.fasta\""; #CHANGEME
-		# 	print "Using RepBase: " . $BLASTDB_repbase . "\n";
-
-		# }
-		
-		# if(-e $repeat_lib_path ."/TREP/trep-db_nr_Rel-16.fasta"){
-		# 	$BLASTDB_trep		= "\"".$repeat_lib_path."/TREP/trep-db_nr_Rel-16.fasta\""; #CHANGEME
-		# 	print "Using TREP: " . $BLASTDB_trep . "\n";
-
-		# }
-		
-		# if((! -e $repeat_lib_path."/repeats.fasta") || (-z $repeat_lib_path."/repeats.fasta")) {
-		# 	system("cat ".$BLASTDB_redat." ".$BLASTDB_repbase." ".$BLASTDB_trep." > " .$repeat_lib_path  . "/repeats.fasta");
-		# }
-		# my $BLASTDB = $repeat_lib_path ."/repeats.fasta";
-		# if(((! -e $repeat_lib_path."/repeats.fasta.nhr") || (-z $repeat_lib_path."/repeats.fasta.nhr")) || ((! -e $repeat_lib_path."/repeats.fasta.nin") || (-z $repeat_lib_path."/repeats.fasta.nin")) || ((! -e $repeat_lib_path."/repeats.fasta.nsq") || (-z $repeat_lib_path."/repeats.fasta.nsq"))) {
-		# 	print("BLASTDB is missing...rebuilding it!\n");
-		# 	system("makeblastdb -in \"".$BLASTDB."\" -dbtype nucl ");
-		# 	print("BLASTDB was rebuilt.\n");
-		# }
-		# print "Using BLASTDB: " . $BLASTDB . "\n";
 
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";		
@@ -113,8 +86,7 @@ sub run_kmasker_SK{
         kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta, $temp_path); #just change .fasta to .tab in temp
         kmasker::filehandler::sequence_length($fasta);
         system( "mv" ." $fasta.length" . " \"$temp_path/$fasta.length\"" );
-        my $percent 	= $HASH_info_this{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
-		my $min_seed	= $HASH_info_this{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
+        
 		
 		#merge seeds
 		print "\n .. start to generate extended region" ;#if(!defined $silent);
@@ -124,13 +96,12 @@ sub run_kmasker_SK{
 		
 		#PRODUCE GFF
 		print "\n .. start to generate GFF" ;#if(!defined $silent);
-		my $min_gff	= $HASH_info_this{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 		my $feature = "KRC";
 		my $subfeature = "KRR";
 		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $subfeature);
 		
 		#Add annotation
-		#moved to postprocessing!
+		# TASK: Move to explore!
 		#kmasker::functions::add_annotation($fasta, "$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", $BLASTDB, "$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff", $threads);
         #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
         kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
@@ -168,12 +139,18 @@ sub run_kmasker_MK{
 	# GET info
 	my $rept 				= $HASH_info_task{"rept"};
 	my $length_threshold 	= $HASH_info_task{"min_length"};
+	my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
+	my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
+	my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
 	my $temp_path       	= $HASH_info_task{"temp_path"};
 	
-	print "\n parameter setting: rept = ".$rept;
+	print "\n parameter setting: rept       = ".$rept;
 	print "\n parameter setting: min_length = ".$length_threshold;
+	print "\n parameter setting: minseed    = ".$min_seed;
+	print "\n parameter setting: pctgap     = ".$percent;
+	print "\n parameter setting: mingff     = ".$min_gff;
 	print "\n temp path: $temp_path";
 	print "\n";
 	
@@ -190,9 +167,8 @@ sub run_kmasker_MK{
    		my %HASH_info_this		= %{$aref_kindexhash};
    		my $seq_depth			= $HASH_info_this{"sequencing depth"};
 		my $k					= $HASH_info_this{"k-mer"};	
-		#my $threads				= $HASH_info_this{"threads"};
-		# my $repeat_lib_path 	= $HASH_info_this{"repeat_lib_path"};
-   		print "\n .. starting multi kindex processing on ".$kindex."\n\n";
+		my $threads				= $HASH_info_this{"threads"};
+		print "\n .. starting multi kindex processing on ".$kindex."\n\n";
    		   		
    		#READ repository.info   		
 		if(exists $HASH_repository_kindex{$kindex}){		
@@ -288,8 +264,6 @@ sub run_kmasker_MK{
 	my $tab2 = $occ2;
 	$tab1 =~ s/\.occ$//;
 	$tab2 =~ s/\.occ$//;
-	my $percent 	= $HASH_info_task{"MK_percent_gapsize"}; 	#10%	#FIXME: That parameter has to come from user
-	my $min_seed	= $HASH_info_task{"MK_min_seed"};			#5 bp	#FIXME: That parameter has to come from user
 	kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
 	kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
 	
@@ -297,12 +271,11 @@ sub run_kmasker_MK{
 	print "\n .. start to generate GFF" ;#if(!defined $silent);
 	
 	#PRODUCE GFF
-	my $min_gff	= $HASH_info_task{"MK_min_gff"}; 				#10 bp	#FIXME: # 10 bp minimal length to be reported in GFF
 	my $feature = "KRC";
 	my $subfeature = "KRR";
 	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC10_".$tab1.".tab", $subfeature);
 	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC10_".$tab2.".tab", $subfeature);
-	#Annotate GFF --> moved to postprocessing
+	#Annotate GFF --> moved to explore
 	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff", $threads);
 	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff", $threads);
     system("cp" . " $temp_path/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab1" . ".gff");

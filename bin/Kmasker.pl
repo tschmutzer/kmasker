@@ -7,24 +7,22 @@ use Digest::MD5 qw(md5 md5_hex md5_base64);
 #setup package directory
 use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
-use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
-use kmasker::kmasker_postprocessing qw(plot_histogram);
+use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.27 rc180412";
+my $version 	= "0.0.28 rc180419";
 my $path 		= dirname abs_path $0;		
 my $fasta;
-my $fastq;
 my $indexfile;
 
 #MODULES
 #BUILD
 my $build;
 my $run;
-my $postprocessing;
+my $explore;
 my $repositories;
 my $build_config;
 my $make_config;
@@ -34,13 +32,14 @@ my $common_name 		= "";
 my $common_name_usr ;
 my $index_name;
 my $index_name_usr;
+my $threads_usr;
 my $threads = 4;
+my $mem_usr;
 my $mem		= 24;
 my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
 
 #RUN
-my $repeat_lib_path 	= $ENV{"HOME"}."/repeats/";
 my $kindex_usr;
 my $k_usr;
 my $k 					= 21;
@@ -52,23 +51,24 @@ my $repeat_threshold	= 5;
 my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
-my $MK_percent_gapsize	= 10;	#default	FIXME
-my $MK_min_seed			= 5;	#default	FIXME
-my $MK_min_gff			= 10;   #default	FIXME
+# set the following parameter using expert_setting_kmasker
+my $MK_percent_gapsize	= 10;	#Default	MK_percent_gapsize (N) is the paramater allowing N percent of a region to be not repeatitive when merging regions. Used in SK and MK.
+my $MK_min_seed			= 5;	#Default	MK_min_seed (N) is the minimal length (bp) of a featuere to start in the process of merging regions for GFF
+my $MK_min_gff			= 10;   #Default	MK_min_gff (N) is the minimal length (bp) of a featue to be reported in GFF
 
-#Postprocessing
+#EXPLORE
 my $gff;
-my $repeat_lib_user;
-my $repeat_lib			= "REdat";
 my $clist;
 my $occ;
 my $stats;
 my $custom_annotate;
 my $blastableDB;
 my $dbfasta;
-#vis
+#visualisation
 my $hist;
-my $volcano;
+my $violin;
+my $hexplot;
+my $triplot;
 
 #GENERAL parameter
 my $help;
@@ -79,7 +79,8 @@ my $set_private_path;
 my $set_global_path;
 my $check_install;
 my $remove_kindex;
-my $expert_setting = ""; 
+my $expert_setting_kmasker 	= "",
+my $expert_setting_jelly 	= ""; 
 my $set_global;
 my $user_name;
 my $verbose;
@@ -96,7 +97,7 @@ my @multi_kindex;
 my $result = GetOptions (	#MAIN
 							"build"				=> \$build,
 							"run"				=> \$run,
-							"postprocessing"	=> \$postprocessing,
+							"explore"			=> \$explore,
 							
 							#BUILD
 							"seq=s{1,}"   		=> \@seq_usr,  			# provide the fasta or fastqfile
@@ -115,17 +116,22 @@ my $result = GetOptions (	#MAIN
 							"rept=s"			=> \$repeat_threshod_usr,
 							"min_length=s"		=> \$length_threshold_usr,
 #							"tol_length=s"		=> \$tolerant_length_threshold_usr,
+
+								
 												
-							#POSTPROCESSING
-							"hist"				=> \$hist,
-							"clist=s"			=> \$clist,
-							"occ=s"				=> \$occ,
-							"stats"				=> \$stats,
+							#EXPLORE
 							"annotate"			=> \$custom_annotate,
 							"gff=s"				=> \$gff,
 							"db=s"				=> \$blastableDB,
-							"dbfasta=s"			=> \$dbfasta,
-#							"repeat_library=s"	=> \$repeat_lib_user,							
+							"dbfasta=s"			=> \$dbfasta,		
+							"hexplot"			=> \$hexplot,
+							"hist"				=> \$hist,
+							"violin"			=> \$violin,
+							"triplot"			=> \$triplot,
+							"clist=s"			=> \$clist,
+							"occ=s"				=> \$occ,
+							"stats"				=> \$stats,
+							
 							
 							#GLOBAL
 							"show_repository"	=> \$show_kindex_repository,
@@ -135,14 +141,15 @@ my $result = GetOptions (	#MAIN
 							"set_private_path=s"=> \$set_private_path,
 							"set_global_path=s"	=> \$set_global_path,
 							"check_install"		=> \$check_install,	
-							"threads=i"			=> \$threads,
-							"mem=i"				=> \$mem,
+							"threads=i"			=> \$threads_usr,
+							"mem=i"				=> \$mem_usr,
 							
 							#Houskeeping
-							"expert_setting"	=> \$expert_setting,
-							"keep_tmp"			=> \$keep_temporary_files,
-							"verbose"			=> \$verbose,
-							"help"				=> \$help										
+							"expert_setting_jelly"	=> \$expert_setting_jelly,
+							"expert_setting_kmasker"=> \$expert_setting_kmasker,
+							"keep_tmp"				=> \$keep_temporary_files,
+							"verbose"				=> \$verbose,
+							"help"					=> \$help										
 						);
 						
 
@@ -164,7 +171,6 @@ if(defined $help){
 		print "\n --gs\t\t genome size of species (in Mbp)";
 		print "\n --in \t\t provide k-mer index name (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
 		print "\n --cn \t\t provide common name of species (e.g. barley)";
-#		print "\n --make_config\t creates basic config file ('build_kindex.config') for completion by user";
 		print "\n --config\t configuration file providing information used for construction of kindex";
 		print "\n --mem\t set memory limit in gigabyte [24]";
 		
@@ -190,25 +196,27 @@ if(defined $help){
 		exit();
 	}
 	
-	if(defined $postprocessing){
-		#HELP section postprocessing
-		print "\n Command:";
-		print "\n\n\t Kmasker --postprocessing --hist --occ file.occ --clist list_of_contigs.txt";
-		print "\n\n\t Kmasker --postprocessing --hexviz --occ file.occ --clist list_of_contigs.txt";
+	if(defined $explore){
+		#HELP section explore
+		print "\n Command (subset):";
+		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --dbfasta repeats.fasta";
+		print "\n\n\t Kmasker --explore --hist --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
 		
 		print "\n\n Options:";
-		print "\n --annotate\t\t use featured elements of GFF to create custom annotation (requires --gff, --fasta, --db or --dbfasta)";
-		print "\n --hex\t\t create a hexamer plot comparing application of multiple k-mer indices on query sequence";
-		print "\n --violin\t\t create violin plot ";
-		print "\n --volcano\t\t create vulcano plot ";
-		print "\n --tertiary\t\t create tertiary plot comparing 3 kindex";
+		print "\n --annotate\t\t custom annotation using featured elements of GFF (requires --gff, --fasta, --db or --dbfasta)";
+		print "\n --gff\t\t\t use Kmasker constructed GFF report for annotation";
+		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
+		print "\n --db\t\t pre-calculated blastableDB of nucleotides used for annotation";	
+		
 		print "\n --hist\t\t create histogram (requires --clist and --occ)";
+		print "\n --violin\t\t create violin plot (distribution of k-mer)";
+		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
+		print "\n --triplot\t\t create tertiary plot (comparison of three kindex)";
 		print "\n --occ\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --clist\t\t file containing a list of contig identifier that are used in postprocessing";	
+		print "\n --clist\t\t file containing a list of contig identifier for analysis";	
 
 #		print "\n --stats\t\t\t calculate basic statistics like avegare k-mer frequency per contig etc. (requires --occ)";	
-#		print "\n --gff\t\t\t perform repeat annotation and construct GFF report";
-#		print "\n --repeat_library\t provide repeat library [REdat]"; 
 		
 		print "\n\n";
 		exit();
@@ -219,15 +227,16 @@ if(defined $help){
     
     print "\n\n Modules:";
 	print "\n --build\t\t construction of new index (requires --indexfiles)";
-	print "\n --run\t\t\t run k-mer repeat detection and masking (requires --fasta)";
-	print "\n --postprocessing\t perform downstream analysis with constructed index and detected repeats";
+	print "\n --run\t\t\t perform analysis and masking (requires --fasta)";
+	print "\n --explore\t perform downstream analysis with constructed index and detected repeats";
 	
 	print "\n\n General options:";
 	print "\n --show_repository\t shows complete list of global and private k-mer indices";
 	print "\n --show_details\t\t shows details for a requested kindex";
 	print "\n --remove_kindex\t remove kindex from repository";
-	print "\n --expert_setting\t submit individual parameter to Kmasker (e.g. on memory usage for index construction)";
-	print "\n --threads\t set number of threads [4]";
+	print "\n --expert_setting_kmasker\t submit individual parameter to Kmasker eg. pctgap, minseed, mingff (see documentation!)";
+	print "\n --expert_setting_jelly\t submit individual parameter to jellyfish (e.g. on memory usage for index construction)";
+	print "\n --threads\t\t set number of threads [4]";
 	
 	print "\n\n";
 	exit();
@@ -275,6 +284,53 @@ if(defined $index_name_usr){
 	$index_name = $index_name_usr;
 }
 
+#MEM 
+if(defined $mem_usr){
+	$mem = $mem_usr;
+}
+
+#THREADS
+if(defined $threads_usr){
+	$threads = $threads_usr;
+}
+
+#EXPERT SETTINGs Kmasker
+if($expert_setting_kmasker ne ""){
+	
+	my @ARRAY_user_parameter_input = split(";", $expert_setting_kmasker);
+	foreach(@ARRAY_user_parameter_input){
+		if($_ =~ /:/){
+			my @ARRAY_tmp = split(":", $_);
+			my $P = $ARRAY_tmp[0];
+			if(defined $ARRAY_tmp[1]){
+				my $V = $ARRAY_tmp[1];
+				
+				if($P eq "pctgap"){
+					print "\n\n .. changing default parameter for PCTGAP from ".$MK_percent_gapsize." to ". $V." !\n";
+					$MK_percent_gapsize = $V;
+				}
+				
+				if($P eq "minseed"){
+					print "\n\n .. changing default parameter for MINSEED from ".$MK_min_seed." to ". $V." !\n";
+					$MK_min_seed = $V;
+				}
+				
+				if($P eq "mingff"){
+					print "\n\n .. changing default parameter for MINGFF from ".$MK_min_gff." to ". $V." !\n";
+					$MK_min_gff = $V;
+				}
+				
+			}else{
+				print "\n\n Cannot use user input (".$expert_setting_kmasker."). Kmasker is stopped!\n\n\n";
+				exit();
+			}
+		}else{
+			print "\n\n Cannot use user input (".$expert_setting_kmasker."). Kmasker is stopped!\n\n\n";
+			exit();
+		}
+	}
+}
+
 #genome_size
 if(defined $genome_size_usr){
 	if($genome_size_usr =~ /^[+-]?\d+$/){
@@ -282,7 +338,6 @@ if(defined $genome_size_usr){
 		$genome_size = $genome_size_usr;
 	}
 }
-
 
 #common_name
 if(defined $common_name_usr){
@@ -314,11 +369,6 @@ if(defined $length_threshold_usr){
 }
 
 
-#repeat library
-if(defined $repeat_lib_user	){
-	#FIX
-}
-
 #CHECK setting
 &check_settings;
 
@@ -348,7 +398,8 @@ if(defined $build){
 		$HASH_info{"kindex name"}			= $index_name	if(defined $index_name);
 		$HASH_info{"common name"}			= $common_name if(defined $common_name);
 		#ADDITIONAL
-		$HASH_info{"expert setting"}		= $expert_setting;
+		$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
+		$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
 		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
 		$HASH_info{"path_bin"}				= $path;
@@ -360,10 +411,9 @@ if(defined $build){
 		$HASH_info{"general notes"}			= "";
 		$HASH_info{"type"}					= "";
 		$HASH_info{"sequencing depth"}		= "";
-		#$HASH_info{"mem"}			 		= $mem;
-		#$HASH_info{"threads"}		 		= $threads;
+		$HASH_info{"memory"}			 	= $mem;
+		$HASH_info{"threads"}		 		= $threads;
 		$HASH_info{"temp_path"}				= $temp_path;
-		#$HASH_info{"repeat_lib_path"}		= $repeat_lib_path;
 		
 		#CONSTRUCT
 		if(defined $input){
@@ -390,7 +440,8 @@ if(defined $run){
 	$HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
 	$HASH_info{"MK_min_seed"}			= $MK_min_seed;
 	$HASH_info{"MK_min_gff"}			= $MK_min_gff;
-	$HASH_info{"expert setting"}		= $expert_setting; 
+	$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
+	$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
 	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
 	$HASH_info{"path_bin"}				= $path;
@@ -452,31 +503,23 @@ if(defined $run){
 	exit();
 }
 
-if(defined $postprocessing){
-	#USE POSTPROCESSING MODULE
+if(defined $explore){
+	#USE EXPLORE MODULE
 	
 	#ANNOTATION
 	if(defined $custom_annotate){
-		# POSTPROCESSING ANNOTATE by GFF
+		# EXPLORE ANNOTATE by GFF
 		
 		#START annotation of sequence features, provided in GFF with custome FASTA sequence or blastableDB
 		my $check_settings = 1;
 		$check_settings = 0 if(!defined $gff);
 		$check_settings = 0 if(!defined $fasta);
-		if(defined $dbfasta){
-			#create blastabl_DB
-			#todo
-			
-		}elsif(defined $blastableDB){
-			#check if file is a blastable DB
-			#todo
-			
-		}else{
-			$check_settings = 0;
-		}
-		
+				
 		if($check_settings == 1){
-			&post_custom_annotation();
+			my %HASH_db;
+    		$HASH_db{"dbfasta"} = $dbfasta if(defined $dbfasta);
+    		$HASH_db{"db"} 		= $dbfasta if(defined $blastableDB);
+			&custom_annotation($fasta, $gff, \%HASH_db, \%HASH_info);
 		}else{
 			print "\n WARNING: Required parameter are missing. Kmasker was stopped.\n\n";
 			exit;
@@ -491,10 +534,10 @@ if(defined $postprocessing){
 	
 	#HISTOGRAM
 	if(defined $visualisation){
-		# POSTPROCESSING VIZUALISATIONS
+		# EXPLORE VIZUALISATIONS
 	
 		if(defined $occ){
-		# postprocessing requires an OCC file
+		# explore requires an OCC file
 			
 			my $missing_parameter = "";
 		
@@ -512,7 +555,7 @@ if(defined $postprocessing){
 			}
 			
 		}else{
-			print "\n ERROR: no occ provided. For Kmasker postprocessing an occ file is required!\n\n";
+			print "\n ERROR: no occ provided. For this 'Kmasker --explore' subfunction an occ file is required!\n\n";
 		}
 	}
 	
@@ -812,13 +855,13 @@ sub check_settings(){
 			exit(0);
 		}
 	}
-	if(defined $postprocessing){
+	if(defined $explore){
 		$module_count++; 
 	}
 	
 	#MULTIPLE 
 	if($module_count > 1){
-		print "\n Kmasker was stopped. Multiple modules (build, run or postprocessing were used!\n";
+		print "\n Kmasker was stopped. Multiple modules (build, run or explore were used!\n";
 		exit(0);
 	}	
 }

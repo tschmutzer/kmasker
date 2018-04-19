@@ -1,7 +1,7 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.24 rc180417)
+ (version:  0.0.25 rc180419)
 
 ## Description:
 
@@ -92,13 +92,13 @@ HEXPLOT
 
 Kmasker --explore --hexplot --multi_kindex At1 Hv1
 
-This visualisation is can be used for comparitve inspection of 2(!) k-mer index structures (e.g. to study two species by comparing the correpsonding WGS data).
+This visualisation is can be used for comparitve inspection of two k-mer index structures (e.g. to study two species by comparing the correpsonding WGS data).
 
 
 TRIPLOT
 
 Kmasker --explore --triplot --multi_kindex At1 Hv1 Sc1
 
-This visualisation is comparing 3(!) k-mer index structures in a triangular plot using the R package ('ggtern' [LINK]). It provides a broader perspective which k-mers are shared with equal (centered) or different (outer regions) abundances throuout the investigated datasets (e.g. three different species).
+This visualisation is comparing three k-mer index structures in a triangular plot using the R package ('ggtern' [LINK]). It provides a broader perspective which k-mers are shared with equal (centered) or different (outer regions) abundances throuout the investigated datasets (e.g. three different species).
 
 

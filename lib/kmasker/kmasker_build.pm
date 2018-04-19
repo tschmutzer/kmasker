@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.5 rc180412";
+my $version_PM_build 	= "0.0.6 rc180419";
 
 
 sub build_kindex_jelly{	
@@ -70,7 +70,7 @@ sub build_kindex_jelly{
 	
 	
 	#LOAD expert setting for build
-	my $parameter_extern = $HASH_info{"expert setting"};
+	my $parameter_extern = $HASH_info{"expert setting jelly"};
 	my $setting = "-s ".$mem."G -t ".$threads;	#server setting
 	if($parameter_extern ne ""){
 		$setting = $parameter_extern;
