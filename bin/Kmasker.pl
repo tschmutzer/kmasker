@@ -360,8 +360,10 @@ if(defined $build){
 		$HASH_info{"general notes"}			= "";
 		$HASH_info{"type"}					= "";
 		$HASH_info{"sequencing depth"}		= "";
-		$HASH_info{"mem"}			 		= $mem;
-		$HASH_info{"threads"}		 		= $threads;
+		#$HASH_info{"mem"}			 		= $mem;
+		#$HASH_info{"threads"}		 		= $threads;
+		$HASH_info{"temp_path"}				= $temp_path;
+		#$HASH_info{"repeat_lib_path"}		= $repeat_lib_path;
 		
 		#CONSTRUCT
 		if(defined $input){
@@ -394,9 +396,9 @@ if(defined $run){
 	$HASH_info{"path_bin"}				= $path;
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
-	$HASH_info{"mem"}			 		= $mem;
-	$HASH_info{"threads"}		 		= $threads;
-	
+	#$HASH_info{"mem"}			 		= $mem;
+	#$HASH_info{"threads"}		 		= $threads;
+	$HASH_info{"temp_path"}				= $temp_path;
 	
 	if(defined $kindex){
 	#single kindex		
@@ -415,7 +417,7 @@ if(defined $run){
 		%HASH_info		= %{$href_info};
 		
 		#START RUN			
-		&run_kmasker_SK($fasta, $kindex, $repeat_lib_path, $temp_path, \%HASH_info, \%HASH_repository_kindex);
+		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
 
 	}elsif(scalar(@multi_kindex > 1)){
 	#multiple kindex
