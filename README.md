@@ -27,8 +27,13 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
  --expert_setting        submit individual parameter to Kmasker (e.g. on memory usage for index construction)
 
 
-### Requirements:
-Here, we provide a list of external tools that are used within Kmasker. Please make sure, that these are in your PATH environemnt. If not please specify them in the 'kmasker.config' file.
+### Installation & Requirements:
+
+See our Wiki for details on how to install Kmasker. There, you find our list of requirements of external tools. 
+Please make sure, that these are in your PATH environemnt. If not please specify them in the 'kmasker.config' file.
+
+Kmasker uses in interal repository for reuse of kindex structures. The data (calculated kindex) will be stored either in lokal ('private') or in the global directory. The path to the global directory has to be set in the kmasker.config file after installation.
+
 
 ## Commands:
 
@@ -55,11 +60,11 @@ One either can provide parameters using the command line or use the option '--co
 
 The run module starts the core process of Kmasker. There are two general options. 1.) Analyse input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
 
-SINGLE
+#### SINGLE
 
 Kmasker --run --fasta query.fasta --kindex At1
 
-MULTIPLE
+#### MULTIPLE
 
 Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
 
@@ -67,7 +72,7 @@ Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
 
 The explore module provides additional functionality for downstream analysisi e.g. vizualisations or annotation. 
 
-#### [EXPLORE - ANNOTATION]
+#### EXPLORE - ANNOTATION
 
 Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --dbfasta mipsREdat_9.3p_ALL.fasta
 
@@ -80,7 +85,7 @@ TREP:
 http://botserv2.uzh.ch/kelldata/trep-db/
 
 
-#### [EXPLORE - VISUALISATION]
+#### EXPLORE - VISUALISATION
 
 
 HEXPLOT
