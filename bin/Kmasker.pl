@@ -7,13 +7,14 @@ use Digest::MD5 qw(md5 md5_hex md5_base64);
 #setup package directory
 use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
+use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.28 rc180419";
+my $version 	= "0.0.28 rc180420";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $indexfile;
@@ -81,6 +82,7 @@ my $check_install;
 my $remove_kindex;
 my $expert_setting_kmasker 	= "",
 my $expert_setting_jelly 	= ""; 
+my $expert_setting_blast	= "";
 my $set_global;
 my $user_name;
 my $verbose;
@@ -228,15 +230,17 @@ if(defined $help){
     print "\n\n Modules:";
 	print "\n --build\t\t construction of new index (requires --indexfiles)";
 	print "\n --run\t\t\t perform analysis and masking (requires --fasta)";
-	print "\n --explore\t perform downstream analysis with constructed index and detected repeats";
+	print "\n --explore\t\t perform downstream analysis with constructed index and detected repeats";
 	
 	print "\n\n General options:";
-	print "\n --show_repository\t shows complete list of global and private k-mer indices";
-	print "\n --show_details\t\t shows details for a requested kindex";
-	print "\n --remove_kindex\t remove kindex from repository";
-	print "\n --expert_setting_kmasker\t submit individual parameter to Kmasker eg. pctgap, minseed, mingff (see documentation!)";
-	print "\n --expert_setting_jelly\t submit individual parameter to jellyfish (e.g. on memory usage for index construction)";
-	print "\n --threads\t\t set number of threads [4]";
+	print "\n --show_repository\t\t shows complete list of global and private k-mer indices";
+	print "\n --show_details\t\t\t shows details for a requested kindex";
+	print "\n --remove_kindex\t\t remove kindex from repository";
+	print "\n --expert_setting_kmasker\t submit individual parameter to Kmasker eg. pctgap,";
+	print "\n\t\t\t\t minseed, mingff (see documentation!)";
+	print "\n --expert_setting_jelly\t\t submit individual parameter to jellyfish (e.g. on memory usage ";
+	print "\n\t\t\t\t for index construction)";
+	print "\n --threads\t\t\t set number of threads [4]";
 	
 	print "\n\n";
 	exit();
@@ -396,7 +400,7 @@ if(defined $build){
 		$HASH_info{"k-mer"}					= $k 			if(defined $k);
 		$HASH_info{"genome size"}			= $genome_size	if(defined $genome_size);
 		$HASH_info{"kindex name"}			= $index_name	if(defined $index_name);
-		$HASH_info{"common name"}			= $common_name if(defined $common_name);
+		$HASH_info{"common name"}			= $common_name  if(defined $common_name);
 		#ADDITIONAL
 		$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 		$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
@@ -506,6 +510,25 @@ if(defined $run){
 if(defined $explore){
 	#USE EXPLORE MODULE
 	
+	my %HASH_info						= ();	
+	$HASH_info{"user name"}				= $user_name;
+	$HASH_info{"kindex"}				= $kindex			if(defined $kindex);
+	$HASH_info{"multi kindex"}			= \@multi_kindex 	if(defined $multi_kindex[0]);
+	#ADDITIONAL
+	$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
+	$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
+	$HASH_info{"expert setting blast"}	= $expert_setting_blast if(defined $expert_setting_blast); 
+	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
+	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
+	$HASH_info{"path_bin"}				= $path;
+	$HASH_info{"version KMASKER"}		= $version;
+	$HASH_info{"version BUILD"} 		= "";
+	$HASH_info{"memory"}			 	= $mem;
+	$HASH_info{"threads"}		 		= $threads;
+	$HASH_info{"temp_path"}				= $temp_path;
+	
+	
+	
 	#ANNOTATION
 	if(defined $custom_annotate){
 		# EXPLORE ANNOTATE by GFF
@@ -526,12 +549,12 @@ if(defined $explore){
 		}		
 	}
 	
-	
 	my $visualisation;
 	$visualisation = 1 if(defined $hist);
-	$visualisation = 1 if(defined $volcano);
-	## ...
-	
+	$visualisation = 1 if(defined $violin);
+	$visualisation = 1 if(defined $hexplot);
+	$visualisation = 1 if(defined $triplot);
+		
 	#HISTOGRAM
 	if(defined $visualisation){
 		# EXPLORE VIZUALISATIONS
