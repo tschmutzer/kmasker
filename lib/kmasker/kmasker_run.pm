@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.28 rc180419";
+my $version_PM_run 	= "0.0.28 rc180420";
 
 ## subroutine
 #
@@ -139,9 +139,9 @@ sub run_kmasker_MK{
 	# GET info
 	my $rept 				= $HASH_info_task{"rept"};
 	my $length_threshold 	= $HASH_info_task{"min_length"};
-	my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
-	my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
-	my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
+	my $percent 			= $HASH_info_task{"MK_percent_gapsize"}; 	# default : 10 (%)
+	my $min_seed			= $HASH_info_task{"MK_min_seed"};			# default :  5 (bp)
+	my $min_gff				= $HASH_info_task{"MK_min_gff"}; 			# default : 10 (bp)
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
 	my $temp_path       	= $HASH_info_task{"temp_path"};
