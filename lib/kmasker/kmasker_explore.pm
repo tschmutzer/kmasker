@@ -73,14 +73,25 @@ sub custom_annotation{
     my $db_fasta;
     my $db;
     
-    if(exists $HASH_DB{"db_fasta"}){
-    	$db_fasta = $HASH_DB{"db_fasta"};
-    }elsif(exists $HASH_DB{"db"}){
+    if(exists $HASH_DB{"db"}){
     	$db = $HASH_DB{"db"};    	
-    	# check if file is a blastable DB
-		# assigned to @Chris
-    	
-    }else{
+        # check if file is a blastable DB
+        # assigned to @Chris
+         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
+            print("The BLASTdb was not found or is not complete!\n");
+            print("Please run Kmasker with dbfasta instead of db again to rebuild the BLASTdb!\n");   
+        }   	
+    }
+    elsif(exists $HASH_DB{"db_fasta"}){
+        $db_fasta = $HASH_DB{"db_fasta"};
+        $db=$db_fasta;
+         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
+            print("BLASTdb is missing. It will be built now!\n");
+            system("makeblastdb -in \"".$db."\" -dbtype nucl ");
+            print("BLASTdb was built. You can use the path to your fasta just with -db in the future.\n");   
+        }
+    }
+    else{
     	print "\n\n Parameter dbfasta or db have to be provided for custom annotation!";
     	print   "\n Kmasker was stopped.\n\n";
     	exit();
@@ -88,7 +99,10 @@ sub custom_annotation{
     
     
     # TASK for Chris to move annotation from run to this section!
-	
+	kmasker::functions::add_annotation($fasta, ".tab", $BLASTDB, "$temp_path/.gff", $threads);
+    #ToDo Reimplemantaion of blast function 
+    #Use of extract_feature_gff (feature must be a feature given by the user)
+    
 	
 }
 

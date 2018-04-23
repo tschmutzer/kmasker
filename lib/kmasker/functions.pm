@@ -42,7 +42,7 @@ sub add_annotation {
 
         extract_sequence_region($FASTA, $TAB);
         system("mv selected_* temp/");
-        # Using standard word soze of megablast [28]
+        # Using standard word size of megablast [28]
         system("blastn -db \"" . $BLAST_db . "\" -query " . "temp/selected_" . $FASTA . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out temp/kmasker_blast.txt");
         #FIXME: Add exchangeable configuration to blast
         add_annotation_to_gff($GFF, "temp/kmasker_blast.txt");
