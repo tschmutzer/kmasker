@@ -16,10 +16,10 @@ build_kindex_jelly
 make_config
 remove_repository_entry
 );
-our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
+our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_external_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.6 rc180419";
+my $version_PM_build 	= "0.0.7 rc180424";
 
 
 sub build_kindex_jelly{	
@@ -559,51 +559,45 @@ sub set_private_path(){
 	$USER_CONF->close();
 	$USER_CONF_OLD->close();
 	
-	#MOVE and EDIT
-	&move_private_structures($private_path, $old_private_path);
 }
 
 ## subroutine
-#
-sub set_global_path(){
+#  
+sub set_external_path(){
 	#INPUT
-	my $path 			= $_[0];
-	my $called_status	= $_[1];
-	my $path_bin		= $_[2];
-	my $href_repository	= $_[3];
+	my $new_path		= $_[0];
+	my $href_info		= $_[1];
 	
-	if(($called_status ne "private") && ($called_status ne "global")){
-		print "\n Unknown status in procedure 'set_global_path'\n";
-		exit();
-	}	
-
-	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
-	my $user_name	= `whoami`;
-	$user_name		=~ s/\n$//;
-	my $abs			= $path_bin."/kmasker.config";
-	my $installed_by= `stat -c "%U" $abs`;
-	$installed_by 	=~ s/\n//;
-	if($installed_by ne $user_name){
-		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
-		print "\n U = (".$user_name.") I = (".$installed_by.")\n";
-		exit();	
-	}
+#	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
+#	my $user_name	= `whoami`;
+#	$user_name		=~ s/\n$//;
+#	my $abs			= $path_bin."/kmasker.config";
+#	my $installed_by= `stat -c "%U" $abs`;
+#	$installed_by 	=~ s/\n//;
+#	if($installed_by ne $user_name){
+#		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
+#		print "\n U = (".$user_name.") I = (".$installed_by.")\n";
+#		exit();	
+#	}
 
 	my $old_path	="";
-	$path 			.= "/" if($path !~ /\/$/ );
-	my $conf		= "";
-	$conf 			= $ENV{"HOME"}."/.kmasker_user.config" if($called_status eq "private");
-	$conf 			= $path_bin."/kmasker.config" if($called_status eq "global");
+	my $conf 			= $ENV{"HOME"}."/.kmasker_user.config";
 	
 	my $CONF_OLD 	= new IO::File($conf, "r") or die "could not read old conf : $!\n";
 	my $CONF 		= new IO::File($conf.".tmp", "w") or die "could not write new conf : $!\n";
+
+	# It is not allowed to change the global path by any user (only root)
+	# Therefor, the set_global_path function only changes the external directory called 'PATH_kindex_external'	
 	while(<$CONF_OLD>){
 		my $line = $_;
 		$line =~ s/\n//;
-		my $pattern = "PATH_kindex_".$called_status;
+		my $pattern = "PATH_kindex_external";
 		if($line =~ /^($pattern)/){
-			print $CONF "PATH_kindex_".$pattern."=".$path."\n";
+			print $CONF $pattern."=".$new_path."\n";
 			$old_path = +(split("=", $line))[1];
+			$old_path = "\'\'" if(!defined $old_path);
+			print "\n OLD path: ".$old_path;
+			print "\n NEW path: ".$new_path."\n\n";
 		}else{
 			print $CONF $line."\n";
 		}		
@@ -612,8 +606,6 @@ sub set_global_path(){
 	$CONF->close();
 	$CONF_OLD->close();
 	
-	#MOVE and EDIT
-	&move_kindex_structures($path, $old_path, $href_repository) if($old_path ne "");
 }
 
 
