@@ -65,13 +65,15 @@ sub repeat_annotation{
 sub custom_annotation{
 	my $fasta		=	$_[0];
     my $gff			=	$_[1];
-    my $href_DB 	=   $_[2]; 
-    my $href_info	=	$_[3];
+    my $feature     =   $_[2];
+    my $href_DB 	=   $_[3]; 
+    my $href_info	=	$_[4];
     
     my %HASH_info 	= %{$href_info};
     my %HASH_DB		= %{$href_DB};
     my $db_fasta;
     my $db;
+    mkdir($HASH_info{"temp_path"}, 0755);
     
     if(exists $HASH_DB{"db"}){
     	$db = $HASH_DB{"db"};    	
@@ -84,7 +86,8 @@ sub custom_annotation{
     }
     elsif(exists $HASH_DB{"db_fasta"}){
         $db_fasta = $HASH_DB{"db_fasta"};
-        $db=$db_fasta;
+        my($db_prefix, $dirs, $suffix) = fileparse($db_fasta, (".fa", ".fasta"));
+        $db=$dirs."/".$db_prefix;
          if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("BLASTdb is missing. It will be built now!\n");
             system("makeblastdb -in \"".$db."\" -dbtype nucl ");
@@ -99,10 +102,11 @@ sub custom_annotation{
     
     
     # TASK for Chris to move annotation from run to this section!
-	kmasker::functions::add_annotation($fasta, ".tab", $BLASTDB, "$temp_path/.gff", $threads);
+    kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
+    print("\nAnnotation of GFF was done!\n");
     #ToDo Reimplemantaion of blast function 
     #Use of extract_feature_gff (feature must be a feature given by the user)
-    
+
 	
 }
 

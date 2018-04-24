@@ -34,18 +34,20 @@ sub read_write_repository {
 
 sub add_annotation {
         my $FASTA = $_[0]; #FASTA to extract sequences from
-        my $TAB = $_[1]; #TAB-file with regions to extract
-        my $BLAST_db = $_[2]; #BLAST-reference
-        my $GFF = $_[3]; #GFF-file to be annotated
-        my $threads = $_[4]; 
-        #FIXME: Give configuration hash as 5th parameter.
-
-        extract_sequence_region($FASTA, $TAB);
-        system("mv selected_* temp/");
+        my $BLAST_db = $_[1]; #BLAST-reference
+        my $GFF = $_[2]; #GFF-file to be annotated
+        my $feature = $_[3];
+        my %HASH_info = %{$_[4]};
+        my $threads = $HASH_info{"threads"};
+        my $temp_dir = $HASH_info{"temp_path"};
+        kmasker::filehandler::extract_feature_gff($FASTA, $GFF, $feature, $temp_dir);
+        #extract_sequence_region($FASTA, $TAB);
+        #system("mv selected_* temp/");
         # Using standard word size of megablast [28]
-        system("blastn -db \"" . $BLAST_db . "\" -query " . "temp/selected_" . $FASTA . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out temp/kmasker_blast.txt");
+        system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out ${temp_dir}/kmasker_blast.txt");
         #FIXME: Add exchangeable configuration to blast
-        add_annotation_to_gff($GFF, "temp/kmasker_blast.txt");
+        #--->almost done, just add the necessary parameters to %HASH_INFO
+        kmasker::filehandler::add_annotation_to_gff($GFF, "${temp_dir}/kmasker_blast.txt");
 }
 
 sub Xtract{
