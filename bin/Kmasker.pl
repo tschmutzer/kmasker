@@ -10,11 +10,11 @@ use Cwd  qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
-use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_global_path clean_repository_directory read_config);
+use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_external_path clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.28 rc180420";
+my $version 	= "0.0.29 rc180425";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $indexfile;
@@ -39,6 +39,7 @@ my $mem_usr;
 my $mem		= 24;
 my $PATH_kindex_private = "";
 my $PATH_kindex_global 	= "";
+my $PATH_kindex_external= "";
 
 #RUN
 my $kindex_usr;
@@ -78,6 +79,7 @@ my $show_kindex_repository;
 my $show_details_for_kindex;
 my $set_private_path;
 my $set_global_path;
+my $set_external_path;
 my $check_install;
 my $remove_kindex;
 my $expert_setting_kmasker 	= "",
@@ -137,15 +139,15 @@ my $result = GetOptions (	#MAIN
 							
 							
 							#GLOBAL
-							"show_repository"	=> \$show_kindex_repository,
-							"show_details=s"	=> \$show_details_for_kindex,
-							"remove_kindex=s"	=> \$remove_kindex,
-							"set_global=s"		=> \$set_global,
-							"set_private_path=s"=> \$set_private_path,
-							"set_global_path=s"	=> \$set_global_path,
-							"check_install"		=> \$check_install,	
-							"threads=i"			=> \$threads_usr,
-							"mem=i"				=> \$mem_usr,
+							"show_repository"		=> \$show_kindex_repository,
+							"show_details=s"		=> \$show_details_for_kindex,
+							"remove_kindex=s"		=> \$remove_kindex,
+							"set_global=s"			=> \$set_global,
+							"set_private_path=s"	=> \$set_private_path,
+							"set_external_path=s"	=> \$set_external_path,
+							"check_install"			=> \$check_install,	
+							"threads=i"				=> \$threads_usr,
+							"mem=i"					=> \$mem_usr,
 							
 							#Houskeeping
 							"expert_setting_jelly"	=> \$expert_setting_jelly,
@@ -175,7 +177,7 @@ if(defined $help){
 		print "\n --in \t\t provide k-mer index name (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
 		print "\n --cn \t\t provide common name of species (e.g. barley)";
 		print "\n --config\t configuration file providing information used for construction of kindex";
-		print "\n --mem\t set memory limit in gigabyte [24]";
+		print "\n --mem\t\t set memory limit in gigabyte [24]";
 		
 		print "\n\n";
 		exit();
@@ -238,6 +240,8 @@ if(defined $help){
 	print "\n --show_repository\t\t shows complete list of global and private k-mer indices";
 	print "\n --show_details\t\t\t shows details for a requested kindex";
 	print "\n --remove_kindex\t\t remove kindex from repository";
+	print "\n --set_private_path\t\t change path to private repository";
+	print "\n --set_external_path\t\t change path to external repository [readonly]";
 	print "\n --expert_setting_kmasker\t submit individual parameter to Kmasker eg. pctgap,";
 	print "\n\t\t\t\t minseed, mingff (see documentation!)";
 	print "\n --expert_setting_jelly\t\t submit individual parameter to jellyfish (e.g. on memory usage ";
@@ -248,9 +252,8 @@ if(defined $help){
 	exit();
 }
 
-
-##MAIN
-
+#######
+## MAIN
 
 #CHECK settings
 if(defined $check_install){
@@ -262,15 +265,58 @@ if(defined $check_install){
 &read_user_config;
 &read_repository;
 
+
+## GET USER INPUT
+
+#THREADS
+if(defined $threads_usr){
+	$threads = $threads_usr;
+}
+
+#index name
+if(defined $index_name_usr){
+	$index_name = $index_name_usr;
+}
+
+#MEM 
+if(defined $mem_usr){
+	$mem = $mem_usr;
+}
+
+
+########
+# STORE GENERAL INFO in HASH info
+my %HASH_info 						= ();
+$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
+$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
+$HASH_info{"PATH_kindex_external"}	= $PATH_kindex_external;
+$HASH_info{"path_bin"}				= $path;
+$HASH_info{"version KMASKER"}		= $version;
+$HASH_info{"temp_path"}				= $temp_path;
+$HASH_info{"threads"}		 		= $threads;
+$HASH_info{"memory"}			 	= $mem;
+
+
+
 #SET private path
 if(defined $set_private_path){
-	&set_private_path();
+	
+	print "\n Kmasker will change private path: ".$set_private_path;
+	print "\n Please note that data will not be moved to new directories!";
+	print "\n This has to be done manually!\n\n";
+	
+	&set_private_path($set_private_path);
 	exit();
 }
 
-#SET global path
-if(defined $set_global_path){
-	&set_global_path($set_global_path, "global", $path, \%HASH_repository_kindex);
+#SET external path
+if(defined $set_external_path){
+	
+	print "\n Kmasker will change external path: ".$set_external_path;
+	print "\n Please note that data will not be moved to new directories!";
+	print "\n This has to be done manually!\n\n";
+	
+	&set_external_path($set_external_path);
 	exit();
 }
 
@@ -284,21 +330,6 @@ if(defined $kindex_usr){
 		exit();
 	}	
 }	
-
-#index name
-if(defined $index_name_usr){
-	$index_name = $index_name_usr;
-}
-
-#MEM 
-if(defined $mem_usr){
-	$mem = $mem_usr;
-}
-
-#THREADS
-if(defined $threads_usr){
-	$threads = $threads_usr;
-}
 
 #EXPERT SETTINGs Kmasker
 if($expert_setting_kmasker ne ""){
@@ -381,10 +412,7 @@ if(defined $length_threshold_usr){
 if(defined $build){
 	#USE BUILD MODULE
 	
-	if(defined $set_private_path){
-		&set_private_path($set_private_path, \%HASH_repository_kindex);
-		exit();
-	}elsif(defined $set_global){
+	if(defined $set_global){
 		if(exists $HASH_repository_kindex{$set_global}){
 			&set_kindex_global($set_global, \%HASH_repository_kindex, $PATH_kindex_private, $PATH_kindex_global);			
 		}else{
@@ -393,8 +421,8 @@ if(defined $build){
 		exit();			
 	}else{
 		
-		#INIT
-		my %HASH_info 						= ();
+		########
+		#STORE BUILD INFO in HASH info
 		my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
 		$HASH_info{"user name"}				= $user_name;
 		$HASH_info{"seq"} 					= $input;		
@@ -406,9 +434,6 @@ if(defined $build){
 		#ADDITIONAL
 		$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 		$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
-		$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
-		$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
-		$HASH_info{"path_bin"}				= $path;
 		$HASH_info{"version KMASKER"}		= $version;
 		$HASH_info{"version BUILD"} 		= "";
 		$HASH_info{"status"}				= "";
@@ -417,9 +442,6 @@ if(defined $build){
 		$HASH_info{"general notes"}			= "";
 		$HASH_info{"type"}					= "";
 		$HASH_info{"sequencing depth"}		= "";
-		$HASH_info{"memory"}			 	= $mem;
-		$HASH_info{"threads"}		 		= $threads;
-		$HASH_info{"temp_path"}				= $temp_path;
 		
 		#CONSTRUCT
 		if(defined $input){
@@ -438,7 +460,8 @@ if(defined $build){
 if(defined $run){
 	#USE RUN MODULE
 	
-	my %HASH_info 						= ();
+	########
+	#STORE RUN INFO in HASH info
 	$HASH_info{"user_name"}				= $user_name;
 	$HASH_info{"kindex name"}			= $kindex;
 	$HASH_info{"rept"}					= $repeat_threshold;
@@ -448,14 +471,9 @@ if(defined $run){
 	$HASH_info{"MK_min_gff"}			= $MK_min_gff;
 	$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 	$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
-	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
-	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
-	$HASH_info{"path_bin"}				= $path;
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
-	#$HASH_info{"mem"}			 		= $mem;
-	#$HASH_info{"threads"}		 		= $threads;
-	$HASH_info{"temp_path"}				= $temp_path;
+
 	
 	if(defined $kindex){
 	#single kindex		
@@ -512,7 +530,8 @@ if(defined $run){
 if(defined $explore){
 	#USE EXPLORE MODULE
 	
-	my %HASH_info						= ();	
+	########
+	#STORE EXPLORE INFO in HASH info
 	$HASH_info{"user name"}				= $user_name;
 	$HASH_info{"kindex"}				= $kindex			if(defined $kindex);
 	$HASH_info{"multi kindex"}			= \@multi_kindex 	if(defined $multi_kindex[0]);
@@ -520,16 +539,8 @@ if(defined $explore){
 	$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 	$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
 	$HASH_info{"expert setting blast"}	= $expert_setting_blast if(defined $expert_setting_blast); 
-	$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
-	$HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
-	$HASH_info{"path_bin"}				= $path;
 	$HASH_info{"version KMASKER"}		= $version;
-	$HASH_info{"version BUILD"} 		= "";
-	$HASH_info{"memory"}			 	= $mem;
-	$HASH_info{"threads"}		 		= $threads;
-	$HASH_info{"temp_path"}				= $temp_path;
-	my %HASH_db;
-
+	$HASH_info{"version BUILD"} 		= "";	
 	
 	
 	#ANNOTATION
@@ -617,7 +628,6 @@ sub read_user_config(){
 	$user_name			=~ s/\n//g;
 	my $gconf 			= $path."/kmasker.config";
 	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
-	#my $urepositories 	= $ENV{"HOME"}."/.user_repositories.kmasker";
 	
 	if(-e $gconf){
 		#LOAD global info
@@ -705,6 +715,20 @@ sub read_user_config(){
 				#directory has to be created
 				system("mkdir "."\"".$PATH_kindex_private."\"");
 			}			
+			
+			#EXTERNAL
+			if(($ARRAY_tmp[0] eq "PATH_kindex_external")&&(defined $ARRAY_tmp[1])){
+				$PATH_kindex_external = $ARRAY_tmp[1];
+				$PATH_kindex_external.= "/" if($PATH_kindex_external !~ /\/$/);
+				if($PATH_kindex_external !~ /^\/$/){
+					if(-d $PATH_kindex_external){
+						#directory exists - do nothing
+					}else{
+						#directory has to be created
+						system("mkdir "."\"".$PATH_kindex_external."\"");
+					}	
+				}		
+			}					
 		}
 	}else{
 		#SETUP user
@@ -718,7 +742,7 @@ sub read_user_config(){
 sub read_repository(){
 	
 	#PRIVATE
-	opendir( my $DIR_P, $PATH_kindex_private ) or die "Can not open $PATH_kindex_private\n";
+	opendir( my $DIR_P, $PATH_kindex_private ) or die "Can not open \'$PATH_kindex_private\' (private path)\n";
 	my $status 				= "";
 	my $common_name_this 	= "";
 	my $file_name			= "";
@@ -749,6 +773,40 @@ sub read_repository(){
 	}
 	close $DIR_P;
 	
+	#EXTERNAL
+	if($PATH_kindex_external !~ //){
+	# EXTERNAL PATH is set
+		opendir( my $DIR_E, $PATH_kindex_external ) or die "Can not open \'$PATH_kindex_external\' (external path)\n";
+		$common_name_this 	= "";
+		$file_name			= "";
+		$kmer				= "";
+		while ( $file_name = readdir $DIR_E ) {
+			$status 			= "external";
+			$common_name_this 	= "";		
+			if($file_name =~ /^repository_/){
+				$file_name =~ s/repository_//;
+				my @ARRAY_name 	= split(/\./, $file_name);
+				my $kindex_id 			= $ARRAY_name[0]; 
+				my $BUILD_file 	= new IO::File($PATH_kindex_external."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
+				if(-e $PATH_kindex_external."repository_".$kindex_id.".info"){;
+					while(<$BUILD_file>){
+						if($_ =~ /^common name/){
+							$common_name_this = +(split("\t", $_))[1];
+							$common_name_this =~ s/\n//;
+						}					
+						if($_ =~ /^k-mer/){
+							$kmer = +(split("\t", $_))[1];
+							$kmer =~ s/\n//;
+						}					
+					}
+					#integrate into HASH
+					$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name_this."\t".$status."\t".$PATH_kindex_external;
+				}
+			}
+		}
+		close $DIR_E;
+	}
+	
 	#GLOBAL
 	opendir( my $DIR_G, $PATH_kindex_global ) or die "Can not open $PATH_kindex_private\n"; ;
 	$common_name_this = "";
@@ -760,7 +818,7 @@ sub read_repository(){
 			my @ARRAY_name 	= split(/\./, $file_name);
 			my $kindex_id 			= $ARRAY_name[0]; 
 			my $BUILD_file 	= new IO::File($PATH_kindex_global."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
-			if(-e $PATH_kindex_global."repository.info"){;
+			if(-e $PATH_kindex_global."repository_".$kindex_id.".info"){;
 				while(<$BUILD_file>){
 					if($_ =~ /^common name/){
 						$common_name_this = +(split("\t", $_))[1];
@@ -832,13 +890,14 @@ sub initiate_user(){
 		#SETUP user conf
 		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
 		print $USER_CONF "PATH_kindex_private=".$ENV{"HOME"}."/KINDEX/";
+		print $USER_CONF "\nPATH_kindex_external=";
 		close $USER_CONF;	
 		
 		#SHOW INFO
 		print "\n PLEASE NOTE: \n You are writing all large data structures to your home directory [default].";
 		print "\n It is recommended to modify the path for 'PATH_kindex_private'.\n";
-		print "\n Use the following command: 'Kmasker --build --set_private_path enter/your/path'\n\n";	
-	}	
+		print "\n Use the following command: 'Kmasker --set_private_path enter/your/path'\n\n";	
+	}
 }
 
 ## subroutine
