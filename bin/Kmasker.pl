@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.29 rc180425";
+my $version 	= "0.0.30 rc180425";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $indexfile;
@@ -296,6 +296,9 @@ $HASH_info{"temp_path"}				= $temp_path;
 $HASH_info{"threads"}		 		= $threads;
 $HASH_info{"memory"}			 	= $mem;
 
+########
+# STORE INFO about DB in HASH_db
+my %HASH_db 						= ();
 
 
 #SET private path
@@ -420,6 +423,11 @@ if(defined $build){
 		}
 		exit();			
 	}else{
+		
+		if(exists $HASH_repository_kindex{$index_name}){
+			print "\n WARNING: KINDEX ".$index_name." already exists! Kmasker was stopped\n\n";
+			exit();
+		}		
 		
 		########
 		#STORE BUILD INFO in HASH info
@@ -609,6 +617,7 @@ if(defined $show_kindex_repository){
 }	
 	
 if(defined $show_details_for_kindex){
+	
 	&show_details_for_kindex($show_details_for_kindex);
 	exit();
 }
@@ -808,7 +817,7 @@ sub read_repository(){
 	}
 	
 	#GLOBAL
-	opendir( my $DIR_G, $PATH_kindex_global ) or die "Can not open $PATH_kindex_private\n"; ;
+	opendir( my $DIR_G, $PATH_kindex_global ) or die "Can not open $PATH_kindex_global (global path) \n"; ;
 	$common_name_this = "";
 	while ( $file_name = readdir $DIR_G ) {
 		$status 			= "global";
@@ -867,12 +876,10 @@ sub show_details_for_kindex(){
 		while(<$BUILD_file>){
 			print "\t".$_;
 		}
-		print "\n\n";
-		
 	}else{
-		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.\n\n";
-		exit();
-	}
+		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.";
+	}	
+	print "\n\n";
 }
 
 

@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_external_path clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.7 rc180424";
+my $version_PM_build 	= "0.0.7 rc180425";
 
 
 sub build_kindex_jelly{	
@@ -67,7 +67,6 @@ sub build_kindex_jelly{
 	my $path			= $HASH_info{"path_bin"};
 	my $threads			= $HASH_info{"threads"};
 	my $mem				= $HASH_info{"memory"};
-	
 	
 	#LOAD expert setting for build
 	my $parameter_extern = $HASH_info{"expert setting jelly"};
@@ -119,12 +118,14 @@ sub build_kindex_jelly{
 	}
 	if(-e $FILE_jelly){
 		system("mv $FILE_jelly ".$PATH_final);
-		system("mv ".$build_config." ".$PATH_final);
+		system("mv $build_config ".$PATH_final);
+		
+		print "\n --> KINDEX ".$HASH_info{"kindex name"}." was sucessfully constructed!";
+		print "\n --> [path] = ".$PATH_final.$FILE_jelly."\n\n";
 	}
 	$HASH_info{"absolut_path"} = $PATH_final.$FILE_jelly;
 
-	print "\n --> KINDEX ".$HASH_info{"kindex name"}." was sucessfully constructed!";
-	print "\n --> [path] = ".$PATH_final.$FILE_jelly."\n\n";
+	
 
 }
 
@@ -148,7 +149,7 @@ sub update_repository_information{
 	my %HASH_info 	= %{$href};
 	
 	my $REPO 		= new IO::File("repository_".$HASH_info{"kindex name"}.".info", "r") or die "could not read file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
-	my $REPO_update = new IO::File("repository_".$HASH_info{"kindex name"}.".info_update", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
+	my $REPO_update = new IO::File("repository_".$HASH_info{"kindex name"}.".info_update", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info_update file: $!\n";
 	
 	#1
 	#READ available info from repository.info into HASH_info (ONLY if HASH is empty)
@@ -297,7 +298,7 @@ sub make_config(){
 		print $USER_kindex_info sprintf("%-15s %s", "general notes :", " ")."\t".$HASH_info{"general notes"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "file :", " ")."\t\n";
 		print $USER_kindex_info sprintf("%-15s %s", "created :", " ")."\t".$loctime2."\n";
-		print $USER_kindex_info sprintf("%-15s %s", "version KMASKER :", " ")."\t\n";
+		print $USER_kindex_info sprintf("%-15s %s", "version KMASKER :", " ")."\t".$HASH_info{"version KMASKER"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "version BUILD :", " ")."\t".$version_PM_build."\n";
 				
 		print $USER_kindex_info "\n";	
@@ -340,7 +341,7 @@ sub make_minimal_info_config(){
 		print $USER_kindex_info sprintf("%-15s %s", "general notes :", " ")."\t".$HASH_info{"general notes"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "file :", " ")."\t\n";
 		print $USER_kindex_info sprintf("%-15s %s", "created :", " ")."\t".$loctime."\n";
-		print $USER_kindex_info sprintf("%-15s %s", "version KMASKER :", " ")."\t\n";
+		print $USER_kindex_info sprintf("%-15s %s", "version KMASKER :", " ")."\t".$HASH_info{"version KMASKER"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "version BUILD :", " ")."\t".$version_PM_build."\n";
 		print $USER_kindex_info "\n";	
 	$USER_kindex_info->close();
@@ -458,18 +459,18 @@ sub remove_kindex(){
 	
 	if(exists $HASH_repository_kindex{$kindex_shorttag}){
 		my @ARRAY_kindex_overview	= split("\t", $HASH_repository_kindex{$kindex_shorttag});
-		my $status 		= $ARRAY_kindex_overview[2];
-		my $abs_path_kindex_dir	= $ARRAY_kindex_overview[3];
+		my $status 					= $ARRAY_kindex_overview[3];
+		my $abs_path_kindex_dir		= $ARRAY_kindex_overview[4];
 		
-		if($status eq "global"){
-			print "\n WARNING: the kindex ".$kindex_shorttag." is global (not permitted to remove)!\n\n";
+		if(($status eq "global")||($status eq "external")){
+			print "\n WARNING: the kindex ".$kindex_shorttag." is external or global (not permitted to remove)!\n\n";
 		}else{
 			#REMOVE DATA
-			print "\n REMOVING the complete directory of KINDEX '$kindex_shorttag' :\n ".$abs_path_kindex_dir."\n\n";
-			system("rm -r ".$abs_path_kindex_dir);	
+			print "\n REMOVING the index structure for KINDEX '$kindex_shorttag' from :\n ".$abs_path_kindex_dir."\n\n";
+			system("rm -r ".$abs_path_kindex_dir."*".$kindex_shorttag."*");
 		}			
 	}else{
-		print "\n WARNING: the kindex ".$kindex_shorttag." does not exist!\n\n";
+		print "\n The kindex ".$kindex_shorttag." does not exist! Nothing to remove!\n\n";
 	}
 }
 
