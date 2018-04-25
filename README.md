@@ -74,7 +74,7 @@ The explore module provides additional functionality for downstream analysisi e.
 
 #### EXPLORE - ANNOTATION
 
-Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --dbfasta mipsREdat_9.3p_ALL.fasta
+Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta mipsREdat_9.3p_ALL.fasta
 
 For repeat studies in plant species we recommend using curated libraries:
 
