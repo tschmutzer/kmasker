@@ -76,13 +76,12 @@ sub custom_annotation{
     mkdir($HASH_info{"temp_path"}, 0755);
     
     if(exists $HASH_DB{"db"}){
-    	$db = $HASH_DB{"db"};    	
-        # check if file is a blastable DB
-        # assigned to @Chris
-         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
+    	# check if file is a blastable DB
+        if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("The BLASTdb was not found or is not complete!\n");
             print("Please run Kmasker with dbfasta instead of db again to rebuild the BLASTdb!\n");   
-        }   	
+        } 
+        $db = $HASH_DB{"db"};    	  	
     }
     elsif(exists $HASH_DB{"db_fasta"}){
         $db_fasta = $HASH_DB{"db_fasta"};
