@@ -89,7 +89,7 @@ my $set_global;
 my $user_name;
 my $verbose;
 my $temp_path			= "./temp/";
-
+my $feature 			= "KRC";
 #HASH
 my %HASH_repository_kindex;
 my %HASH_path;
@@ -126,6 +126,7 @@ my $result = GetOptions (	#MAIN
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
 							"gff=s"				=> \$gff,
+							"feature=s"			=> \$feature,
 							"db=s"				=> \$blastableDB,
 							"dbfasta=s"			=> \$dbfasta,		
 							"hexplot"			=> \$hexplot,
@@ -203,13 +204,14 @@ if(defined $help){
 	if(defined $explore){
 		#HELP section explore
 		print "\n Command (subset):";
-		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --dbfasta repeats.fasta";
+		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
 		print "\n\n\t Kmasker --explore --hist --occ file.occ --clist list_of_contigs.txt";
 		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
 		
 		print "\n\n Options:";
 		print "\n --annotate\t\t custom annotation using featured elements of GFF (requires --gff, --fasta, --db or --dbfasta)";
 		print "\n --gff\t\t\t use Kmasker constructed GFF report for annotation";
+		print "\n --feature\t\t the type of feature in the GFF that should be annotated";
 		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
 		print "\n --db\t\t pre-calculated blastableDB of nucleotides used for annotation";	
 		
@@ -549,12 +551,12 @@ if(defined $explore){
 		my $check_settings = 1;
 		$check_settings = 0 if(!defined $gff);
 		$check_settings = 0 if(!defined $fasta);
+		$check_settings = 0 if(!defined $feature);
 				
 		if($check_settings == 1){
-			my %HASH_db;
-    		$HASH_db{"dbfasta"} = $dbfasta if(defined $dbfasta);
-    		$HASH_db{"db"} 		= $dbfasta if(defined $blastableDB);
-			&custom_annotation($fasta, $gff, \%HASH_db, \%HASH_info);
+    		$HASH_db{"db_fasta"} = $dbfasta if(defined $dbfasta);
+    		$HASH_db{"db"} 		= $blastableDB if(defined $blastableDB);
+			&custom_annotation($fasta, $gff, $feature ,\%HASH_db, \%HASH_info);
 		}else{
 			print "\n WARNING: Required parameter are missing. Kmasker was stopped.\n\n";
 			exit;

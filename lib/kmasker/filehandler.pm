@@ -159,19 +159,26 @@ sub extract_feature_gff {
    my $seqfile = $_[0];
    my $list = $_[1];
    my $feature = $_[2];
+   my $temp = $_[3];
    my $offset = 1;
    open(my $seqfh, "<", "$seqfile") or die "Can not open $seqfile\n";
    (my $name,my $path,my $suffix) = fileparse($seqfile, qr/\.[^.]*/);
+   if (defined $temp) {
+      $path=$temp;
+   }
    open(my $listfh, "<", "$list") or die "Can not open $list\n";
    my @start;
    my @stop;
    my @ident;
    while(<$listfh>) {
-      my @line = split(/\t/, $_);
-      if($line[2] eq $feature) {
-         push(@ident, $line[0]);
-         push(@start, ($line[3] - $offset));
-         push(@stop , ($line[4] - $offset));
+      if($_ !~ m/^#/ ) {
+         my @line = split(/\t/, $_);
+         #print $line[2];
+         if($line[2] eq $feature) {
+               push(@ident, $line[0]);
+               push(@start, ($line[3] - $offset));
+               push(@stop , ($line[4] - $offset));
+         }
       }
    }
    my %seqdata;
@@ -448,7 +455,7 @@ sub add_annotation_to_gff{
    open(my $gfffh, "<", "$gff") or die "Can not open $gff\n";
    open(my $blastfh, "<", "$blast") or die "Can not open $blast\n";
    (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
-   open(my $gff_out, ">", "$path/${name}_annotation${suffix}") or die "Can not write to $path/${name}_annotation${suffix} \n";     
+   open(my $gff_out, ">", "$path/${name}_with_annotation${suffix}") or die "Can not write to $path/${name}_with_annotation${suffix} \n";     
    my %blastresults;
    while(<$blastfh>){
       my @line = split(/\t/, $_);
