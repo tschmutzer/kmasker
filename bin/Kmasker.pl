@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.29 rc180424";
+my $version 	= "0.0.29 rc180425";
 my $path 		= dirname abs_path $0;		
 my $fasta;
 my $indexfile;
