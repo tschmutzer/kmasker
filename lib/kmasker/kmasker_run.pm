@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.28 rc180420";
+my $version_PM_run 	= "0.0.29 rc180712";
 
 ## subroutine
 #
@@ -60,7 +60,7 @@ sub run_kmasker_SK{
 		print "\n\n";
 
 		#create symbolic link to kindex from private or global
-		my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";		
+		my $full_kindex_name = "KINDEX_".$kindex.".jf";		
 		if(-e $absolut_path.$full_kindex_name){
 			system("ln -s \"".$absolut_path.$full_kindex_name."\"");
 		}else{
@@ -87,7 +87,6 @@ sub run_kmasker_SK{
         kmasker::filehandler::sequence_length($fasta);
         system( "mv" ." $fasta.length" . " \"$temp_path/$fasta.length\"" );
         
-		
 		#merge seeds
 		print "\n .. start to generate extended region" ;#if(!defined $silent);
 		my $tab = $fasta;
@@ -100,13 +99,9 @@ sub run_kmasker_SK{
 		my $subfeature = "KRR";
 		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $subfeature);
 		
-		#Add annotation
-		# TASK: Move to explore!
-		#kmasker::functions::add_annotation($fasta, "$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", $BLASTDB, "$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff", $threads);
-        #system("FASTA_Xdivider.pl --fasta KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." --sl ".$length_threshold);
-        kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
-        #system("mv Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta." KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_MIN".$length_threshold."_".$fasta);
-        #system("mv" . " temp/Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta . " Xsplit_KMASKER_".$kindex."_RT".$rept."_N".$seq_depth."_".$fasta);
+		#extract repeat regions
+		kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
+       
         system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff" . " RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff");
 	}else{
 		#KINDEX is missing in repository
@@ -125,7 +120,9 @@ sub run_kmasker_MK{
 	my $aref_info_Kx	= $_[2];
 	my $href_repo 		= $_[3];
 	#my $href_info		= $_[4];
-	my $path 		= dirname abs_path $0;		
+	my $path 			= dirname abs_path $0;
+	my $FC_compare		= 5;
+			
 	
 	#my %HASH_info_this 			= %{$href_info};
 	my %HASH_repository_kindex 	= %{$href_repo};
@@ -176,44 +173,8 @@ sub run_kmasker_MK{
 			my @ARRAY_repository 	= split("\t", $HASH_repository_kindex{$kindex});
 			my $absolut_path		= $ARRAY_repository[4];
 
-				
-			# #REPEAT analytics
-			# my $BLASTDB_redat 	= "";
-			# my $BLASTDB_repbase = "";
-			# my $BLASTDB_trep	= "";
-			# my $BLASTDB = $repeat_lib_path ."/repeats.fasta";
-			
-			# #REPEAT analytics -should be done with REdat, RepBase and TREP FASTA
-			# if(-e $repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta"){
-			# 	$BLASTDB_redat		= "\"".$repeat_lib_path."/REdat/mipsREdat_9.3p_ALL.fasta\""; #CHANGEME
-			# 	print "Using REdat: " . $BLASTDB_redat . "\n";
-			# }
-			
-			# if(-e $repeat_lib_path."/RepBase/RepBase22.07_plants.fasta"){
-			# 	my $BLASTDB_repbase	= "\"".$repeat_lib_path."/RepBase/RepBase22.07_plants.fasta\""; #CHANGEME
-			# 	print "Using RepBase: " . $BLASTDB_repbase . "\n";
-
-			# }
-			
-			# if(-e $repeat_lib_path ."/TREP/trep-db_nr_Rel-16.fasta"){
-			# 	$BLASTDB_trep		= "\"".$repeat_lib_path."/TREP/trep-db_nr_Rel-16.fasta\""; #CHANGEME
-			# 	print "Using TREP: " . $BLASTDB_trep . "\n";
-
-			# }
-			
-			# if((! -e $repeat_lib_path."/repeats.fasta") || (-z $repeat_lib_path."/repeats.fasta")) {
-			# 	system("cat ".$BLASTDB_redat." ".$BLASTDB_repbase." ".$BLASTDB_trep." > " .$repeat_lib_path  . "/repeats.fasta");
-			# }
-			# if(((! -e $repeat_lib_path."/repeats.fasta.nhr") || (-z $repeat_lib_path."/repeats.fasta.nhr")) || ((! -e $repeat_lib_path."/repeats.fasta.nin") || (-z $repeat_lib_path."/repeats.fasta.nin")) || ((! -e $repeat_lib_path."/repeats.fasta.nsq") || (-z $repeat_lib_path."/repeats.fasta.nsq"))) {
-			# 	print("BLASTDB is missing...rebuilding it!\n");
-			# 	system("makeblastdb -in \"".$BLASTDB."\" -dbtype nucl ");
-			# 	print("BLASTDB was rebuilt.\n");
-			# }
-			# print "Using BLASTDB: " . $BLASTDB . "\n";
-
-
 			#create symbolic link to kindex from private or global
-			my $full_kindex_name = "KINDEX_".$kindex."_k".$k.".jf";
+			my $full_kindex_name = "KINDEX_".$kindex.".jf";
 			push(@ARRAY_full_kindex_names, $full_kindex_name);
 			push(@ARRAY_seq_depth, $seq_depth);
 			if(-e $absolut_path.$full_kindex_name){
@@ -273,16 +234,13 @@ sub run_kmasker_MK{
 	#PRODUCE GFF
 	my $feature = "KRC";
 	my $subfeature = "KRR";
-	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC10_".$tab1.".tab", $subfeature);
-	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC10_".$tab2.".tab", $subfeature);
-	#Annotate GFF --> moved to explore
-	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged.tab".".gff", $threads);
-	#kmasker::functions::add_annotation($fasta, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab", $BLASTDB, "temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged.tab".".gff", $threads);
-    system("cp" . " $temp_path/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab1" . ".gff");
-    system("cp" . " $temp_path/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC10_$tab2" . ".gff");
-    #With Annotation
-    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab1" . "_Regions_merged_annotation".".gff" . " KMASKER_comparativ_FC10_$tab1" . "_annotation.gff");
-    #system("cp" . " temp/KMASKER_comparativ_FC10_$tab2" . "_Regions_merged_annotation".".gff" . " KMASKER_comparativ_FC10_$tab2" . "_annotation.gff");
+	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $subfeature);
+	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $subfeature);
+	system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff");
+    system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff");
+      
+    #CALL comparative methods
+    system("OCC_compare.pl --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
 
 }
 

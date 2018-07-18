@@ -10,13 +10,12 @@ use Cwd  qw(abs_path);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
-use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_external_path clean_repository_directory read_config);
+use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.30 rc180425";
+my $version 	= "0.0.31 rc180717";
 my $path 		= dirname abs_path $0;		
-my $fasta;
 my $indexfile;
 
 #MODULES
@@ -38,10 +37,11 @@ my $threads = 4;
 my $mem_usr;
 my $mem		= 24;
 my $PATH_kindex_private = "";
-my $PATH_kindex_global 	= "";
 my $PATH_kindex_external= "";
 
 #RUN
+my $fasta;
+my $grna;
 my $kindex_usr;
 my $k_usr;
 my $k 					= 21;
@@ -68,17 +68,18 @@ my $blastableDB;
 my $dbfasta;
 #visualisation
 my $hist;
+my $histbw;
 my $violin;
 my $hexplot;
-my $triplot;
+
 
 #GENERAL parameter
 my $help;
 my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
+my $show_path;
 my $set_private_path;
-my $set_global_path;
 my $set_external_path;
 my $check_install;
 my $remove_kindex;
@@ -110,18 +111,16 @@ my $result = GetOptions (	#MAIN
 							"cn=s"				=> \$common_name_usr,
 							"in=s"				=> \$index_name_usr,
 							"config=s"			=> \$build_config,
-							"make_config"		=> \$make_config,
-							
+							"make_config"		=> \$make_config,							
 							
 							#RUN
 							"fasta=s"			=> \$fasta,	
+							"grna=s"			=> \$grna,
 							"kindex=s"			=> \$kindex_usr,
 							"multi_kindex=s{1,}"=> \@multi_kindex,
 							"rept=s"			=> \$repeat_threshod_usr,
-							"min_length=s"		=> \$length_threshold_usr,
-#							"tol_length=s"		=> \$tolerant_length_threshold_usr,
-
-								
+							"min_length=s"		=> \$length_threshold_usr,							
+#							"tol_length=s"		=> \$tolerant_length_threshold_usr,								
 												
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
@@ -131,8 +130,8 @@ my $result = GetOptions (	#MAIN
 							"dbfasta=s"			=> \$dbfasta,		
 							"hexplot"			=> \$hexplot,
 							"hist"				=> \$hist,
+							"histbw"			=> \$histbw,
 							"violin"			=> \$violin,
-							"triplot"			=> \$triplot,
 							"clist=s"			=> \$clist,
 							"occ=s"				=> \$occ,
 							"stats"				=> \$stats,
@@ -141,10 +140,10 @@ my $result = GetOptions (	#MAIN
 							#GLOBAL
 							"show_repository"		=> \$show_kindex_repository,
 							"show_details=s"		=> \$show_details_for_kindex,
+							"show_path"				=> \$show_path,
 							"remove_kindex=s"		=> \$remove_kindex,
-							"set_global=s"			=> \$set_global,
 							"set_private_path=s"	=> \$set_private_path,
-							"set_external_path=s"	=> \$set_external_path,
+							"set_external_path=s"	=> \$set_external_path,							
 							"check_install"			=> \$check_install,	
 							"threads=i"				=> \$threads_usr,
 							"mem=i"					=> \$mem_usr,
@@ -190,7 +189,7 @@ if(defined $help){
 		
 		print "\n\n Options:";
 		print "\n --fasta\t FASTA sequence for k-mer analysis and masking";
-		print "\n --kindex\t use specific k-mer index e.g. bowman or morex";
+		print "\n --kindex\t use single k-mer index";
 		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --min_length\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
@@ -207,22 +206,23 @@ if(defined $help){
 		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
 		print "\n\n\t Kmasker --explore --hist --occ file.occ --clist list_of_contigs.txt";
 		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
+		print "\n\n\t Kmasker --explore --stats --occ file.occ";
 		
 		print "\n\n Options:";
 		print "\n --annotate\t\t custom annotation using featured elements of GFF (requires --gff, --fasta, --db or --dbfasta)";
 		print "\n --gff\t\t\t use Kmasker constructed GFF report for annotation";
 		print "\n --feature\t\t the type of feature in the GFF that should be annotated";
 		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
-		print "\n --db\t\t pre-calculated blastableDB of nucleotides used for annotation";	
+		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
 		
-		print "\n --hist\t\t create histogram (requires --clist and --occ)";
-		print "\n --violin\t\t create violin plot (distribution of k-mer)";
+		print "\n --hist\t\t\t create histogram (requires --clist and --occ)";
+		print "\n --histbw\t\t create simple histogram (requires --clist and --occ)";
+		print "\n --violin\t\t create violin plot (comparison of two kindex)";
 		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
-		print "\n --triplot\t\t create tertiary plot (comparison of three kindex)";
-		print "\n --occ\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
+		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
 		print "\n --clist\t\t file containing a list of contig identifier for analysis";	
 
-#		print "\n --stats\t\t\t calculate basic statistics like avegare k-mer frequency per contig etc. (requires --occ)";	
+		print "\n --stats\t\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
 		
 		print "\n\n";
 		exit();
@@ -237,8 +237,9 @@ if(defined $help){
 	print "\n --explore\t\t perform downstream analysis with constructed index and detected repeats";
 	
 	print "\n\n General options:";
-	print "\n --show_repository\t\t shows complete list of global and private k-mer indices";
-	print "\n --show_details\t\t\t shows details for a requested kindex";
+	print "\n --show_repository\t\t show complete list of private and external k-mer indices";
+	print "\n --show_details\t\t\t show details for a requested kindex";
+	print "\n --show_path\t\t show path Kmaskers looks for constructed kindex";
 	print "\n --remove_kindex\t\t remove kindex from repository";
 	print "\n --set_private_path\t\t change path to private repository";
 	print "\n --set_external_path\t\t change path to external repository [readonly]";
@@ -287,7 +288,6 @@ if(defined $mem_usr){
 ########
 # STORE GENERAL INFO in HASH info
 my %HASH_info 						= ();
-$HASH_info{"PATH_kindex_global"}	= $PATH_kindex_global; 
 $HASH_info{"PATH_kindex_private"}	= $PATH_kindex_private;
 $HASH_info{"PATH_kindex_external"}	= $PATH_kindex_external;
 $HASH_info{"path_bin"}				= $path;
@@ -304,6 +304,11 @@ my %HASH_db 						= ();
 #SET private path
 if(defined $set_private_path){
 	
+	if($set_private_path =~ /^\./){
+		print "\n .. please use absolut path! Kmasker was stopped!\n";
+		exit();
+	}
+	
 	print "\n Kmasker will change private path: ".$set_private_path;
 	print "\n Please note that data will not be moved to new directories!";
 	print "\n This has to be done manually!\n\n";
@@ -315,11 +320,22 @@ if(defined $set_private_path){
 #SET external path
 if(defined $set_external_path){
 	
+	if($set_external_path =~ /^\./){
+		print "\n .. please use absolut path! Kmasker was stopped!\n";
+		exit();
+	}
+	
 	print "\n Kmasker will change external path: ".$set_external_path;
 	print "\n Please note that data will not be moved to new directories!";
 	print "\n This has to be done manually!\n\n";
 	
 	&set_external_path($set_external_path);
+	exit();
+}
+
+#GET info of Kmasker used path
+if(defined $show_path){
+	&show_path_infos();
 	exit();
 }
 
@@ -415,50 +431,46 @@ if(defined $length_threshold_usr){
 if(defined $build){
 	#USE BUILD MODULE
 	
-	if(defined $set_global){
-		if(exists $HASH_repository_kindex{$set_global}){
-			&set_kindex_global($set_global, \%HASH_repository_kindex, $PATH_kindex_private, $PATH_kindex_global);			
-		}else{
-			print "\n WARNING: requested kindex '".$set_global."' does not exist. Kmasker was stopped!\n\n";
-		}
-		exit();			
-	}else{
-		
-		if(exists $HASH_repository_kindex{$index_name}){
-			print "\n WARNING: KINDEX ".$index_name." already exists! Kmasker was stopped\n\n";
-			exit();
-		}		
-		
-		########
-		#STORE BUILD INFO in HASH info
-		my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
-		$HASH_info{"user name"}				= $user_name;
-		$HASH_info{"seq"} 					= $input;		
-		#REQUIRED
-		$HASH_info{"k-mer"}					= $k 			if(defined $k);
-		$HASH_info{"genome size"}			= $genome_size	if(defined $genome_size);
-		$HASH_info{"kindex name"}			= $index_name	if(defined $index_name);
-		$HASH_info{"common name"}			= $common_name  if(defined $common_name);
-		#ADDITIONAL
-		$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
-		$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
-		$HASH_info{"version KMASKER"}		= $version;
-		$HASH_info{"version BUILD"} 		= "";
-		$HASH_info{"status"}				= "";
-		$HASH_info{"scientific name"}		= "";
-		$HASH_info{"sequence type"}			= "";
-		$HASH_info{"general notes"}			= "";
-		$HASH_info{"type"}					= "";
-		$HASH_info{"sequencing depth"}		= "";
-		
-		#CONSTRUCT
-		if(defined $input){
-			&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex, \%HASH_path); 
-		}
-		
-		#CLEAN
-		&clean_repository_directory(\%HASH_info, \%HASH_repository_kindex);			
+	if(exists $HASH_repository_kindex{$index_name}){
+		print "\n WARNING: KINDEX ".$index_name." already exists! Kmasker was stopped\n\n";
+		exit();
 	}	
+		
+	if(length($index_name) >=25){
+		print "\n WARNING: KINDEX name ".$index_name." is to long. Please use index name with less than 25 letters!\n\n";
+		exit();
+	}			
+		
+	########
+	#STORE BUILD INFO in HASH info
+	my $input 							= join(" ", sort { $a cmp $b } @seq_usr);
+	$HASH_info{"user name"}				= $user_name;
+	$HASH_info{"seq"} 					= $input;		
+	#REQUIRED
+	$HASH_info{"k-mer"}					= $k 			if(defined $k);
+	$HASH_info{"genome size"}			= $genome_size	if(defined $genome_size);
+	$HASH_info{"kindex name"}			= $index_name	if(defined $index_name);
+	$HASH_info{"common name"}			= $common_name  if(defined $common_name);
+	#ADDITIONAL
+	$HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
+	$HASH_info{"expert setting jelly"}	= $expert_setting_jelly; 
+	$HASH_info{"version KMASKER"}		= $version;
+	$HASH_info{"version BUILD"} 		= "";
+	$HASH_info{"status"}				= "";
+	$HASH_info{"scientific name"}		= "";
+	$HASH_info{"sequence type"}			= "";
+	$HASH_info{"general notes"}			= "";
+	$HASH_info{"type"}					= "";
+	$HASH_info{"sequencing depth"}		= "";
+		
+	#CONSTRUCT
+	if(defined $input){
+		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex, \%HASH_path); 
+	}
+		
+	#CLEAN
+	&clean_repository_directory(\%HASH_info, \%HASH_repository_kindex);			
+
 		
 	#QUIT
 	print "\n - Thanks for using Kmasker! -\n\n";
@@ -569,13 +581,29 @@ if(defined $explore){
 			print "\n WARNING: Required parameter are missing. Kmasker was stopped.\n\n";
 			exit;
 		}		
-	}
+	}	
 	
+	#PRINT REPORT
+	if(defined $stats){
+		# EXPLORE STATS
+		
+		#STATS requirements
+		my $check_settings = 1;
+		$check_settings = 0 if(!defined $occ);
+				
+		if($check_settings == 1){
+    		&report_statistics($occ);
+		}else{
+			print "\n WARNING: Required parameter --occ is missing. Kmasker was stopped.\n\n";
+			exit;
+		}		
+	}	
+	
+	#VIZUALISATION
 	my $visualisation;
 	$visualisation = 1 if(defined $hist);
 	$visualisation = 1 if(defined $violin);
 	$visualisation = 1 if(defined $hexplot);
-	$visualisation = 1 if(defined $triplot);
 		
 	#HISTOGRAM
 	if(defined $visualisation){
@@ -586,13 +614,18 @@ if(defined $explore){
 			
 			my $missing_parameter = "";
 		
+			#HISTOGRAM
 			if(defined $hist){
-				if(defined $clist){
-					&plot_histogram($occ, $clist);
+				if(defined $clist){					
+					if (-e $clist) {
+   						&plot_histogram($occ, $clist);
+					}else{
+						$missing_parameter .= " --clist (file ".$clist." not found)";
+					}				
 				}else{
 					$missing_parameter .= " --clist";
 				}
-			}		
+			}			
 			
 			if($missing_parameter ne ""){
 				#GIVE warning note for missing parameter
@@ -639,7 +672,7 @@ sub read_user_config(){
 	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
 	
 	if(-e $gconf){
-		#LOAD global info
+		#LOAD info for external tools
 		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read user config $!";	
 		
 		while(<$gCFG>){
@@ -648,17 +681,20 @@ sub read_user_config(){
 			my $line = $_;
 			$line =~ s/\n//;
 			my @ARRAY_tmp = split("=", $line);
-			$PATH_kindex_global	= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_global");
-			$PATH_kindex_global .= "/" if($PATH_kindex_global !~ /\/$/);
-			
-			#GLOBAL
-			#PRIVATE
-			if(-d $PATH_kindex_global){
-				#directory exists - do nothing
-			}else{
-				#directory has to be created
-				system("mkdir "."\"".$PATH_kindex_global."\"");
-			}
+			if($ARRAY_tmp[0] eq "PATH_kindex_external"){
+				if(defined $ARRAY_tmp[1]){
+					$PATH_kindex_external	= $ARRAY_tmp[1];
+					$PATH_kindex_external .= "/" if($PATH_kindex_external !~ /\/$/);
+					
+					#EXTERNAL
+					if(-d $PATH_kindex_external){
+						#directory exists - do nothing
+					}else{
+						#directory has to be created
+						system("mkdir "."\"".$PATH_kindex_external."\"");
+					}
+				}
+			}		
 			
 			#READ external tool path
 			#JELLYFISH
@@ -727,6 +763,7 @@ sub read_user_config(){
 			
 			#EXTERNAL
 			if(($ARRAY_tmp[0] eq "PATH_kindex_external")&&(defined $ARRAY_tmp[1])){
+				
 				$PATH_kindex_external = $ARRAY_tmp[1];
 				$PATH_kindex_external.= "/" if($PATH_kindex_external !~ /\/$/);
 				if($PATH_kindex_external !~ /^\/$/){
@@ -736,7 +773,7 @@ sub read_user_config(){
 						#directory has to be created
 						system("mkdir "."\"".$PATH_kindex_external."\"");
 					}	
-				}		
+				}	
 			}					
 		}
 	}else{
@@ -783,8 +820,9 @@ sub read_repository(){
 	close $DIR_P;
 	
 	#EXTERNAL
-	if($PATH_kindex_external !~ //){
+	if($PATH_kindex_external !~ /^\/$/){
 	# EXTERNAL PATH is set
+		
 		opendir( my $DIR_E, $PATH_kindex_external ) or die "Can not open \'$PATH_kindex_external\' (external path)\n";
 		$common_name_this 	= "";
 		$file_name			= "";
@@ -816,52 +854,35 @@ sub read_repository(){
 		close $DIR_E;
 	}
 	
-	#GLOBAL
-	opendir( my $DIR_G, $PATH_kindex_global ) or die "Can not open $PATH_kindex_global (global path) \n"; ;
-	$common_name_this = "";
-	while ( $file_name = readdir $DIR_G ) {
-		$status 			= "global";
-		$common_name_this 	= "";	
-		if($file_name =~ /^repository_/){
-			$file_name =~ s/repository_//;
-			my @ARRAY_name 	= split(/\./, $file_name);
-			my $kindex_id 			= $ARRAY_name[0]; 
-			my $BUILD_file 	= new IO::File($PATH_kindex_global."repository_".$kindex_id.".info", "r") or print " ... could not read repository info for $kindex_id : $!\n";
-			if(-e $PATH_kindex_global."repository_".$kindex_id.".info"){;
-				while(<$BUILD_file>){
-					if($_ =~ /^common name/){
-						$common_name_this = +(split("\t", $_))[1];
-						$common_name_this =~ s/\n//;
-					}	
-					if($_ =~ /^k-mer/){
-						$kmer = +(split("\t", $_))[1];
-						$kmer =~ s/\n//;
-					}	
-				}
-				#integrate into HASH
-				$HASH_repository_kindex{$kindex_id} = $kindex_id."\t".$kmer."\t".$common_name_this."\t".$status."\t".$PATH_kindex_global;
-			}		
-		}
-	}
-	
-	close $DIR_G;
 }
 
 
 ## subroutine
 #
 sub show_repository(){	
-	print "\n\nREPOSITORY of available kindex structures:\n";		
+	print "\n\nREPOSITORY of available kindex structures:\n";
+	
+	my %HASH_repository_content = ();
+			
 	#PRINT
 	foreach my $kindex_this (keys %HASH_repository_kindex){
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_this});
-		#formatted print
-		print "\n\t";
-		printf "%-14s", $kindex_this;				
-		print "\t".$ARRAY_repository[1]."\t";
-		printf "%-14s", $ARRAY_repository[2];
-		print "\t".$ARRAY_repository[3];
+		my $hashline = "";
+		
+		$hashline = "\n\t";
+		$hashline .= sprintf("%-25s", $kindex_this);				
+		$hashline .= "\t".$ARRAY_repository[1]."\t";
+		$hashline .= sprintf("%-14s", $ARRAY_repository[2]);
+		$hashline .= "\t".$ARRAY_repository[3];
+		
+		#INSERT
+		$HASH_repository_content{$kindex_this} = $hashline;
 	}
+	
+	foreach my $key (sort keys %HASH_repository_content){
+		print $HASH_repository_content{$key};
+	}
+	
 	print "\n\n";
 }
 
@@ -923,7 +944,7 @@ sub check_settings(){
 		
 		if(defined $make_config){
 			#nothing to do
-		}elsif(defined $set_global){
+		}elsif(defined $set_external_path){
 			#nothing to do
 		}elsif(defined $set_private_path){
 			#nothing to do
@@ -978,7 +999,7 @@ sub check_install(){
 	}
 	
 	#REQUIREMENTs
-	my %HASH_requirments	= ("PATH_kindex_global" => $ENV{"HOME"}."/KINDEX/",
+	my %HASH_requirments	= ("PATH_kindex_external" => $ENV{"HOME"}."/KINDEX/",
 								"jellyfish" => "",
 								"fastq-stats" => "",
 								"gffread" => "");
@@ -1007,10 +1028,10 @@ sub check_install(){
 			my @ARRAY_tmp = split("=", $line);
 			
 			#PATH
-			if($line =~ /^PATH_kindex_global/){
+			if($line =~ /^PATH_kindex_external/){
 				if(defined $ARRAY_tmp[1]){
-					$HASH_requirments{"PATH_kindex_global"} = $ARRAY_tmp[1];
-					$HASH_requirments{"PATH_kindex_global"}	.= "/" if($HASH_requirments{"PATH_kindex_global"} !~ /\/$/ );
+					$HASH_requirments{"PATH_kindex_external"} = $ARRAY_tmp[1];
+					$HASH_requirments{"PATH_kindex_external"}	.= "/" if($HASH_requirments{"PATH_kindex_external"} !~ /\/$/ );
 				}
 			}
 			
@@ -1032,7 +1053,7 @@ sub check_install(){
 				
 		#WRITE
 		print $gCFG "#path requirements\n";
-		print $gCFG "PATH_kindex_global=".$HASH_requirments{"PATH_kindex_global"}."\n\n";
+		print $gCFG "PATH_kindex_external=".$HASH_requirments{"PATH_kindex_external"}."\n\n";
 		print $gCFG "#external tool requirements\n";
 		foreach my $required (keys %HASH_requirments){
 			if($required !~ /^PATH_kindex/){
@@ -1042,12 +1063,20 @@ sub check_install(){
 			}			
 		}
 		
-		if($HASH_requirments{"PATH_kindex_global"} eq $ENV{"HOME"}."/KINDEX/"){					
-			print "\n PATH_kindex_global=".$ENV{"HOME"}."/KINDEX/\n\n";
-			print "\n The global path variable is not defined and was automatically set to your home directory."; 
+		if($HASH_requirments{"PATH_kindex_external"} eq $ENV{"HOME"}."/KINDEX/"){					
+			print "\n PATH_kindex_external=".$ENV{"HOME"}."/KINDEX/\n\n";
+			print "\n The external path variable is not defined and was automatically set to your home directory."; 
 			print "\n Its recommended to use another directoty because large data volumes will be produced and stored in that directory.";
-			print "\n Please edit the global path variable for storage of constructed KINDEX by using the following command";
-			print "\n\n  Kmasker --set_global_path /global_path/\n\n"; 
+			print "\n Please edit the external path variable for storage of constructed KINDEX by using the following command";
+			print "\n\n  Kmasker --set_external_path /external_path/\n\n"; 
+		}
+		
+		if($HASH_requirments{"PATH_kindex_private"} eq $ENV{"HOME"}."/KINDEX/"){					
+			print "\n PATH_kindex_private=".$ENV{"HOME"}."/KINDEX/\n\n";
+			print "\n The private path variable is not defined and was automatically set to your home directory."; 
+			print "\n Its recommended to use another directoty because large data volumes will be produced and stored in that directory.";
+			print "\n Please edit the private path variable for storage of constructed KINDEX by using the following command";
+			print "\n\n  Kmasker --set_private_path /private_path/\n\n"; 
 		}
 		
 		$gCFG_old->close();

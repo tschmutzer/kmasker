@@ -16,10 +16,10 @@ build_kindex_jelly
 make_config
 remove_repository_entry
 );
-our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_global set_private_path set_external_path clean_repository_directory read_config);
+our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.7 rc180425";
+my $version_PM_build 	= "0.0.7 rc180717";
 
 
 sub build_kindex_jelly{	
@@ -86,7 +86,7 @@ sub build_kindex_jelly{
 	
 	#BUILD JELLY index	
 	print "\n ... start construction of kindex with the following parameters ".$setting." \n";
-	my $FILE_jelly = "KINDEX_".$HASH_info{"kindex name"}."_k".$k.".jf";
+	my $FILE_jelly = "KINDEX_".$HASH_info{"kindex name"}.".jf";
 	push(@ARRAY_shell, "jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq." ");
 	#CREATE script
 	system("cp ".$path."/.kmasker_background_process .");
@@ -107,8 +107,7 @@ sub build_kindex_jelly{
 	$HASH_info{"sequencing depth"} 		= &read_stats($HASH_info{"genome size"});
 	$HASH_info{"file"}					= $FILE_jelly;
 	$HASH_info{"created"}				= $loctime2;
-	&update_repository_information(\%HASH_info);
-	
+	&update_repository_information(\%HASH_info);	
 	
 	#STORE constructed kindex and repository.info
 	my $PATH_final = $HASH_info{"PATH_kindex_private"};
@@ -124,21 +123,8 @@ sub build_kindex_jelly{
 		print "\n --> [path] = ".$PATH_final.$FILE_jelly."\n\n";
 	}
 	$HASH_info{"absolut_path"} = $PATH_final.$FILE_jelly;
-
-	
-
 }
 
-
-## subroutine
-#
-sub edit_repository_information{
-	# Subroutine aims to fill repository information (e.g missing species names).
-	# An inteactive mode will be started to add information 
-	
-	&promptUser("", "");
-	
-}
 
 ## subroutine
 #
@@ -477,7 +463,7 @@ sub remove_kindex(){
 
 ## subroutine
 #
-sub set_kindex_global(){
+sub set_kindex_external(){
 	
 	my $kindex_shorttag		= $_[0];
 	my $href_this 			= $_[1];
@@ -529,7 +515,7 @@ sub set_kindex_name(){
 #
 sub clean_repository_directory(){
 	#routinly check if KINDEX datasets exist, that are not complete
-	# e.g. repository,file is missing or is empty
+	# e.g. repository.file is missing or is empty
 	
 	#general cleaning
 	system("rm \.kmasker_background_process") if(-e "\.kmasker_background_process");
@@ -569,19 +555,12 @@ sub set_external_path(){
 	my $new_path		= $_[0];
 	my $href_info		= $_[1];
 	
-#	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
-#	my $user_name	= `whoami`;
-#	$user_name		=~ s/\n$//;
-#	my $abs			= $path_bin."/kmasker.config";
-#	my $installed_by= `stat -c "%U" $abs`;
-#	$installed_by 	=~ s/\n//;
-#	if($installed_by ne $user_name){
-#		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
-#		print "\n U = (".$user_name.") I = (".$installed_by.")\n";
-#		exit();	
-#	}
-
-	my $old_path	="";
+	if($new_path =~ /^\./){
+		print "\n .. please use absolut path! Kmasker was stopped!\n";
+		exit();
+	}
+	
+	my $old_path		="";
 	my $conf 			= $ENV{"HOME"}."/.kmasker_user.config";
 	
 	my $CONF_OLD 	= new IO::File($conf, "r") or die "could not read old conf : $!\n";
@@ -612,23 +591,23 @@ sub set_external_path(){
 
 ## subroutine
 #
-sub move_private_structures(){
-	my $PPN = $_[0];
-	my $PPO = $_[1];
-	#EDIT PRIVATE REPOSITORY
-	
-	exit if($PPN eq $PPO);
-		
-	#MOVE data
-	if(-d $PPN){
-		print "\n ".$PPN." already exists and will be into ".$ENV{"HOME"}."/TMP_storage/";
-		system("mv ".$PPN." ".$ENV{"HOME"}."/TMP_storage/");
-		system("cp -r ".$PPO." ".$PPN);
-	}else{
-		system("cp -r ".$PPO." ".$PPN);
-	}	
-	system("rm -r ".$PPO);		
+sub show_path_infos(){
+	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
+	my $USER_CONF_OLD 	= new IO::File($uconf, "r") or die "could not read old user conf : $!\n";
+	print "\nKmasker path info:\n";
+	while(<$USER_CONF_OLD>){
+		my $line = $_;
+		$line =~ s/\n//;
+		if($line =~ /^PATH_kindex_private/){
+			print "\n".$line;
+		}		
+		if($line =~ /^PATH_kindex_external/){
+			print "\n".$line;
+		}		
+	}
+	print "\n\n";
 }
+
 
 ## subroutine
 #

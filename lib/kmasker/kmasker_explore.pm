@@ -10,17 +10,33 @@ plot_histogram
 repeat_annotation
 gff_construction
 );
-our @EXPORT_OK = qw(plot_histogram custom_annotation gff_construction);
+our @EXPORT_OK = qw(plot_histogram custom_annotation gff_construction report_statistics);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.1 rc180419";
+my $version_PM_explore 	= "0.0.1 rc180717";
 
 ## subroutine
 #
 sub plot_histogram{
     my $occ		=	$_[0];
     my $clist	=	$_[1];
-    system("occVisualizer.R -i ".$occ." -l ".$clist);
+    
+    my $systemcall_wc = `wc -l $clist`;  
+    $systemcall_wc =~ s/ /\t/;
+    $systemcall_wc =~ s/ //g;
+  	my @ARRAY_sys = split("\t", $systemcall_wc);
+	my $number = $ARRAY_sys[0];
+	print "\n ".$number." sequences selected for plotting.";
+	if($number >= 10000){
+		print "\n WARNING: Generating more than 10000 plots will take long and is not reccomended!\n";
+	}   
+	
+	#subset
+	system("FASTA_getseq.pl -o ".$occ." --clist ".$clist);
+	my $occ_subset = $occ.".selection";
+    
+    #vis
+    system("occVisualizer.R -i ".$occ_subset." -l ".$clist);
     #The script will skip large contigs to avoid long running times
     #You can force it to do it anyway with -f
     #If you do not want to provide a contig list (instead running on all entries
@@ -41,14 +57,17 @@ sub plot_histogram{
 		next if($_ =~ /^#/);
 		my $line = $_;
 		$line =~ s/\n//;
-		system("mv ".$line."*.png Kmasker_plots_".$kindex);
-   	}    
+		system("mv ".$line.".png Kmasker_plots_".$kindex."/".$line."_hist.png");
+   	}  
+   	
+   	#clean
+   	system("rm ".$occ_subset);  
 }
 
 
 ## subroutine
 #
-sub gff_construction{
+sub report_statistics{
 #implement
 	
 }
