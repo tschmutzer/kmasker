@@ -1,6 +1,6 @@
 #!/usr/bin/env Rscript
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(getopt, zoo, ggplot2, scales, stringr)
+pacman::p_load(getopt, zoo, pillar, ggplot2, scales, stringr)
 #library('getopt')
 #use getopt for input file and help description
 spec=matrix(c(
@@ -29,10 +29,15 @@ if( !is.null(opt$window_size)) {
   wsize=opt$window_size
 }
 
-
+my.read.lines=function(fname) {
+  s = file.info( fname )$size 
+  buf = readChar( fname, s, useBytes=T)
+  strsplit( buf,"\n",fixed=T,useBytes=T)[[1]]
+  #https://www.r-bloggers.com/faster-files-in-r/
+}
 
 #pharse quality-data
-qual_file <- readLines(file(file.path(opt$input), open="r"))
+qual_file <- my.read.lines(file.path(opt$input))
 #get the positions with >
 opentags<-which(grepl(">.*", qual_file) == TRUE)
 if( !is.null(opt$list)) {
