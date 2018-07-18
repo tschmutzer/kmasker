@@ -14,6 +14,14 @@ if ( !is.null(opt$help) ) {
   cat(getopt(spec, usage=TRUE));
   q(status=1);
 }
+
+my.read.lines=function(fname) {
+  s = file.info( fname )$size 
+  buf = readChar( fname, s, useBytes=T)
+  strsplit( buf,"\n",fixed=T,useBytes=T)[[1]]
+  #https://www.r-bloggers.com/faster-files-in-r/
+}
+
 options(scipen = 999)
 #https://stat.ethz.ch/pipermail/bioconductor/2008-October/024669.html
 gffRead <- function(gffFile, nrows = -1) {
@@ -52,7 +60,7 @@ feature<-opt$class
 gff<-gffRead(opt$gff)
 gff_feature<-gff[which(gff[,"feature"]==feature),]
 #pharse quality-data
-qual_file <- readLines(file(file.path(opt$input), open="r"))
+qual_file <- my.read.lines(file.path(opt$input))
 #get the positions with >
 opentags<-which(grepl(">.*", qual_file) == TRUE)
 #if( !is.null(opt$list)) {
