@@ -60,7 +60,7 @@ my $MK_min_gff			= 10;   #Default	MK_min_gff (N) is the minimal length (bp) of a
 
 #EXPLORE
 my $gff;
-my $clist;
+my $list;
 my $occ;
 my $stats;
 my $custom_annotate;
@@ -132,7 +132,7 @@ my $result = GetOptions (	#MAIN
 							"hist"				=> \$hist,
 							"histbw"			=> \$histbw,
 							"violin"			=> \$violin,
-							"clist=s"			=> \$clist,
+							"list=s"			=> \$list,
 							"occ=s"				=> \$occ,
 							"stats"				=> \$stats,
 							
@@ -204,7 +204,7 @@ if(defined $help){
 		#HELP section explore
 		print "\n Command (subset):";
 		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
-		print "\n\n\t Kmasker --explore --hist --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --explore --hist --occ file.occ --list list_of_sequenceIDs.txt";
 		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
 		print "\n\n\t Kmasker --explore --stats --occ file.occ";
 		
@@ -215,12 +215,12 @@ if(defined $help){
 		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
 		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
 		
-		print "\n --hist\t\t\t create histogram (requires --clist and --occ)";
-		print "\n --histbw\t\t create simple histogram (requires --clist and --occ)";
+		print "\n --hist\t\t\t create histogram (requires --list and --occ)";
+		print "\n --histbw\t\t create simple histogram (requires --list and --occ)";
 		print "\n --violin\t\t create violin plot (comparison of two kindex)";
 		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
 		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --clist\t\t file containing a list of contig identifier for analysis";	
+		print "\n --list\t\t file containing a list of contig identifier for analysis";	
 
 		print "\n --stats\t\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
 		
@@ -616,14 +616,14 @@ if(defined $explore){
 		
 			#HISTOGRAM
 			if(defined $hist){
-				if(defined $clist){					
-					if (-e $clist) {
-   						&plot_histogram($occ, $clist);
+				if(defined $list){					
+					if (-e $list) {
+   						&plot_histogram($occ, $list);
 					}else{
-						$missing_parameter .= " --clist (file ".$clist." not found)";
+						$missing_parameter .= " --list (file ".$list." not found)";
 					}				
 				}else{
-					$missing_parameter .= " --clist";
+					$missing_parameter .= " --list";
 				}
 			}			
 			
