@@ -270,7 +270,7 @@ sub tab_to_gff {
        if (defined $_[4]) {
           $subfeaturename = $_[5];
       }
-      print "\nUsing $subfeature as reference for subfeature annotation!\n";
+      #print "\nUsing $subfeature as reference for subfeature annotation!\n";
       open (my $subTAB, "<", "$subfeature") or die "Can not read subfeature (tab_to_gff) \n";
       my $insub =  0;
       my $c = 1;

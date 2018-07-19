@@ -295,6 +295,7 @@ $HASH_info{"version KMASKER"}		= $version;
 $HASH_info{"temp_path"}				= $temp_path;
 $HASH_info{"threads"}		 		= $threads;
 $HASH_info{"memory"}			 	= $mem;
+$HASH_info{"verbose"}				= $verbose;
 
 ########
 # STORE INFO about DB in HASH_db

@@ -44,6 +44,7 @@ sub run_kmasker_SK{
 		my $k					= $HASH_info_this{"k-mer"};
 		my $threads				= $HASH_info_this{"threads"};
 		my $temp_path       	= $HASH_info_this{"temp_path"};
+		my $verbose				= $HASH_info_this{"verbose"};
 		my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
 		my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
 		my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
@@ -69,7 +70,7 @@ sub run_kmasker_SK{
 		}
 		
 		#start
-		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex);
+		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . " >>log.txt 2>&1");
        
        #clean
 		unlink($full_kindex_name);
@@ -103,6 +104,22 @@ sub run_kmasker_SK{
 		kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
        
         system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff" . " RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff");
+        #Statistics
+        system("$path/stats.R " . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c Sequence" . " >>log.txt 2>&1");
+        system("$path/stats.R "  . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c " . $feature . " >>log.txt 2>&1");
+        if((!(-e "Stats_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "Stats_Sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
+        	print "Some statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+        }
+        else {
+	       	system("$path/stats_overview.R " . " -s Stats_Sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab " . " -k " . "Stats_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab" . " >>log.txt 2>&1");
+        }
+        if($verbose) {
+        	print "Output of external commands was written to log.txt\n";
+        }
+        else{
+        	unlink("log.txt");
+        }
+
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
@@ -122,7 +139,7 @@ sub run_kmasker_MK{
 	#my $href_info		= $_[4];
 	my $path 			= dirname abs_path $0;
 	my $FC_compare		= 5;
-			
+		
 	
 	#my %HASH_info_this 			= %{$href_info};
 	my %HASH_repository_kindex 	= %{$href_repo};
@@ -142,6 +159,7 @@ sub run_kmasker_MK{
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
 	my $temp_path       	= $HASH_info_task{"temp_path"};
+	my $verbose				= $HASH_info_task{"verbose"};
 	
 	print "\n parameter setting: rept       = ".$rept;
 	print "\n parameter setting: min_length = ".$length_threshold;
@@ -181,7 +199,7 @@ sub run_kmasker_MK{
 				system("ln -s ".$absolut_path.$full_kindex_name);
 				
 				#PRODUCE OCC
-				system("cmasker -f ".$fasta." -j ".$full_kindex_name." -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex." -s");
+				system("$path/cmasker -f ".$fasta." -j ".$full_kindex_name." -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex." -s" . " >>log.txt 2>&1");
 				
 				my @NAME = split(/\./, $fasta);
 				pop @NAME;
@@ -217,6 +235,7 @@ sub run_kmasker_MK{
 	(my $name1,my $path1,my $suffix1) = fileparse($occ1, qr/\.[^.]*/);
 	(my $name2,my $path2,my $suffix2) = fileparse($occ2, qr/\.[^.]*/);
 	
+	#Modify here to support more than two files!
 	#Feedback
 	print "\n .. start to generate extended region" ;#if(!defined $silent);
 	
@@ -238,9 +257,39 @@ sub run_kmasker_MK{
 	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $subfeature);
 	system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff");
     system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff");
-      
+    
+    #Statistics
+    system("$path/stats.R " . "-i " . $occ1 . " -g"  . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff" . " -c Sequence" .  " >>log.txt 2>&1");
+    system("$path/stats.R " . "-i " . $occ2 . " -g " . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff" . " -c Sequence" .  " >>log.txt 2>&1");
+
+    system("$path/stats.R " . "-i " . $occ1 . " -g"  . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff" . " -c " . $feature . " >>log.txt 2>&1");
+    system("$path/stats.R " . "-i " . $occ2 . " -g " . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff" . " -c " . $feature . " >>log.txt 2>&1");
+
+    if( (!(-e "Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1")) || (!(-e "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab "))) {
+        	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+        }
+    else {
+ 		system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
+ 		system("mv overview_stats.txt " . "overview_stats_" . $ARRAY_kindex[0] . ".txt");
+     }
+   # system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
+    if(!(-e "Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2") || !(-e "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab ")) {
+        	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+        }
+    else {
+ 		system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab " . " >>log.txt 2>&1");
+ 		system("mv overview_stats.txt " . "overview_stats_" . $ARRAY_kindex[0] . ".txt");
+     }
+
     #CALL comparative methods
-    system("OCC_compare.pl --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
+    system("$path/OCC_compare.pl --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
+    if($verbose) {
+      	print "Output of external commands was written to log.txt\n";
+    }
+    else{
+       	unlink("log.txt");
+    }
+
 
 }
 
