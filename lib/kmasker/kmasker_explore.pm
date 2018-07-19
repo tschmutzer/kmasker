@@ -13,15 +13,15 @@ gff_construction
 our @EXPORT_OK = qw(plot_histogram custom_annotation gff_construction report_statistics);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.1 rc180717";
+my $version_PM_explore 	= "0.0.1 rc180719";
 
 ## subroutine
 #
 sub plot_histogram{
     my $occ		=	$_[0];
-    my $clist	=	$_[1];
+    my $list	=	$_[1];
     
-    my $systemcall_wc = `wc -l $clist`;  
+    my $systemcall_wc = `wc -l $list`;  
     $systemcall_wc =~ s/ /\t/;
     $systemcall_wc =~ s/ //g;
   	my @ARRAY_sys = split("\t", $systemcall_wc);
@@ -32,11 +32,11 @@ sub plot_histogram{
 	}   
 	
 	#subset
-	system("FASTA_getseq.pl -o ".$occ." --clist ".$clist);
+	system("FASTA_getseq.pl -o ".$occ." --list ".$list);
 	my $occ_subset = $occ.".selection";
     
     #vis
-    system("occVisualizer.R -i ".$occ_subset." -l ".$clist);
+    system("occVisualizer.R -i ".$occ_subset." -l ".$list);
     #The script will skip large contigs to avoid long running times
     #You can force it to do it anyway with -f
     #If you do not want to provide a contig list (instead running on all entries
@@ -51,7 +51,7 @@ sub plot_histogram{
     	system("mkdir Kmasker_plots_".$kindex);
     }
    
-   	my $LIST = new IO::File($clist, "r") or die "\n unable to read $clist $!";	
+   	my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";	
    	while(<$LIST>){
    		next if($_ =~ /^$/);
 		next if($_ =~ /^#/);

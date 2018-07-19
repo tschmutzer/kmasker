@@ -19,12 +19,12 @@ my $version = "v1.0.14 rc180112";
 my $fasta;
 my $occ;
 my $help 	= "";
-my $clist;
+my $list;
 my %HASH_LIST = ();
 
 my $result = GetOptions ("fasta=s"   	=> \$fasta,  		# provide the fasta file
 						 "occ=s"		=> \$occ,			# provided occ freq file
-						 "clist=s"		=> \$clist,
+						 "list=s"		=> \$list,
 						 "help" 		=> \$help);
 
 
@@ -39,7 +39,7 @@ if($help ne ""){
 	print "\n\n OPTIONS:\n"; 
 	print "\n\t --fasta-\t provide the fasta file";
 	print "\n\t --occ\t-\t provided occ file";
-	print "\n\t --rlist-\t provide list of sequence identifier";
+	print "\n\t --list-\t provide file of sequence identifier (one ID per line)";
 	exit();
 }
 
@@ -109,7 +109,7 @@ sub process(){
 # corresponding start\tend positions in the RIDS Hash
 #
 sub read_IDLIST(){
-	my $LIST = new IO::File($clist, "r") or die "\n unable to read clist file $!";
+	my $LIST = new IO::File($list, "r") or die "\n unable to read $list file $!";
 	while(<$LIST>){
 		my $line = $_;
 		next if($line =~ /^$/);

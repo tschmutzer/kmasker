@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.31 rc180717";
+my $version 	= "0.0.31 rc180719";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -60,7 +60,7 @@ my $MK_min_gff			= 10;   #Default	MK_min_gff (N) is the minimal length (bp) of a
 
 #EXPLORE
 my $gff;
-my $clist;
+my $list;
 my $occ;
 my $stats;
 my $custom_annotate;
@@ -132,7 +132,7 @@ my $result = GetOptions (	#MAIN
 							"hist"				=> \$hist,
 							"histbw"			=> \$histbw,
 							"violin"			=> \$violin,
-							"clist=s"			=> \$clist,
+							"list=s"			=> \$list,
 							"occ=s"				=> \$occ,
 							"stats"				=> \$stats,
 							
@@ -204,7 +204,7 @@ if(defined $help){
 		#HELP section explore
 		print "\n Command (subset):";
 		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
-		print "\n\n\t Kmasker --explore --hist --occ file.occ --clist list_of_contigs.txt";
+		print "\n\n\t Kmasker --explore --hist --occ file.occ --list list_of_sequenceIDs.txt";
 		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
 		print "\n\n\t Kmasker --explore --stats --occ file.occ";
 		
@@ -215,12 +215,12 @@ if(defined $help){
 		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
 		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
 		
-		print "\n --hist\t\t\t create histogram (requires --clist and --occ)";
-		print "\n --histbw\t\t create simple histogram (requires --clist and --occ)";
+		print "\n --hist\t\t\t create histogram (requires --list and --occ)";
+		print "\n --histbw\t\t create simple histogram (requires --list and --occ)";
 		print "\n --violin\t\t create violin plot (comparison of two kindex)";
 		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
 		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --clist\t\t file containing a list of contig identifier for analysis";	
+		print "\n --list\t\t file containing a list of contig identifier for analysis";	
 
 		print "\n --stats\t\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
 		
@@ -239,7 +239,7 @@ if(defined $help){
 	print "\n\n General options:";
 	print "\n --show_repository\t\t show complete list of private and external k-mer indices";
 	print "\n --show_details\t\t\t show details for a requested kindex";
-	print "\n --show_path\t\t show path Kmaskers looks for constructed kindex";
+	print "\n --show_path\t\t\t show path Kmaskers looks for constructed kindex";
 	print "\n --remove_kindex\t\t remove kindex from repository";
 	print "\n --set_private_path\t\t change path to private repository";
 	print "\n --set_external_path\t\t change path to external repository [readonly]";
@@ -295,7 +295,7 @@ $HASH_info{"version KMASKER"}		= $version;
 $HASH_info{"temp_path"}				= $temp_path;
 $HASH_info{"threads"}		 		= $threads;
 $HASH_info{"memory"}			 	= $mem;
-$HASH_info{"verbose"}				= $verbose;
+$HASH_info{"verbose"}				= $verbose if(defined $verbose);
 
 ########
 # STORE INFO about DB in HASH_db
@@ -429,6 +429,11 @@ if(defined $length_threshold_usr){
 #CHECK setting
 &check_settings;
 
+
+#######################
+###
+### BUILD SECTION
+###
 if(defined $build){
 	#USE BUILD MODULE
 	
@@ -478,6 +483,11 @@ if(defined $build){
 	exit();
 }
 
+
+#######################
+###
+### RUN SECTION
+###
 if(defined $run){
 	#USE RUN MODULE
 	
@@ -548,6 +558,11 @@ if(defined $run){
 	exit();
 }
 
+
+#######################
+###
+### EXPLORE SECTION
+###
 if(defined $explore){
 	#USE EXPLORE MODULE
 	
@@ -571,7 +586,7 @@ if(defined $explore){
 		#START annotation of sequence features, provided in GFF with custome FASTA sequence or blastableDB
 		my $check_settings = 1;
 		$check_settings = 0 if(!defined $gff);
-		$check_settings = 0 if(!defined $fasta);
+		$check_settings = 0 if((!defined $dbfasta)&&(!defined $blastableDB));
 		$check_settings = 0 if(!defined $feature);
 				
 		if($check_settings == 1){
@@ -617,14 +632,14 @@ if(defined $explore){
 		
 			#HISTOGRAM
 			if(defined $hist){
-				if(defined $clist){					
-					if (-e $clist) {
-   						&plot_histogram($occ, $clist);
+				if(defined $list){					
+					if (-e $list) {
+   						&plot_histogram($occ, $list);
 					}else{
-						$missing_parameter .= " --clist (file ".$clist." not found)";
+						$missing_parameter .= " --list (file ".$list." not found)";
 					}				
 				}else{
-					$missing_parameter .= " --clist";
+					$missing_parameter .= " --list";
 				}
 			}			
 			
