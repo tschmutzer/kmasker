@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
 
-my $version 	= "0.0.31 rc180717";
+my $version 	= "0.0.31 rc180719";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -239,7 +239,7 @@ if(defined $help){
 	print "\n\n General options:";
 	print "\n --show_repository\t\t show complete list of private and external k-mer indices";
 	print "\n --show_details\t\t\t show details for a requested kindex";
-	print "\n --show_path\t\t show path Kmaskers looks for constructed kindex";
+	print "\n --show_path\t\t\t show path Kmaskers looks for constructed kindex";
 	print "\n --remove_kindex\t\t remove kindex from repository";
 	print "\n --set_private_path\t\t change path to private repository";
 	print "\n --set_external_path\t\t change path to external repository [readonly]";
@@ -295,6 +295,7 @@ $HASH_info{"version KMASKER"}		= $version;
 $HASH_info{"temp_path"}				= $temp_path;
 $HASH_info{"threads"}		 		= $threads;
 $HASH_info{"memory"}			 	= $mem;
+$HASH_info{"verbose"}				= $verbose if(defined $verbose);
 
 ########
 # STORE INFO about DB in HASH_db
@@ -428,6 +429,11 @@ if(defined $length_threshold_usr){
 #CHECK setting
 &check_settings;
 
+
+#######################
+###
+### BUILD SECTION
+###
 if(defined $build){
 	#USE BUILD MODULE
 	
@@ -477,6 +483,11 @@ if(defined $build){
 	exit();
 }
 
+
+#######################
+###
+### RUN SECTION
+###
 if(defined $run){
 	#USE RUN MODULE
 	
@@ -547,6 +558,11 @@ if(defined $run){
 	exit();
 }
 
+
+#######################
+###
+### EXPLORE SECTION
+###
 if(defined $explore){
 	#USE EXPLORE MODULE
 	
@@ -570,7 +586,7 @@ if(defined $explore){
 		#START annotation of sequence features, provided in GFF with custome FASTA sequence or blastableDB
 		my $check_settings = 1;
 		$check_settings = 0 if(!defined $gff);
-		$check_settings = 0 if(!defined $fasta);
+		$check_settings = 0 if((!defined $dbfasta)&&(!defined $blastableDB));
 		$check_settings = 0 if(!defined $feature);
 				
 		if($check_settings == 1){
