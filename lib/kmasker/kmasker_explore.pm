@@ -96,16 +96,16 @@ sub custom_annotation{
     
     if(exists $HASH_DB{"db"}){
     	# check if file is a blastable DB
+        $db=$HASH_DB{"db"};
         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("The BLASTdb was not found or is not complete!\n");
             print("Please run Kmasker with dbfasta instead of db again to rebuild the BLASTdb!\n");   
         } 
-        $db = $HASH_DB{"db"};    	  	
     }
     elsif(exists $HASH_DB{"db_fasta"}){
         $db_fasta = $HASH_DB{"db_fasta"};
         my($db_prefix, $dirs, $suffix) = fileparse($db_fasta, (".fa", ".fasta"));
-        $db=$dirs."/".$db_prefix;
+        $db=$dirs."/".$db_prefix.$suffix;
          if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("BLASTdb is missing. It will be built now!\n");
             system("makeblastdb -in \"".$db."\" -dbtype nucl ");
