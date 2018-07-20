@@ -24,7 +24,7 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
  
  --remove_kindex         remove kindex from repository
  
- --expert_setting        submit individual parameter to Kmasker (e.g. on memory usage for index construction)
+ --expert_setting_*      submit individual parameters to subprocesses. Kmasker (e.g. on memory usage for index construction)
 
 
 ### Installation & Requirements:
@@ -32,7 +32,7 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
 See our Wiki for details on how to install Kmasker. There, you find our list of requirements of external tools. 
 Please make sure, that these are in your PATH environemnt. If not please specify them in the 'kmasker.config' file.
 
-Kmasker uses in interal repository for reuse of kindex structures. The data (calculated kindex) will be stored either in lokal ('private') or in the global directory. The path to the global directory has to be set in the kmasker.config file after installation.
+Kmasker uses in interal repository for reuse of kindex structures. The data (calculated kindex) will be stored either in local ('private') or in the external directory. The path to the external directory has to be set in the kmasker.config file after installation.
 
 
 ## Commands:
@@ -88,17 +88,22 @@ http://botserv2.uzh.ch/kelldata/trep-db/
 #### EXPLORE - VISUALISATION
 
 
+HISTPLOT
+
+Two kinds of histograms can be constructed ('hist' and 'histm'). 
+
+Kmasker --explore --hist --occ species_A.occ species_B.occ
+Kmasker --explore --histm --occ species_A.occ species_B.occ
+
+The first type ('hist') will construct histograms showing raw k-mer frequencies and calculated means etc. per sequence. The second type ('histm') will construct histograms using mean values calculated in a sliding window approach. Furthermore, these plots use log scales for improved visability. If large dataset with millions of contigs are analyzed its recommended to use both methods with the '--list' parameter that is providing as subset of selected sequence identifiers. This will avoid long computing times. 
+
 HEXPLOT
 
-Kmasker --explore --hexplot --multi_kindex At1 Hv1
+Kmasker --explore --hexplot --occ species_A.occ species_B.occ
 
-This visualisation is can be used for comparitve inspection of two k-mer index structures (e.g. to study two species by comparing the correpsonding WGS data).
+This visualisation can be used for comparative inspection of two constructed Kmasker output files (occ). Keep in mind that only sequences are compared that are present in both files. The visualisation illustrates which sequences are the most different based on k-mer frequencies (e.g. to study two species by comparing the correpsonding WGS data).
 
 
-TRIPLOT
 
-Kmasker --explore --triplot --multi_kindex At1 Hv1 Sc1
-
-This visualisation is comparing three k-mer index structures in a triangular plot using the R package ('ggtern' [LINK]). It provides a broader perspective which k-mers are shared with equal (centered) or different (outer regions) abundances throuout the investigated datasets (e.g. three different species).
 
 
