@@ -1,4 +1,4 @@
-#!/usr/bin/env Rscript
+#!/usr/bin/env Rscript --vanilla
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(getopt, zoo, pillar, ggplot2, scales, stringr)
 #library('getopt')
