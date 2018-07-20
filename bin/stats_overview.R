@@ -22,8 +22,8 @@ stats_krc<-read.table(opt$KRC_stats, header=TRUE)
 ncontigs<-nrow(stats)
 nkrc<-nrow(stats_krc)
 avgk10<-length(which(stats[,"Avg"]>10))
-avgsequencelength<-mean(stats[,"End"]-(stats[,"Start"]-1))
-sumsequencelength<-sum(stats[,"End"]-(stats[,"Start"]-1))
+avgsequencelength<-mean(stats[,"Length"])
+sumsequencelength<-sum(stats[,"Length"])
 avgsequenceq50<-mean(stats[,"Q50"])
 avgkrcq50<-mean(stats_krc[,"Q50"])
 avgk<-mean(stats[,"Avg"])
@@ -33,12 +33,12 @@ avgkkrc<-mean(stats_krc[,"Avg"])
 
 fileConn<-file("overview_stats.txt")
 writeLines(c(paste("Number of sequences:", "\t", ncontigs),
-paste("Number of Kmer Repeat Cluster:", "\t", nkrc),
+paste("Number of Kmer Repeat Clusters:", "\t", nkrc),
 paste("Number of sequences with average Kmer density > 10:", "\t", avgk10),
 paste("Total sequence length", "\t", sumsequencelength), 
 paste("Average sequence length:", "\t", avgsequencelength), 
 paste("Average Q50 of Kmer density in sequences :", "\t", avgsequenceq50), 
 paste("Average Kmer density in sequences:", "\t", avgk), 
-paste("Average Kmer density in KMer Repeat Cluster:", "\t", avgkkrc)), fileConn)
+paste("Average Kmer density in Kmer Repeat Clusters:", "\t", avgkkrc)), fileConn)
 close(fileConn)
 
