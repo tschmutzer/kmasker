@@ -265,16 +265,16 @@ sub run_kmasker_MK{
     system("$path/stats.R " . "-i " . $occ1 . " -g"  . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff" . " -c " . $feature . " >>log.txt 2>&1");
     system("$path/stats.R " . "-i " . $occ2 . " -g " . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff" . " -c " . $feature . " >>log.txt 2>&1");
 
-    if( (!(-e "Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1")) || (!(-e "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab "))) {
-        	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+    if( (!(-e "Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1")) || (!(-e "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab"))) {
+        	print "\nSome statistics could not be calculated.(" .  $ARRAY_kindex[0] .") The main reason for this is that there are no significant features in the gff file.\n";
         }
     else {
  		system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
  		system("mv overview_stats.txt " . "overview_stats_" . $ARRAY_kindex[0] . ".txt");
      }
    # system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
-    if(!(-e "Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2") || !(-e "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab ")) {
-        	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+    if(!(-e "Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2") || !(-e "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab")) {
+        	print "\nSome statistics could not be calculated.(" .  $ARRAY_kindex[1] .") The main reason for this is that there are no significant features in the gff file.\n";
         }
     else {
  		system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "Stats_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab " . " >>log.txt 2>&1");
