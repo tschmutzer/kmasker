@@ -53,10 +53,11 @@ my $repeat_threshold	= 5;
 my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
-# set the following parameter using expert_setting_kmasker
-my $MK_percent_gapsize	= 10;	#Default	MK_percent_gapsize (N) is the paramater allowing N percent of a region to be not repeatitive when merging regions. Used in SK and MK.
+
+# set the following parameter using '--expert_setting_kmasker' or provide them in file using '--config_kmasker'
+my $MK_percent_gapsize	= 10;	#Default	MK_percent_gapsize (N) is the paramater allowing N percent of a region to be not repetitive when merging regions. Used in SK and MK.
 my $MK_min_seed			= 5;	#Default	MK_min_seed (N) is the minimal length (bp) of a featuere to start in the process of merging regions for GFF
-my $MK_min_gff			= 10;   #Default	MK_min_gff (N) is the minimal length (bp) of a featue to be reported in GFF
+my $MK_min_gff			= 25;   #Default	MK_min_gff (N) is the minimal length (bp) of a featue to be reported in GFF
 
 #EXPLORE
 my $gff;
@@ -170,119 +171,22 @@ my $result = GetOptions (	#MAIN
 							"help"					=> \$help										
 						);
 						
+#############
+# CALLING general commands and tasks
+&intro_call();					
+			
+			
+#############
+# CALLING HELP if requested						
 $help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
 
 if(defined $help){
-	
-	print "\n Usage of program Kmasker: ";
-    print "\n (version:  ".$version.")";
-    print "\n";
-	
-	if(defined $build){
-		#HELP section build		
-		print "\n Command:";
-		print "\n\t Kmasker --build --seq mysequences.fasta";
-		
-		print "\n\n Options:";
-		print "\n --seq\t\t fasta or fastq sequence(s) that are used to build the index";
-		print "\n --k\t\t k-mer size to build index [21]";
-		print "\n --gs\t\t genome size of species (in Mbp)";
-		print "\n --in \t\t provide k-mer index name (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
-		print "\n --cn \t\t provide common name of species (e.g. barley)";
-		print "\n --config\t configuration file providing information used for construction of kindex";
-		print "\n --mem\t\t set memory limit in gigabyte [24]";
-		
-		print "\n\n";
-		exit();
-	}
-	
-	if(defined $run){
-		#HELP section run
-		print "\n Command:";
-		print "\n\t Kmasker --run --fasta sequence_to_be_analyzed.fasta\n";		
-		
-		print "\n\n Options:";
-		print "\n --fasta\t FASTA sequence for k-mer analysis and masking";
-		print "\n --kindex\t use single k-mer index";
-		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
-		print "\n --rept\t\t frequency threshold used for masking [5]!";
-		print "\n --min_length\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
-#		print "\n --tol_length\t maximal length of sequence with high k-mer frequencies. Within non-repetitive candidate sequences with sufficient sequence length \
-#		 		\t\t\t	(--min_length) it is tolerated that small regions occure were the corresponding k-mer frequency exceeds the defined threshold (--rept). [0]";
-	
-		print "\n\n";
-		exit();
-	}
-	
-	if(defined $explore){
-		#HELP section explore
-		print "\n Command (subset):";
-		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
-		print "\n\n\t Kmasker --explore --hist --occ file.occ --list list_of_sequenceIDs.txt";
-		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
-		print "\n\n\t Kmasker --explore --stats --occ file.occ";
-		
-		print "\n\n Options:";
-		print "\n --annotate\t\t custom annotation using featured elements of GFF (requires --gff, --fasta, --db or --dbfasta)";
-		print "\n --gff\t\t\t use Kmasker constructed GFF report for annotation";
-		print "\n --feature\t\t the type of feature in the GFF that should be annotated";
-		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
-		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
-		
-		print "\n --hist\t\t\t create histogram using raw values (requires --occ and optional --list)";
-		print "\n --histm\t\t create histogram using calulated means (requires --occ and optional --list)";
-		print "\n --violin\t\t create violin plot (comparison of two kindex)";
-		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
-		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --list\t\t\t file containing a list of contig identifier for analysis";	
-
-		print "\n --stats\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
-		
-		print "\n\n";
-		exit();
-	}
-	
-
-    print "\n Description:\n\t Kmasker is a tool for the automatic detection of repetitive sequence regions.";
-    print "\n It has three modules and you should select one for your analysis.";
-    
-    print "\n\n Modules:";
-	print "\n --build\t\t construction of new index (requires --indexfiles)";
-	print "\n --run\t\t\t perform analysis and masking (requires --fasta)";
-	print "\n --explore\t\t perform downstream analysis with constructed index and detected repeats";
-	
-	print "\n\n General options:";
-	print "\n --show_repository\t\t show complete list of private and external k-mer indices";
-	print "\n --show_details\t\t\t show details for a requested kindex";
-	print "\n --show_path\t\t\t show path Kmaskers looks for constructed kindex";
-	print "\n --remove_kindex\t\t remove kindex from repository";
-	print "\n --set_private_path\t\t change path to private repository";
-	print "\n --set_external_path\t\t change path to external repository [readonly]";
-	print "\n --expert_setting_kmasker\t submit individual parameter to Kmasker eg. pctgap,";
-	print "\n\t\t\t\t minseed, mingff (see documentation!)";
-	print "\n --expert_setting_jelly\t\t submit individual parameter to jellyfish (e.g. on memory usage ";
-	print "\n\t\t\t\t for index construction)";
-	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
-	print "\n --threads\t\t\t set number of threads [4]";
-	
-	print "\n\n";
-	exit();
+	&help();	
 }
 
 #######
 ## MAIN
 
-#SHOW version
-if(defined $show_version){
-	print "\n Kmasker version: ".$version."\n\n";
-	exit();
-}
-
-#CHECK settings
-if(defined $check_install){
-	&check_install();
-	exit();
-}
 
 #READ global settings
 &read_user_config;
@@ -306,7 +210,6 @@ if(defined $mem_usr){
 	$mem = $mem_usr;
 }
 
-
 ########
 # STORE GENERAL INFO in HASH info
 my %HASH_info 						= ();
@@ -323,44 +226,6 @@ $HASH_info{"verbose"}				= $verbose if(defined $verbose);
 # STORE INFO about DB in HASH_db
 my %HASH_db 						= ();
 
-
-#SET private path
-if(defined $set_private_path){
-	
-	if($set_private_path =~ /^\./){
-		print "\n .. please use absolut path! Kmasker was stopped!\n";
-		exit();
-	}
-	
-	print "\n Kmasker will change private path: ".$set_private_path;
-	print "\n Please note that data will not be moved to new directories!";
-	print "\n This has to be done manually!\n\n";
-	
-	&set_private_path($set_private_path);
-	exit();
-}
-
-#SET external path
-if(defined $set_external_path){
-	
-	if($set_external_path =~ /^\./){
-		print "\n .. please use absolut path! Kmasker was stopped!\n";
-		exit();
-	}
-	
-	print "\n Kmasker will change external path: ".$set_external_path;
-	print "\n Please note that data will not be moved to new directories!";
-	print "\n This has to be done manually!\n\n";
-	
-	&set_external_path($set_external_path);
-	exit();
-}
-
-#GET info of Kmasker used path
-if(defined $show_path){
-	&show_path_infos();
-	exit();
-}
 
 #USER specification
 #kindex
@@ -446,7 +311,6 @@ if(defined $length_threshold_usr){
 		$length_threshold = $length_threshold_usr;
 	}
 }
-
 
 #CHECK setting
 &check_settings;
@@ -600,28 +464,32 @@ if(defined $explore){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";	
 	
+	print "\n starting explore module ... ";
 	
 	#ANNOTATION
 	if(defined $custom_annotate){
 		# EXPLORE ANNOTATE by GFF
 		
 		#START annotation of sequence features, provided in GFF with custome FASTA sequence or blastableDB
-		my $check_settings = 1;
-		$check_settings = 0 if(!defined $gff);
-		$check_settings = 0 if((!defined $dbfasta)&&(!defined $blastableDB));
-		$check_settings = 0 if(!defined $feature);
+		my $check_settings = "";
+		$check_settings .= " --gff undefined;" if(!defined $gff);
+		$check_settings .= " --blast db or fasta undefined;" if((!defined $dbfasta)&&(!defined $blastableDB));
+		$check_settings .= " --feature undefined;" if(!defined $feature);
+		$check_settings .= " --fasta missing. It provides FASTA belonging to constructed GFF" if(!defined $fasta);
 				
-		if($check_settings == 1){
-    		$HASH_db{"db_fasta"} = $dbfasta if(defined $dbfasta);
-    		$HASH_db{"db"} 		= $blastableDB if(defined $blastableDB);
+		if($check_settings eq ""){
+    		$HASH_db{"db_fasta"} 	= $dbfasta if(defined $dbfasta);
+    		$HASH_db{"db"} 			= $blastableDB if(defined $blastableDB);
 			&custom_annotation($fasta, $gff, $feature ,\%HASH_db, \%HASH_info);
 		}else{
-			print "\n WARNING: Required parameter are missing. Kmasker was stopped.\n\n";
+			print "\n WARNING: Required parameter are missing.";
+			print "\n WARNINGS are ".$check_settings;
+			print "\n Kmasker was stopped.\n\n";
 			exit;
 		}		
 	}	
 	
-	#PRINT REPORT
+	#REPORT
 	if(defined $stats){
 		# EXPLORE STATS
 		
@@ -678,6 +546,9 @@ if(defined $explore){
 							$missing_parameter .= " --list";						
 							exit();
 						}
+					}else{
+						&plot_histogram_raw($occ) if(defined $hist);
+						&plot_histogram_mean($occ) if(defined $histm);
 					}	
 				}
 			}			
@@ -1160,6 +1031,164 @@ sub check_routine_for_requirement(){
 		}
 	}	
 	return $default;
+}
+
+#################
+#
+#
+sub intro_call(){
+
+	#SHOW version
+	if(defined $show_version){
+		print "\n Kmasker version: ".$version."\n\n";
+		exit();
+	}
+
+	#CHECK settings
+	if(defined $check_install){
+		&check_install();
+		exit();
+	}
+	
+	#SET private path
+	if(defined $set_private_path){
+		
+		if($set_private_path =~ /^\./){
+			print "\n .. please use absolut path! Kmasker was stopped!\n";
+			exit();
+		}
+		
+		print "\n Kmasker will change private path: ".$set_private_path;
+		print "\n Please note that data will not be moved to new directories!";
+		print "\n This has to be done manually!\n\n";
+		
+		&set_private_path($set_private_path);
+		exit();
+	}
+	
+	#SET external path
+	if(defined $set_external_path){
+		
+		if($set_external_path =~ /^\./){
+			print "\n .. please use absolut path! Kmasker was stopped!\n";
+			exit();
+		}
+		
+		print "\n Kmasker will change external path: ".$set_external_path;
+		print "\n Please note that data will not be moved to new directories!";
+		print "\n This has to be done manually!\n\n";
+		
+		&set_external_path($set_external_path);
+		exit();
+	}
+	
+	#GET info of Kmasker used path
+	if(defined $show_path){
+		&show_path_infos();
+		exit();
+	}
+
+}
+
+
+#################
+#
+#
+sub help(){
+
+	print "\n Usage of program Kmasker: ";
+    print "\n (version:  ".$version.")";
+    print "\n";
+	
+	if(defined $build){
+		#HELP section build		
+		print "\n Command:";
+		print "\n\t Kmasker --build --seq mysequences.fasta";
+		
+		print "\n\n Options:";
+		print "\n --seq\t\t fasta or fastq sequence(s) that are used to build the index";
+		print "\n --k\t\t k-mer size to build index [21]";
+		print "\n --gs\t\t genome size of species (in Mbp)";
+		print "\n --in \t\t provide k-mer index name (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
+		print "\n --cn \t\t provide common name of species (e.g. barley)";
+		print "\n --config\t configuration file providing information used for construction of kindex";
+		print "\n --mem\t\t set memory limit in gigabyte [24]";
+		
+		print "\n\n";
+		exit();
+	}
+	
+	if(defined $run){
+		#HELP section run
+		print "\n Command:";
+		print "\n\t Kmasker --run --fasta sequence_to_be_analyzed.fasta\n";		
+		
+		print "\n\n Options:";
+		print "\n --fasta\t FASTA sequence for k-mer analysis and masking";
+		print "\n --kindex\t use single k-mer index";
+		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
+		print "\n --rept\t\t frequency threshold used for masking [5]!";
+		print "\n --min_length\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
+#		print "\n --tol_length\t maximal length of sequence with high k-mer frequencies. Within non-repetitive candidate sequences with sufficient sequence length \
+#		 		\t\t\t	(--min_length) it is tolerated that small regions occure were the corresponding k-mer frequency exceeds the defined threshold (--rept). [0]";
+	
+		print "\n\n";
+		exit();
+	}
+	
+	if(defined $explore){
+		#HELP section explore
+		print "\n Command (subset):";
+		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
+		print "\n\n\t Kmasker --explore --hist --occ file.occ --list list_of_sequenceIDs.txt";
+		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
+		print "\n\n\t Kmasker --explore --stats --occ file.occ";
+		
+		print "\n\n Options:";
+		print "\n --annotate\t\t custom annotation using featured elements of GFF (requires --gff, --fasta, --db or --dbfasta)";
+		print "\n --gff\t\t\t use Kmasker constructed GFF report for annotation";
+		print "\n --feature\t\t the type of feature in the GFF that should be annotated";
+		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
+		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
+		
+		print "\n --hist\t\t\t create histogram using raw values (requires --occ and optional --list)";
+		print "\n --histm\t\t create histogram using calulated means (requires --occ and optional --list)";
+		print "\n --violin\t\t create violin plot (comparison of two kindex)";
+		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
+		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
+		print "\n --list\t\t\t file containing a list of contig identifier for analysis";	
+
+		print "\n --stats\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
+		
+		print "\n\n";
+		exit();
+	}
+	
+
+    print "\n Description:\n\t Kmasker is a tool for the automatic detection of repetitive sequence regions.";
+    print "\n\t There are three modules and you should select one for your analysis.";
+    
+    print "\n\n Modules:";
+	print "\n --build\t\t construction of new index (requires --indexfiles)";
+	print "\n --run\t\t\t perform analysis and masking (requires --fasta)";
+	print "\n --explore\t\t perform downstream analysis with constructed index and detected repeats";
+	
+	print "\n\n General options:";
+	print "\n --show_repository\t\t show complete list of private and external k-mer indices";
+	print "\n --show_details\t\t\t show details for a requested kindex";
+	print "\n --show_path\t\t\t show path Kmaskers looks for constructed kindex";
+	print "\n --remove_kindex\t\t remove kindex from repository";
+	print "\n --set_private_path\t\t change path to private repository";
+	print "\n --set_external_path\t\t change path to external repository [readonly]";
+	print "\n --expert_setting_kmasker\t submit individual parameter to Kmasker eg. pctgap,";
+	print "\n\t\t\t\t minseed, mingff (see documentation!)";
+	print "\n --expert_setting_jelly\t\t submit individual parameter to jellyfish (e.g. on memory usage ";
+	print "\n\t\t\t\t for index construction)";
+	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
+	print "\n --threads\t\t\t set number of threads [4]";
+	
+	print "\n\n";
+	exit();
 }
 
 

@@ -72,12 +72,14 @@ sub plot_histogram_mean{
 		next if($_ =~ /^#/);
 		my $line = $_;
 		$line =~ s/\n//;
-		system("mv ".$line.".png Kmasker_plots_".$kindex."/".$line."_hist.png");
+		if(-e $line.".png"){
+			system("mv ".$line.".png Kmasker_plots_".$kindex."/".$line."_hist.png");
+		}
    	}
    	
    	#clean    
    	if(-e "kmasker_seq.ids"){
- #  		system("rm kmasker_seq.ids");
+ 		system("rm kmasker_seq.ids");
    	}
 }
 
@@ -126,7 +128,7 @@ sub custom_annotation{
         $db_fasta = $HASH_DB{"db_fasta"};
         my($db_prefix, $dirs, $suffix) = fileparse($db_fasta, (".fa", ".fasta"));
         $db=$dirs."/".$db_prefix.$suffix;
-         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
+        if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("BLASTdb is missing. It will be built now!\n");
             system("makeblastdb -in \"".$db."\" -dbtype nucl ");
             print("BLASTdb was built. You can use the path to your fasta just with -db in the future.\n");   
