@@ -92,10 +92,12 @@ HISTPLOT
 
 Two kinds of histograms can be constructed ('hist' and 'histm'). 
 
-Kmasker --explore --hist --occ species_A.occ species_B.occ
-Kmasker --explore --histm --occ species_A.occ species_B.occ
+Kmasker --explore --hist --occ species_A.occ --list selection.ids
+
+Kmasker --explore --histm --occ species_A.occ --list selection.ids
 
 The first type ('hist') will construct histograms showing raw k-mer frequencies and calculated means etc. per sequence. The second type ('histm') will construct histograms using mean values calculated in a sliding window approach. Furthermore, these plots use log scales for improved visability. If large dataset with millions of contigs are analyzed its recommended to use both methods with the '--list' parameter that is providing as subset of selected sequence identifiers. This will avoid long computing times. 
+
 
 HEXPLOT
 
