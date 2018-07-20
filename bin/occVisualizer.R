@@ -62,7 +62,7 @@ for (pos in opentags){
       #We convert the characters into numbers finaly.
       approx<-(next_pos_in_text-pos)*30
       if(approx > 300000 & force == FALSE) {
-        print("Sorry, your contig seems to be too large to be read in. Anyway, you can force me to read it with --force")
+        print("Sorry, your sequence seems to be too large to be read in. Anyway, you can force me to read it with --force")
         next;
       }
       #Our OCC format specification definies 80 characters per line at maximum (but mostly they are about 30 long)
@@ -73,7 +73,7 @@ for (pos in opentags){
       next_pos_in_text <- length(qual_file)
       approx<-(next_pos_in_text-pos)*30
       if(approx > 300000 & force == FALSE) {
-        print("Sorry, your contig seems to be too large to be read in. Anyway, you can force me to read it with --force")
+        print("Sorry, your sequence seems to be too large to be read in. Anyway, you can force me to read it with --force")
         next;
       }
       occs<-as.numeric(unlist(strsplit(qual_file[(pos+1):(next_pos_in_text)], " ")))
@@ -82,9 +82,9 @@ for (pos in opentags){
     print(paste("Plotting contig:", id, sep=" "));
     if(length(occs)>1000000){
       if(force == TRUE) {
-        print("Warning: Your contig has more than 1000000bp. The process will take some time!")
+        print("Warning: Your sequence has more than 1000000bp. The process will take some time!")
       } else {
-        print(paste("Finally your Contig has", length(occs), "bp. This is too much to print. You can force me with --force", sep=" "))
+        print(paste("Finally your sequence has", length(occs), "bp. This is too much to print. You can force me with --force", sep=" "))
         next;
       }
     }

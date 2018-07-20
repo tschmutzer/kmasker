@@ -84,15 +84,10 @@ for (pos in opentags){
       #Then we split the string into a list with a whitespace as sperator
       #After that we turn the list into a vector
       #We convert the characters into numbers finaly.
-     # approx<-(next_pos_in_text-pos)*30
-     # if(approx > 300000) {
-    #    print("Sorry, your contig seems to be too large to be read in. Anyway, you can force me to read it with --force")
-    #    next;
-   #   }
       #Our OCC format specification definies 80 characters per line at maximum (but mostly they are about 30 long)
       #This check will be tricked out by a file which is not in the specification
       occs<-as.numeric(unlist(strsplit(qual_file[(pos+1):(next_pos_in_text[1] - 1)], " ")))
-      occsub<-data.frame(Name = id, ID=getAttributeField(gff_feature[which(gff_feature[,"seqname"]==id),"attributes"], "ID") ,Start=gff_feature[which(gff_feature[,"seqname"]==id),"start"] , End=gff_feature[which(gff_feature[,"seqname"]==id),"end"], Min = 0, Max=0, Avg=0, "zero_pos"=0, "Q25"=0, "Q50"=0, "Q75"=0)
+      occsub<-data.frame(Name = id, ID=getAttributeField(gff_feature[which(gff_feature[,"seqname"]==id),"attributes"], "ID") ,Start=gff_feature[which(gff_feature[,"seqname"]==id),"start"] , End=gff_feature[which(gff_feature[,"seqname"]==id),"end"], Length=abs(gff_feature[which(gff_feature[,"seqname"]==id),"end"] - gff_feature[which(gff_feature[,"seqname"]==id),"start"]-1) ,Min = 0, Max=0, Avg=0, "zero_pos"=0, "Q25"=0, "Q50"=0, "Q75"=0)
       for(i in 1:nrow(occsub)){
         occs_temp<-occs[(occsub[i,"Start"]):(occsub[i,"End"])]
         occsub[i,"Min"]=min(occs_temp)
@@ -107,12 +102,7 @@ for (pos in opentags){
     else{
       next_pos_in_text <- length(qual_file)
       occs<-as.numeric(unlist(strsplit(qual_file[(pos+1):(next_pos_in_text)], " ")))      
-    #  approx<-(next_pos_in_text-pos)*30
-     # if(approx > 300000) {
-    #    print("Sorry, your contig seems to be too large to be read in. Anyway, you can force me to read it with --force")
-     #   next;
-   #   }
-      occsub<-data.frame(Name = id, ID=getAttributeField(gff_feature[which(gff_feature[,"seqname"]==id),"attributes"], "ID") ,Start=gff_feature[which(gff_feature[,"seqname"]==id),"start"] , End=gff_feature[which(gff_feature[,"seqname"]==id),"end"], Min = 0, Max=0, Avg=0, "zero_pos"=0, "Q25"=0, "Q50"=0, "Q75"=0)
+      occsub<-data.frame(Name = id, ID=getAttributeField(gff_feature[which(gff_feature[,"seqname"]==id),"attributes"], "ID") ,Start=gff_feature[which(gff_feature[,"seqname"]==id),"start"] , End=gff_feature[which(gff_feature[,"seqname"]==id),"end"], Length=abs(gff_feature[which(gff_feature[,"seqname"]==id),"end"] - gff_feature[which(gff_feature[,"seqname"]==id),"start"]-1) ,Min = 0, Max=0, Avg=0, "zero_pos"=0, "Q25"=0, "Q50"=0, "Q75"=0)
       for(i in 1:nrow(occsub)){
         occs_temp<-occs[(occsub[i,"Start"]):(occsub[i,"End"])]
         occsub[i,"Min"]=min(occs_temp)
@@ -124,14 +114,12 @@ for (pos in opentags){
         occsub[i,"Q75"]=quantile(occs_temp, 0.75)[[1]]
       }
     }
-   # output<-data.frame(Name = id , Start=gff_feature$start, End=gff_feature$end, Min = min(occs), Max=max(occs), Avg=mean(occs), "zero_pos"=length(occs[occs==0]), "Q25"=quantile(occs, 0.25)[[1]], "Q50"=quantile(occs, 0.25)[[1]], "Q75"=quantile(occs, 0.25)[[1]])
-    #write output here
     if(first == 0){
-      write.table(occsub, file=paste("Stats_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, append=FALSE)
+      write.table(occsub, file=paste("Report_statistics_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, append=FALSE)
       first<-1
     }
     else{
-      write.table(occsub, file=paste("Stats_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
+      write.table(occsub, file=paste("Report_statistics_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
     }
   }
 }
