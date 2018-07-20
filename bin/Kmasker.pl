@@ -12,9 +12,9 @@ use lib dirname(dirname abs_path $0) . '/lib';
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
-use kmasker::kmasker_explore qw(plot_histogram custom_annotation);
+use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
 
-my $version 	= "0.0.31 rc180719";
+my $version 	= "0.0.31 rc180720";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -68,10 +68,10 @@ my $blastableDB;
 my $dbfasta;
 #visualisation
 my $hist;
-my $histbw;
+my $histm;
 my $violin;
 my $hexplot;
-
+my $force;
 
 #GENERAL parameter
 my $help;
@@ -79,18 +79,25 @@ my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
 my $show_path;
+my $show_version;
 my $set_private_path;
 my $set_external_path;
 my $check_install;
 my $remove_kindex;
-my $expert_setting_kmasker 	= "",
-my $expert_setting_jelly 	= ""; 
-my $expert_setting_blast	= "";
 my $set_global;
 my $user_name;
 my $verbose;
 my $temp_path			= "./temp/";
 my $feature 			= "KRC";
+
+#CONFIGURATION parameter
+my $expert_setting_kmasker 	= "",
+my $expert_setting_jelly 	= ""; 
+my $expert_setting_blast	= "";
+my $expert_config_kmasker;
+my $expert_config_jelly;
+my $expert_config_blast;
+
 #HASH
 my %HASH_repository_kindex;
 my %HASH_path;
@@ -130,12 +137,11 @@ my $result = GetOptions (	#MAIN
 							"dbfasta=s"			=> \$dbfasta,		
 							"hexplot"			=> \$hexplot,
 							"hist"				=> \$hist,
-							"histbw"			=> \$histbw,
+							"histm"				=> \$histm,
 							"violin"			=> \$violin,
 							"list=s"			=> \$list,
 							"occ=s"				=> \$occ,
-							"stats"				=> \$stats,
-							
+							"stats"				=> \$stats,							
 							
 							#GLOBAL
 							"show_repository"		=> \$show_kindex_repository,
@@ -148,15 +154,23 @@ my $result = GetOptions (	#MAIN
 							"threads=i"				=> \$threads_usr,
 							"mem=i"					=> \$mem_usr,
 							
-							#Houskeeping
+							#configuration
 							"expert_setting_jelly"	=> \$expert_setting_jelly,
 							"expert_setting_kmasker"=> \$expert_setting_kmasker,
+							"expert_setting_blast"	=> \$expert_setting_blast,
+							"config_jelly"			=> \$expert_config_jelly,
+							"config_kmasker"		=> \$expert_config_kmasker,
+							"config_blast"			=> \$expert_config_blast,
+							"force"					=> \$force,
+							
+							#Houskeeping
 							"keep_tmp"				=> \$keep_temporary_files,
 							"verbose"				=> \$verbose,
+							"show_version"			=> \$show_version,
 							"help"					=> \$help										
 						);
 						
-
+$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
 
 if(defined $help){
 	
@@ -215,14 +229,14 @@ if(defined $help){
 		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
 		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
 		
-		print "\n --hist\t\t\t create histogram (requires --list and --occ)";
-		print "\n --histbw\t\t create simple histogram (requires --list and --occ)";
+		print "\n --hist\t\t\t create histogram using raw values (requires --occ and optional --list)";
+		print "\n --histm\t\t create histogram using calulated means (requires --occ and optional --list)";
 		print "\n --violin\t\t create violin plot (comparison of two kindex)";
 		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
 		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --list\t\t file containing a list of contig identifier for analysis";	
+		print "\n --list\t\t\t file containing a list of contig identifier for analysis";	
 
-		print "\n --stats\t\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
+		print "\n --stats\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
 		
 		print "\n\n";
 		exit();
@@ -230,6 +244,7 @@ if(defined $help){
 	
 
     print "\n Description:\n\t Kmasker is a tool for the automatic detection of repetitive sequence regions.";
+    print "\n It has three modules and you should select one for your analysis.";
     
     print "\n\n Modules:";
 	print "\n --build\t\t construction of new index (requires --indexfiles)";
@@ -247,6 +262,7 @@ if(defined $help){
 	print "\n\t\t\t\t minseed, mingff (see documentation!)";
 	print "\n --expert_setting_jelly\t\t submit individual parameter to jellyfish (e.g. on memory usage ";
 	print "\n\t\t\t\t for index construction)";
+	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
 	print "\n --threads\t\t\t set number of threads [4]";
 	
 	print "\n\n";
@@ -255,6 +271,12 @@ if(defined $help){
 
 #######
 ## MAIN
+
+#SHOW version
+if(defined $show_version){
+	print "\n Kmasker version: ".$version."\n\n";
+	exit();
+}
 
 #CHECK settings
 if(defined $check_install){
@@ -618,6 +640,7 @@ if(defined $explore){
 	#VIZUALISATION
 	my $visualisation;
 	$visualisation = 1 if(defined $hist);
+	$visualisation = 1 if(defined $histm);
 	$visualisation = 1 if(defined $violin);
 	$visualisation = 1 if(defined $hexplot);
 		
@@ -626,20 +649,36 @@ if(defined $explore){
 		# EXPLORE VIZUALISATIONS
 	
 		if(defined $occ){
-		# explore requires an OCC file
+		# explore visualisations require an OCC file
 			
 			my $missing_parameter = "";
 		
-			#HISTOGRAM
-			if(defined $hist){
-				if(defined $list){					
+			#HISTOGRAM RAW or MEAN
+			if((defined $hist)||(defined $histm)){	
+				if(defined $list){				
 					if (-e $list) {
-   						&plot_histogram($occ, $list);
+   						&plot_histogram_raw($occ, $list) if(defined $hist);
+   						&plot_histogram_mean($occ, $list) if(defined $histm);
 					}else{
 						$missing_parameter .= " --list (file ".$list." not found)";
 					}				
 				}else{
-					$missing_parameter .= " --list";
+					#check
+					my $systemcall_grep 		= "grep -cP \">\" ".$occ;
+					my $number 	= `$systemcall_grep`;
+					$number		=~ s/\n//;
+					if($number >= 10000){	
+						
+						if(defined $force){
+							&plot_histogram_raw($occ) if(defined $hist);
+							&plot_histogram_mean($occ) if(defined $histm);
+						}else{						
+							print "\n\n WARNING: Your input contains ".$number." sequences. We do not recommend to build more than 10.000 in one step.\n";
+							print     " This might take very long. You can force this by using '--force'. Kmasker has been stopped \n\n";	
+							$missing_parameter .= " --list";						
+							exit();
+						}
+					}	
 				}
 			}			
 			

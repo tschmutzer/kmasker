@@ -10,47 +10,62 @@ plot_histogram
 repeat_annotation
 gff_construction
 );
-our @EXPORT_OK = qw(plot_histogram custom_annotation gff_construction report_statistics);
+our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.1 rc180719";
+my $version_PM_explore 	= "0.0.1 rc180720";
 
 ## subroutine
 #
-sub plot_histogram{
+sub plot_histogram_mean{
     my $occ		=	$_[0];
     my $list	=	$_[1];
     
-    my $systemcall_wc = `wc -l $list`;  
-    $systemcall_wc =~ s/ /\t/;
-    $systemcall_wc =~ s/ //g;
-  	my @ARRAY_sys = split("\t", $systemcall_wc);
-	my $number = $ARRAY_sys[0];
-	print "\n ".$number." sequences selected for plotting.";
-	if($number >= 10000){
-		print "\n WARNING: Generating more than 10000 plots will take long and is not reccomended!\n";
-	}   
+    #VAR
+    my $outlist = "kmasker_seq.ids";
+    
+    if(defined $list){
+    #SUBSET
+	    my $systemcall_wc = `wc -l $list`;  
+	    $systemcall_wc =~ s/ /\t/;
+	    $systemcall_wc =~ s/ //g;
+	  	my @ARRAY_sys = split("\t", $systemcall_wc);
+		my $number = $ARRAY_sys[0];
+		print "\n ".$number." sequences selected for plotting.";
+		if($number >= 10000){
+			print "\n WARNING: Generating more than 10000 plots will take long and is not reccomended!\n";
+		}   
 	
-	#subset
-	system("FASTA_getseq.pl -o ".$occ." --list ".$list);
-	my $occ_subset = $occ.".selection";
+		#subset
+		system("FASTA_getseq.pl -o ".$occ." --list ".$list);
+		my $occ_subset = $occ.".selection";
     
-    #vis
-    system("occVisualizer.R -i ".$occ_subset." -l ".$list);
-    #The script will skip large contigs to avoid long running times
-    #You can force it to do it anyway with -f
-    #If you do not want to provide a contig list (instead running on all entries
-    #in the occ file) use the following
-    #system("occVisualizer.R -i ".$occ.");
-    #The script will generate one plot per contig in the current working directory
+	    #vis
+	    system("occVisualizer.R -i ".$occ_subset." -l ".$list);
+	    #The script will generate one plot per contig in the current working directory
+	    #The script will skip large contigs to avoid long running times
+	    #You can force it to do it anyway with -f
+	    
+	    #clean
+   		system("rm ".$occ_subset);
+   		
+    }else{
+    #FULL DATASET
+    	$list = $outlist;
+    	system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
+    	system("occVisualizer.R -i ".$occ);
+    	#The script will generate one plot per contig in the current working directory
+	    #If you do not want to provide a contig list (instead running on all entries
+	    #in the occ file) use the following
+	    
+    }
     
-    #
+    #STORE results
     my @ARRAY_info = split("_", $occ);
     my $kindex = $ARRAY_info[1];
     if(!( -d "./Kmasker_plots_".$kindex)){
     	system("mkdir Kmasker_plots_".$kindex);
-    }
-   
+    }   
    	my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";	
    	while(<$LIST>){
    		next if($_ =~ /^$/);
@@ -58,10 +73,21 @@ sub plot_histogram{
 		my $line = $_;
 		$line =~ s/\n//;
 		system("mv ".$line.".png Kmasker_plots_".$kindex."/".$line."_hist.png");
-   	}  
+   	}
    	
-   	#clean
-   	system("rm ".$occ_subset);  
+   	#clean    
+   	if(-e "kmasker_seq.ids"){
+ #  		system("rm kmasker_seq.ids");
+   	}
+}
+
+
+## subroutine
+#
+sub plot_histogram_raw{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
 }
 
 
@@ -72,12 +98,6 @@ sub report_statistics{
 	
 }
 
-## subroutine
-#
-sub repeat_annotation{
-#implement	
-
-}
 
 ## subroutine
 #
