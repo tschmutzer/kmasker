@@ -44,14 +44,9 @@ sub add_annotation {
         #extract_sequence_region($FASTA, $TAB);
         #system("mv selected_* temp/");
         # Using standard word size of megablast [28]
-        if(defined $HASH_info{"user setting blast"}) {
-       	      my @parameters = split(/;/, $HASH_info{"user setting blast"});
-       	      my $parameterstring = "";
-       	      foreach $parameter (@parameters) {
-       	      	$parameterstring = $parameterstring . "-" . $parameter;
-       	      }
-       	      system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -num_threads ".$threads." -outfmt 6 " . $parameterstring . " -out ${temp_dir}/kmasker_blast.txt");
-
+        if(exists $HASH_info{"user setting blast"}) {
+       	      my $parameterstring = $HASH_info{"user setting blast"};
+       	      system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -num_threads ".$threads." -outfmt 6 " . $parameterstring . " -ungapped -max_hsps 1 -max_target_seqs 1" . "  -out ${temp_dir}/kmasker_blast.txt");
         }
         else{
         	system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out ${temp_dir}/kmasker_blast.txt");

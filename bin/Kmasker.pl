@@ -246,6 +246,7 @@ if(defined $kindex_usr){
 #EXPERT SETTING from command line Kmasker
 &use_expert_settings("kmasker", $expert_setting_kmasker) if($expert_setting_kmasker ne "");	
 &use_expert_settings("jelly", $expert_setting_jelly) if($expert_setting_jelly ne "");	
+&use_expert_settings("blast", $expert_setting_blast) if($expert_setting_blast ne "");	
 
 #genome_size
 if(defined $genome_size_usr){
@@ -777,16 +778,21 @@ sub use_expert_settings(){
 	
 	#HASH_info: par1 value; par2 value; ...
 	
-	if($_[0] eq "blast"){		
-		print "\n\n BLAST expert settings should be provided in \"' '\" e.g. '-perc_identity 0.95 -evalue 10'";
-		print "\n Please note that the usage of expert settings will overwrite ALL blast default settings (set those manually, too)!";
-		print "\n For eusability you can use the '--config_blast' parameter to provide a file with your manual settings for blast.\n";
-		print "\n Kmasker will use the following settings (".$_[1].")!";	
-		$HASH_info{"user setting blast"} 		= $_[1];
-	}
+	my $type 		= $_[0];
+	my $parameter 	= $_[1];
 	
 	#PARSING
-	my @ARRAY_user_parameter_input = split(";", $_[1]);
+	my @ARRAY_user_parameter_input = split(";", $parameter);
+	
+	if($type eq "blast"){		
+		print "\n\n BLAST expert settings should be provided in the form '-parameter:value;-parameter:value'";
+		print "\n e.g. blast parameter '-perc_identity 0.95 -evalue 10' encoded for Kmasker '-perc_identity=0.95;-evalue=10' ";
+		print "\n Please note that the usage of expert settings will overwrite ALL blast default settings (set those manually, too)!";
+		print "\n For reusability you can use the '--config_blast' parameter to provide a file with your manual settings for blast.\n\n";
+	}	
+	
+	my $hash_info_entry = "";
+	
 	foreach(@ARRAY_user_parameter_input){
 		if($_ =~ /=/){
 			my @ARRAY_tmp = split("=", $_);
@@ -795,38 +801,59 @@ sub use_expert_settings(){
 				my $VALUE = $ARRAY_tmp[1];
 				
 				#KMASKER
-				if($_[0] eq "kmasker"){
-				my $hash_info_entry = "";
-				
+				if($type eq "kmasker"){
+					$hash_info_entry = "";
+					$hash_info_entry = $HASH_info{"user setting kmasker"} if(exists $HASH_info{"user setting kmasker"}); 
+					
 					if($PAR eq "pctgap"){
 						print "\n\n .. changing default parameter for PCTGAP from ".$MK_percent_gapsize." to ". $VALUE." !\n";
 						$MK_percent_gapsize = $VALUE;
 						$HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
-						$hash_info_entry 					.= " MK_percent_gapsize ".$MK_percent_gapsize.";";
+						$hash_info_entry					.= " " if($hash_info_entry ne "");
+						$hash_info_entry 					.= "--pctgap ".$MK_percent_gapsize.";";
 					}
 					
 					if($PAR eq "minseed"){
 						print "\n\n .. changing default parameter for MINSEED from ".$MK_min_seed." to ". $VALUE." !\n";
 						$MK_min_seed = $VALUE;
 						$HASH_info{"MK_min_seed"}			= $MK_min_seed;
-						$hash_info_entry 					.= " MK_min_seed ".$MK_min_seed.";";
+						$hash_info_entry					.= " " if($hash_info_entry ne "");
+						$hash_info_entry 					.= "--minseed ".$MK_min_seed.";";
 					}
 					
 					if($PAR eq "mingff"){
 						print "\n\n .. changing default parameter for MINGFF from ".$MK_min_gff." to ". $VALUE." !\n";
-						$MK_min_gff = $VALUE;
+						$MK_min_gff 						= $VALUE;
 						$HASH_info{"MK_min_gff"}			= $MK_min_gff;
-						$hash_info_entry 					.= " MK_min_gff ".$MK_min_gff.";";
+						$hash_info_entry					.= " " if($hash_info_entry ne "");
+						$hash_info_entry 					.= "--mingff ".$MK_min_gff.";";
 					}
 					
+					if($PAR eq "rept"){
+						print "\n\n .. changing default parameter for REPT from ".$repeat_threshold." to ". $VALUE." !\n";
+						$repeat_threshold					= $VALUE;
+						$HASH_info{"rept"}					= $MK_min_gff;
+						$hash_info_entry					.= " " if($hash_info_entry ne "");
+						$hash_info_entry 					.= "--rept ".$repeat_threshold.";";
+					}
+					
+					if($PAR eq "min_length"){
+						print "\n\n .. changing default parameter for MIN_LENGTH from ".$length_threshold." to ". $VALUE." !\n";
+						$length_threshold 					= $VALUE;
+						$HASH_info{"min_length"}			= $length_threshold;
+						$hash_info_entry					.= " " if($hash_info_entry ne "");
+						$hash_info_entry 					.= "--min_length ".$length_threshold.";";
+					}
+										
 					#INSERT
 					$HASH_info{"user setting kmasker"} 		= $hash_info_entry;
 				}	
 				
 				
 				#JELLYFISH
-				if($_[0] eq "jelly"){
-				my $hash_info_entry = ""; 
+				if($type eq "jelly"){
+					$hash_info_entry = "";
+					$hash_info_entry = $HASH_info{"user setting jelly"} if(exists $HASH_info{"user setting jelly"}); 
 					if($PAR eq "size"){
 						print "\n .. changing default parameter for --size from ".$size." to ". $VALUE." !\n";
 						$size 				= $VALUE;
@@ -843,17 +870,33 @@ sub use_expert_settings(){
 					
 					#INSERT
 					$HASH_info{"user setting jelly"} 		= $hash_info_entry;
+				}
+				
+				
+				#BLAST
+				if($type eq "blast"){					
+					## blast parameter encoded for Kmasker '-perc_identity=0.95;-evalue=10' ";
+					$hash_info_entry = "";
+					$hash_info_entry = $HASH_info{"user setting blast"} if(exists $HASH_info{"user setting blast"}); 
+					$PAR = "-".$PAR if($PAR !~ /^\-/);					
+					$hash_info_entry	.= " " if($hash_info_entry ne "");
+					$hash_info_entry 	.= $PAR." ".$VALUE;
+			
+					#INSERT
+					$HASH_info{"user setting blast"} 		= $hash_info_entry;					
 				}			
 				
 			}else{
-				print "\n\n Cannot use user input (".$_[1]."). Kmasker is stopped!\n\n\n";
+				print "\n\n Cannot use user input (".$parameter."). Kmasker is stopped!\n\n\n";
 				exit();
 			}
 		}else{
-			print "\n\n Cannot use user input (".$_[1]."). Kmasker is stopped!\n\n\n";
+			print "\n\n Cannot use user input (".$parameter."). Kmasker is stopped!\n\n\n";
 			exit();
 		}
 	}
+	
+	print "\n parameter settings for ".$type." : ".$hash_info_entry."\n" if($hash_info_entry ne "");
 	
 }
 
@@ -912,6 +955,7 @@ sub reading_file(){
 	$CONFIG->close();	
 	$readline 			= join(" ", @ARRAY_collect);
 	my $readline_func 	= join(";", @ARRAY_collect);
+	$readline_func 		= join("=", @ARRAY_collect) if($type eq "blast");
 	&use_expert_settings($type, $readline_func);
 		
 	#RETURN	
