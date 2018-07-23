@@ -14,7 +14,7 @@ This instructions will help you to install kmasker including all prerequisites.
 - perl5
 - scons
 - tools for compiling c++ programs 
-(we will try to offer binaries for differet OS to you)
+(we will try to offer binaries for different OS to you)
 ## Installation Instructions
 ### Distribution specific parts
 #### Ubuntu/Debian
@@ -27,7 +27,7 @@ apt-get install jellyfish libjellyfish-2.0-dev gsl libgsl-dev scons blast2 build
 Installation of necessary tools and libs with yum
 To be done. 
 
-###General instructions (executed after the distrubution dependencies)
+### General instructions (executed after the distrubution dependencies)
 Create a directory for the source code of the different tools
 `mkdir ~/src`
 Check out the tools
