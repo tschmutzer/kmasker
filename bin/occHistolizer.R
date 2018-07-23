@@ -7,10 +7,8 @@ spec=matrix(c(
   'input', 'i', 1, "character",
   'help', 'h', 0, "logical",
   'force', 'f', 0, "logical",
-  'sws', 'w', 0, "numeric",
-  'list', 'l', 2, "character",
-  'log', 'g', 0, "logical",
-  'dynamic', 'd', 0, "logical"
+  'window_size', 'w', 0, "numeric",
+  'list', 'l', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
@@ -27,11 +25,8 @@ if( !is.null(opt$force)) {
   force=TRUE
 }
 wsize=500
-if( !is.null(opt$sws)) {
-  wsize=opt$sws
-}
-if (!is.null(opt$dynamic)) {
-  dynamic=2
+if( !is.null(opt$window_size)) {
+  wsize=opt$window_size
 }
 
 my.read.lines=function(fname) {
@@ -73,7 +68,7 @@ for (pos in opentags){
       #Our OCC format specification definies 80 characters per line at maximum (but mostly they are about 30 long)
       #This check will be tricked out by a file which is not in the specification
       occs<-as.numeric(unlist(strsplit(qual_file[(pos+1):(next_pos_in_text[1] - 1)], " ")))
-      }
+    }
     else{
       next_pos_in_text <- length(qual_file)
       approx<-(next_pos_in_text-pos)*30
@@ -93,19 +88,8 @@ for (pos in opentags){
         next;
       }
     }
-    if (!is.null(opt$dynamic)) {
-      temp<-length(occs)*dynamic/100
-      exp<-trunc(log10(temp))
-      temp<-temp/(10^exp)
-      values<-c(1,2,5)
-      if(length(which(temp-values>0))==0) {
-        print("Sequence to short for dynamic window estimation.\n");next;
-      }
-      value<-max(values[which(temp-values>0)])
-      wsize<-value*10^exp
-    }
     #png(paste(id, ".png", sep=""), width=2048, height=1024)
-    mean10 <- rollmean(occs, wsize, align= 'center', fill=0)
+    #mean10 <- rollmean(occs, wsize, align= 'center', fill=0)
     m<-mean(occs)
     q25<-quantile(occs, 0.25)[[1]]
     q50<-quantile(occs, 0.5)[[1]]
@@ -115,44 +99,22 @@ for (pos in opentags){
     dataframe <- data.frame(positions, occs, mean10)
     dataframe<-as.data.frame(apply(dataframe, c(1,2), function(x) if(x<1){return(1)}else{return(x)}))
     colnames(dataframe) <- c('pos', 'occ', 'mean10')
-    if(! is.null(opt$log)){
-      plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
-        #geom_line( aes(colour = occ), size=1.1) +
-        #scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency\n")) +
-        geom_area( aes( x = pos, y = mean10), fill='blue')  +
-        geom_line( aes( x = pos, y = mean10), size=1.2)  +
-        labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency [log10]") +
-        theme_gray(base_size = 19) + 
-        theme(legend.text=element_text(size=15)) +
-        #guides(fill = guide_legend(keywidth = 3, keyheight = 2)) +
-        scale_y_log10(breaks=trans_breaks("log10",function(x) 10^x), labels=trans_format("log10", math_format(10^.x))) +
-        #geom_hline(aes(yintercept=m, fill="avg"), colour="blue", linetype=3, size=1.2) + 
-        #geom_hline(aes(yintercept=q25, fill="q25"), colour="red", linetype=3, size=1.2) + 
-        #geom_hline(aes(yintercept=q50, fill="q50"), colour="brown", linetype=4, size=1.2) + 
-        #geom_hline(aes(yintercept=q75, fill="q75"), colour="darkgreen", linetype=5, size=1.2) + 
-        #geom_hline(aes(yintercept=q90, fill="q90"), colour="violet", linetype=6, size=1.2) +
-        geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
-        geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-        geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
-        scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
-        #scale_color_hue("Group") +
-        #scale_fill_manual("Lines", values=rep(1,5),guide=guide_legend(override.aes = list(colour=c("blue", "red", "brown", "darkgreen", "violet"))))
-    } else {
-      plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
-        geom_area( aes( x = pos, y = mean10), fill='blue')  +
-        geom_line( aes( x = pos, y = mean10), size=1.2)  +
-        labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency") +
-        theme_gray(base_size = 19) + 
-        theme(legend.text=element_text(size=15)) +
-        geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
-        geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-        geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
-        scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
-    }
+    plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
+      #geom_line( aes(colour = occ), size=1.1) +
+      #scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency\n")) +
+      geom_area( aes( x = pos, y = occ), fill='black')  +
+      #geom_line( aes( x = pos, y = mean10), size=1.2)  +
+      labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency") +
+      theme_gray(base_size = 19) + 
+      theme(legend.text=element_text(size=15)) +
+      geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
+      geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
+      geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
+      geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
+      geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
+      scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
+    #guides(fill = guide_legend(keywidth = 3, keyheight = 2))
+    #scale_y_log10(breaks=trans_breaks("log10",function(x) 10^x), labels=trans_format("log10", math_format(10^.x)))
     png(paste(id, ".png", sep=""), width=2048, height=1024)
     #in a loop we have to explicitly print the plot
     print(plot)
