@@ -45,15 +45,15 @@ Kmasker uses an interal repository for reuse of kindex structures. The data (cal
 
 Kmasker --help
 
+Kmasker --show_repository
+
+Kmasker --show_details At1
+
 Kmasker --build --seq sequence.fastq --gs 135 --in At1
 
 Kmasker --run --fasta query.fasta --kindex At1
 
 Kmasker --explore --hexplot --multi_kindex At1 Hv1
-
-Kmasker --show_repository
-
-Kmasker --show_details At1
 
 
 
@@ -82,6 +82,7 @@ Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
 
 Kmasker --run --grna candidate_gRNA.fasta --kindex Hv1
 
+Check a set of gRNAs for their specificity in CRISPR/cas application. As a result for each given gRNA a score is calculated reflecting its target specififity. 
 
 
 ## [EXPLORE]:
