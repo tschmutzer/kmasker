@@ -473,8 +473,13 @@ sub add_annotation_to_gff{
          my @line = split(/\t/, $_);
          my $ident = $line[0] . "_" .($line[3] - 1) . "_" . ($line[4] - 1);
          if ( exists $blastresults{$ident}) {
+            my $aliascount = () = $line[8] =~ /Alias/g;
+            my $extension = "";
+            if($aliascount > 0) {
+               $extension = $aliascount + 1;
+            }
             my $refname = @{$blastresults{$ident}}[1];
-            $line[8] = $line[8] . ";Alias=$refname";
+            $line[8] = $line[8] . ";Alias" . $extension . "=$refname";
             if ($verbose eq "true") {
                my $evalue = @{$blastresults{$ident}}[10];
                $evalue =~ s/^\s+|\s+$//g;
@@ -484,7 +489,7 @@ sub add_annotation_to_gff{
                $pident =~ s/^\s+|\s+$//g;
                my $blength = @{$blastresults{$ident}}[4];
                $blength =~ s/^\s+|\s+$//g;
-               $line[8] = $line[8] . ";blast_score=$score;blast_evalue=$evalue;blast_identity=$pident;blast_algn_length=$blength";
+               $line[8] = $line[8] . ";blast_score". $extension ."=$score;blast_evalue". $extension ."=$evalue;blast_identity". $extension ."=$pident;blast_algn_length". $extension ."=$blength";
             }
          }
          for(my $i=0; $i<scalar(@line)-1; $i++) {
