@@ -57,7 +57,7 @@ Kmasker --show_details At1
 
 
 
-### [BUILD]:
+## [BUILD]:
 
 The build module is used to construct a k-mer index structure. It has its own help section (type '--help'). 
 One either can provide parameters using the command line or use the option '--config' to provide a config file with detailed meta data. If parameters are defined twice, the config file will overwrite parameters given at the command line.
@@ -66,7 +66,7 @@ Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 
 
-### [RUN]:
+## [RUN]:
 
 The run module starts the core process of Kmasker. There are two general options. 1.) Analyse input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
 
@@ -83,6 +83,10 @@ Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
 Kmasker --run --grna candidate_gRNA.fasta --kindex Hv1
 
 
+
+## [EXPLORE]:
+
+The explore module provides additional functionality for downstream analysisi e.g. vizualisations or annotation. 
 
 #### EXPLORE - VISUALISATION
 
@@ -105,10 +109,6 @@ Kmasker --explore --hexplot --occ species_A.occ species_B.occ
 This visualisation can be used for comparative inspection of two constructed Kmasker output files (occ). Keep in mind that only sequences are compared that are present in both files. The visualisation illustrates which sequences are the most different based on k-mer frequencies (e.g. to study two species by comparing the correpsonding WGS data).
 
 
-
-### [EXPLORE]:
-
-The explore module provides additional functionality for downstream analysisi e.g. vizualisations or annotation. 
 
 #### EXPLORE - ANNOTATION
 
