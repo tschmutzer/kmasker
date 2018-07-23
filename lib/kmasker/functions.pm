@@ -11,7 +11,7 @@ our @EXPORT_OK = qw(read_write_repository Xtract add_annotation);
 
 
 ## VERSION
-my $version_PM_functions 	= "0.0.1 rc180412";
+my $version_PM_functions 	= "0.0.1 rc180723";
 
 sub add_repository {
    # function adds local repository to global shared repository 
