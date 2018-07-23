@@ -68,7 +68,7 @@ Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 ## [RUN]:
 
-The run module starts the core process of Kmasker. There are two general options. 1.) Analyse input with SINGLE k-mer index structures and 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures.
+The run module starts the core process of Kmasker. There are three general options. 1.) Analyse input with SINGLE k-mer index structures, 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures and 3) analysis of short sequence probes for its genome-wide specificity.
 
 #### SINGLE
 
