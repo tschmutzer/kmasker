@@ -44,7 +44,18 @@ sub add_annotation {
         #extract_sequence_region($FASTA, $TAB);
         #system("mv selected_* temp/");
         # Using standard word size of megablast [28]
-        system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out ${temp_dir}/kmasker_blast.txt");
+        if(defined $HASH_info{"user setting blast"}) {
+       	      my @parameters = split(/;/, $HASH_info{"user setting blast"});
+       	      my $parameterstring = "";
+       	      foreach $parameter (@parameters) {
+       	      	$parameterstring = $parameterstring . "-" . $parameter;
+       	      }
+       	      system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -num_threads ".$threads." -outfmt 6 " . $parameterstring . " -out ${temp_dir}/kmasker_blast.txt");
+
+        }
+        else{
+        	system("blastn -db \"" . $BLAST_db . "\" -query " . "${temp_dir}/selected_" . $FASTA . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped -max_hsps 1 -max_target_seqs 1" . " -out ${temp_dir}/kmasker_blast.txt");
+        }
         #FIXME: Add exchangeable configuration to blast
         #--->almost done, just add the necessary parameters to %HASH_INFO
         kmasker::filehandler::add_annotation_to_gff($GFF, "${temp_dir}/kmasker_blast.txt");

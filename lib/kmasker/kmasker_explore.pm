@@ -140,13 +140,16 @@ sub custom_annotation{
     	exit();
     }
     
-    
-    # TASK for Chris to move annotation from run to this section!
     kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
-    print("\nAnnotation of GFF was done!\n");
-    #ToDo Reimplemantaion of blast function 
-    #Use of extract_feature_gff (feature must be a feature given by the user)
-
+    (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
+    if(-x "$path/${name}_with_annotation${suffix}") {
+      print("\nAnnotation of GFF was done!\n");
+      unlink($gff);
+      system("mv" . " " . "$path/${name}_with_annotation${suffix}" . " " . $gff);
+    }
+    else{
+        print("An annotated GFF was not created. Something went wrong!");
+    }
 	
 }
 
