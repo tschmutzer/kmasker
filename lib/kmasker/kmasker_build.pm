@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.7 rc180717";
+my $version_PM_build 	= "0.0.7 rc180723";
 
 
 sub build_kindex_jelly{	
@@ -41,14 +41,14 @@ sub build_kindex_jelly{
 	}
 	
 	#INFO
-	print "\n .. building kindex for ".$HASH_info{"kindex name"}."\n";
+	print "\n .. building kindex for ".$HASH_info{"kindex name"}."\n" if(exists $HASH_info{"kindex name"});
 	
 	
 	#CHECK minimal requirement
 	my $go_interactiv;
 	$go_interactiv = 1 if(!exists $HASH_info{"genome size"}||!exists $HASH_info{"kindex name"}||!exists $HASH_info{"k-mer"}||!exists $HASH_info{"common name"});
 	if(defined $go_interactiv){
-		my $href_info_update = &make_config($HASH_info{"PATH_kindex_private"}, $HASH_info{"PATH_kindex_global"}, \%HASH_info);
+		my $href_info_update = &make_config($HASH_info{"PATH_kindex_private"}, $HASH_info{"PATH_kindex_external"}, \%HASH_info);
 		%HASH_info = %{$href_info_update};
 		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
@@ -66,13 +66,23 @@ sub build_kindex_jelly{
 	my $short_tag		= $HASH_info{"kindex name"};
 	my $path			= $HASH_info{"path_bin"};
 	my $threads			= $HASH_info{"threads"};
-	my $mem				= $HASH_info{"memory"};
+	my $size			= $HASH_info{"size"};
 	
 	#LOAD expert setting for build
-	my $parameter_extern = $HASH_info{"expert setting jelly"};
-	my $setting = "-s ".$mem."G -t ".$threads;	#server setting
-	if($parameter_extern ne ""){
-		$setting = $parameter_extern;
+	my $setting = "-s ".$size."G -t ".$threads;	#server setting
+	if(exists $HASH_info{"user setting jelly"}){
+		$parameter_extern = $HASH_info{"user setting jelly"};
+		my @ARRAY_config = split("; ", $parameter_extern);
+		for(my $s=0;$s<scalar(@ARRAY_config);$s++){
+			my $set = $ARRAY_config[$s];
+			$set =~ s/^ //;		#no empty space at beginning
+			$set .= "--".$set; 	# add parameter prefix structure
+			if($set =~ /size/){
+				$set .= $set."G" if(($set !~ /M$/)&&($set !~ /G$/));
+			}
+			$ARRAY_config[$s] = $set;
+		}
+		$setting = join (" ", @ARRAY_config);
 	}
 	
 	#create command shell script for background
@@ -111,7 +121,7 @@ sub build_kindex_jelly{
 	
 	#STORE constructed kindex and repository.info
 	my $PATH_final = $HASH_info{"PATH_kindex_private"};
-	$PATH_final = $HASH_info{"PATH_kindex_global"} if($HASH_info{"status"} eq "global");
+	$PATH_final = $HASH_info{"PATH_kindex_external"} if($HASH_info{"status"} eq "external");
 	if(!(-d $PATH_final)){
 		system("mkdir ".$PATH_final);
 	}
@@ -192,10 +202,9 @@ sub update_repository_information{
 sub make_config(){
 	
 	my $PATH_kindex_private = $_[0];
-	my $PATH_kindex_global	= $_[1];
+	my $PATH_kindex_external= $_[1];
 	my $href				= $_[2];
 	my %HASH_info			= %{$href};
-	my $USER_kindex_info 	= new IO::File("repository_".$HASH_info{"kindex name"}.".info", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
 		
 		#Start interactiv mode
 		
@@ -213,18 +222,20 @@ sub make_config(){
 		opendir( my $DIR_P, $PATH_kindex_private );
 		while ( my $entry = readdir $DIR_P ) {
 			$entry =~ s/KINDEX_//;
+			$entry =~ s/\.jf$//;
 			$entry = lc($entry);
 			$unique = 0 if($entry eq lc($HASH_info{"kindex name"}));
 		}
 		close $DIR_P;
 		
-		opendir( my $DIR_G, $PATH_kindex_global );
-		while ( my $entry = readdir $DIR_G ) {
+		opendir( my $DIR_E, $PATH_kindex_external );
+		while ( my $entry = readdir $DIR_E ) {
 			$entry =~ s/KINDEX_//;
+			$entry =~ s/\.jf$//;
 			$entry = lc($entry);
 			$unique = 0 if($entry eq lc($HASH_info{"kindex name"}));
 		}
-		close $DIR_G;
+		close $DIR_E;
 		
 		if($unique eq 0){
 			print "\n name of index is not unique. Kmasker is stopped!\n\n";
@@ -232,7 +243,8 @@ sub make_config(){
 		}
 		
 		#2
-		$HASH_info{"status"} = &promptUser("\n\tStatus of index (private or global)\n\t", "private");
+		#$HASH_info{"status"} = &promptUser("\n\tStatus of index (private or external)\n\t", "private");
+		$HASH_info{"status"} = "private";
 			
 		#3
 		$default = "unknown";
@@ -254,9 +266,9 @@ sub make_config(){
 		$default = "";
 		$default = $HASH_info{"genome size"} if(exists $HASH_info{"genome size"});
 		$HASH_info{"genome size"} = &promptUser("\n\tGenome size in Mb (e.g. '5100' for barley)\n\t", $default);
-		if($HASH_info{"genome size"} eq ""){
+		if(($HASH_info{"genome size"} eq "")||($HASH_info{"genome size"} !~ (/^\d+$/))){
 			print "\n [WARNING]";
-			print "\n Required value of 'genome size' is missing. Kmasker is stopped!\n\n";
+			print "\n Required value of 'genome size' is missing or is not a number. Kmasker was stopped!\n\n";
 			exit();
 		}
 		
@@ -272,6 +284,7 @@ sub make_config(){
 		$HASH_info{"general notes"} = &promptUser("\n\tGeneral notes\n\t", "");
 		
 		#CREATE configuratio file
+		my $USER_kindex_info 	= new IO::File("repository_".$HASH_info{"kindex name"}.".info", "w") or die "could not write file for repository_".$HASH_info{"kindex name"}.".info file: $!\n";
 		print $USER_kindex_info sprintf("%-15s %s", "kindex name :", " ")."\t".$HASH_info{"kindex name"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "status :", " ")."\t".$HASH_info{"status"}."\n";
 		print $USER_kindex_info sprintf("%-15s %s", "common name :", " ")."\t".$HASH_info{"common name"}."\n";
@@ -297,7 +310,7 @@ sub make_config(){
 		print "\n\n";
 		
 		#EXIT
-		if(lc($start) ne "yes"){
+		if((lc($start) ne "yes")&&(lc($start) ne "y")){
 			exit();
 		}
 
