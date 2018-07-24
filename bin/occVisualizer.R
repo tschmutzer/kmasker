@@ -121,7 +121,7 @@ for (pos in opentags){
         #scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency\n")) +
         geom_area( aes( x = pos, y = mean10), fill='blue')  +
         geom_line( aes( x = pos, y = mean10), size=1.2)  +
-        labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency [log10]") +
+        labs(title = paste("k-mer distribution of", id, "sws", wsize, sep=" "), x="position (bp)", y="k-mer frequency [log10]") +
         theme_gray(base_size = 19) + 
         theme(legend.text=element_text(size=15)) +
         #guides(fill = guide_legend(keywidth = 3, keyheight = 2)) +
@@ -135,7 +135,7 @@ for (pos in opentags){
         geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
         geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
         geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-        geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
+        #geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
         scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
         #scale_color_hue("Group") +
         #scale_fill_manual("Lines", values=rep(1,5),guide=guide_legend(override.aes = list(colour=c("blue", "red", "brown", "darkgreen", "violet"))))
@@ -143,14 +143,14 @@ for (pos in opentags){
       plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
         geom_area( aes( x = pos, y = mean10), fill='blue')  +
         geom_line( aes( x = pos, y = mean10), size=1.2)  +
-        labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency") +
+        labs(title = paste("k-mer distribution of", id, "sws", wsize, sep=" "), x="position (bp)", y="k-mer frequency") +
         theme_gray(base_size = 19) + 
         theme(legend.text=element_text(size=15)) +
         geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
         geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
         geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
         geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-        geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
+        #geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
         scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
     }
     png(paste(id, ".png", sep=""), width=2048, height=1024)

@@ -7,7 +7,6 @@ spec=matrix(c(
   'input', 'i', 1, "character",
   'help', 'h', 0, "logical",
   'force', 'f', 0, "logical",
-  'window_size', 'w', 0, "numeric",
   'list', 'l', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
@@ -23,10 +22,6 @@ options(scipen = 999)
 force=FALSE
 if( !is.null(opt$force)) {
   force=TRUE
-}
-wsize=500
-if( !is.null(opt$window_size)) {
-  wsize=opt$window_size
 }
 
 my.read.lines=function(fname) {
