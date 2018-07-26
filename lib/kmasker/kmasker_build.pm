@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.7 rc180723";
+my $version_PM_build 	= "0.0.8 rc180726";
 
 
 sub build_kindex_jelly{	
@@ -72,17 +72,18 @@ sub build_kindex_jelly{
 	my $setting = "-s ".$size."G -t ".$threads;	#server setting
 	if(exists $HASH_info{"user setting jelly"}){
 		$parameter_extern = $HASH_info{"user setting jelly"};
-		my @ARRAY_config = split("; ", $parameter_extern);
+		my @ARRAY_config = split(";", $parameter_extern);
 		for(my $s=0;$s<scalar(@ARRAY_config);$s++){
 			my $set = $ARRAY_config[$s];
-			$set =~ s/^ //;		#no empty space at beginning
-			$set .= "--".$set; 	# add parameter prefix structure
+			$set =~ s/^ //;							# no empty space at beginning
+			$set .= "--".$set if($set !~ /^\-\-/) ; 	# add parameter prefix structure
 			if($set =~ /size/){
-				$set .= $set."G" if(($set !~ /M$/)&&($set !~ /G$/));
+				$set .= "G" if(($set !~ /M$/)&&($set !~ /G$/));
 			}
 			$ARRAY_config[$s] = $set;
 		}
 		$setting = join (" ", @ARRAY_config);
+		print "\n using modified user settings : ".$setting."\n";
 	}
 	
 	#create command shell script for background
