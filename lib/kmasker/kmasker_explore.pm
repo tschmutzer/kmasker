@@ -13,7 +13,7 @@ gff_construction
 our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.2 rc180726";
+my $version_PM_explore 	= "0.0.2 rc180727";
 
 ## subroutine
 #
@@ -88,6 +88,40 @@ sub plot_histogram_mean{
 #
 sub plot_histogram_raw{
     my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+
+## subroutine
+#
+sub plot_violin_split{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+## subroutine
+#
+sub plot_hexagon{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+## subroutine
+#
+sub plot_boxplot{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+
+## subroutine
+#
+sub barplot_of_means_per_contig{
+    my $file	=	$_[0];
     my $list	=	$_[1];    
     
 }
