@@ -7,7 +7,7 @@ spec=matrix(c(
   'input', 'i', 1, "character",
   'help', 'h', 0, "logical",
   'force', 'f', 0, "logical",
-  'sws', 'w', 0, "numeric",
+  'sws', 'w', 2, "numeric",
   'list', 'l', 2, "character",
   'log', 'g', 0, "logical",
   'dynamic', 'd', 0, "logical"
@@ -29,9 +29,11 @@ if( !is.null(opt$force)) {
 wsize=500
 if( !is.null(opt$sws)) {
   wsize=opt$sws
+  print(paste("Sliding window was set to ", wsize, sep=""))
 }
 if (!is.null(opt$dynamic)) {
   dynamic=2
+  print("Dynamic sliding window estimation activated");
 }
 
 my.read.lines=function(fname) {
@@ -99,7 +101,7 @@ for (pos in opentags){
       temp<-temp/(10^exp)
       values<-c(1,2,5)
       if(length(which(temp-values>0))==0) {
-        print("Sequence to short for dynamic window estimation.\n");next;
+        print("Sequence too short for dynamic window estimation.\n");next;
       }
       value<-max(values[which(temp-values>0)])
       wsize<-value*10^exp

@@ -67,13 +67,15 @@ my $stats;
 my $custom_annotate;
 my $blastableDB;
 my $dbfasta;
+my $dynamic;
+my $force;
 #visualisation
 my $hist;
 my $histm;
 my $violin;
 my $hexplot;
-my $force;
-
+my $sws;
+my $log;
 #GENERAL parameter
 my $help;
 my $keep_temporary_files;
@@ -141,8 +143,10 @@ my $result = GetOptions (	#MAIN
 							"violin"			=> \$violin,
 							"list=s"			=> \$list,
 							"occ=s"				=> \$occ,
-							"stats"				=> \$stats,							
-							
+							"stats"				=> \$stats,	
+							"dynamic"			=> \$dynamic,
+							"window"			=> \$sws,		
+							"log"				=> \$log,					
 							#GLOBAL
 							"show_repository"			=> \$show_kindex_repository,
 							"show_details=s"			=> \$show_details_for_kindex,
@@ -483,15 +487,19 @@ if(defined $explore){
 	
 		if(defined $occ){
 		# explore visualisations require an OCC file
-			
-			my $missing_parameter = "";
+		
+				my $missing_parameter = "";
+				if(! -x $occ) {
+					print "\n ERROR: $occ was not found. Kmasker was stopped.\n\n";
+					exit;
+				}
 		
 			#HISTOGRAM RAW or MEAN
 			if((defined $hist)||(defined $histm)){	
 				if(defined $list){				
 					if (-e $list) {
-   						&plot_histogram_raw($occ, $list) if(defined $hist);
-   						&plot_histogram_mean($occ, $list) if(defined $histm);
+   						&plot_histogram_raw($occ, $list, $force) if(defined $hist);
+   						&plot_histogram_mean($occ, $list, $dynamic, $force, $sws, $log) if(defined $histm);
 					}else{
 						$missing_parameter .= " --list (file ".$list." not found)";
 					}				
@@ -503,8 +511,8 @@ if(defined $explore){
 					if($number >= 10000){	
 						
 						if(defined $force){
-							&plot_histogram_raw($occ) if(defined $hist);
-							&plot_histogram_mean($occ) if(defined $histm);
+							&plot_histogram_raw($occ, undef, $force) if(defined $hist);
+							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws, $log) if(defined $histm);
 						}else{						
 							print "\n\n WARNING: Your input contains ".$number." sequences. We do not recommend to build more than 10.000 in one step.\n";
 							print     " This might take very long. You can force this by using '--force'. Kmasker has been stopped \n\n";	
@@ -512,9 +520,13 @@ if(defined $explore){
 							exit();
 						}
 					}else{
-						&plot_histogram_raw($occ) if(defined $hist);
-						&plot_histogram_mean($occ) if(defined $histm);
-					}	
+							&plot_histogram_raw($occ, undef, undef) if(defined $hist);
+							&plot_histogram_mean($occ, undef, $dynamic, undef, $sws, $log) if(defined $histm);
+					}
+					#clean logs
+					if((! defined $verbose) && -e "log.txt") {
+						unlink("log.txt");
+					}
 				}
 			}			
 			

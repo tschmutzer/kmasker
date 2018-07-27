@@ -91,9 +91,9 @@ for (pos in opentags){
     q75<-quantile(occs, 0.75)[[1]]
     q90<-quantile(occs, 0,9)[[1]]
     positions <- 1:length(occs);
-    dataframe <- data.frame(positions, occs, mean10)
+    dataframe <- data.frame(positions, occs)
     dataframe<-as.data.frame(apply(dataframe, c(1,2), function(x) if(x<1){return(1)}else{return(x)}))
-    colnames(dataframe) <- c('pos', 'occ', 'mean10')
+    colnames(dataframe) <- c('pos', 'occ')
     plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
       #geom_line( aes(colour = occ), size=1.1) +
       #scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency\n")) +

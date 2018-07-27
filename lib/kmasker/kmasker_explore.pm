@@ -3,6 +3,11 @@ use Exporter qw(import);
 use File::Basename;
 use strict;
 use warnings;
+use kmasker::filehandler;
+use kmasker::occ;
+use kmasker::functions;
+use File::Basename qw(dirname);
+use Cwd  qw(abs_path);
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -15,13 +20,31 @@ our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff
 ## VERSION
 my $version_PM_explore 	= "0.0.1 rc180720";
 
+my $path        = dirname abs_path $0;      
+
 ## subroutine
 #
 sub plot_histogram_mean{
     my $occ		=	$_[0];
     my $list	=	$_[1];
-    
+    my $dynamic =   $_[2];
+    my $force   =   $_[3];
+    my $sws     =   $_[4];
+    my $log     =   $_[5];
     #VAR
+    my $arguments = "";
+    if(defined $dynamic) {
+        $arguments = $arguments . " -d";
+    }
+    if(defined $force) {
+        $arguments = $arguments . " -f";
+    }
+    if(defined $sws) {
+        $arguments = $arguments . " -w $sws";
+    }
+    if(defined $log) {
+        $arguments = $arguments . " -g";
+    }
     my $outlist = "kmasker_seq.ids";
     
     if(defined $list){
@@ -37,11 +60,11 @@ sub plot_histogram_mean{
 		}   
 	
 		#subset
-		system("FASTA_getseq.pl -o ".$occ." --list ".$list);
+		system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>log.txt 2>&1");
 		my $occ_subset = $occ.".selection";
     
 	    #vis
-	    system("occVisualizer.R -i ".$occ_subset." -l ".$list);
+	    system($path . "/" ."occVisualizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>log.txt 2>&1");
 	    #The script will generate one plot per contig in the current working directory
 	    #The script will skip large contigs to avoid long running times
 	    #You can force it to do it anyway with -f
@@ -53,7 +76,7 @@ sub plot_histogram_mean{
     #FULL DATASET
     	$list = $outlist;
     	system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
-    	system("occVisualizer.R -i ".$occ);
+    	system($path . "/" ."occVisualizer.R -i ".$occ . "$arguments". " >>log.txt 2>&1");
     	#The script will generate one plot per contig in the current working directory
 	    #If you do not want to provide a contig list (instead running on all entries
 	    #in the occ file) use the following
@@ -61,10 +84,10 @@ sub plot_histogram_mean{
     }
     
     #STORE results
-    my @ARRAY_info = split("_", $occ);
-    my $kindex = $ARRAY_info[1];
-    if(!( -d "./Kmasker_plots_".$kindex)){
-    	system("mkdir Kmasker_plots_".$kindex);
+    #my @ARRAY_info = split("_", $occ);
+    #my $kindex = $ARRAY_info[1];
+    if(!( -d "./Kmasker_plots")){
+    	system("mkdir Kmasker_plots");
     }   
    	my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";	
    	while(<$LIST>){
@@ -73,7 +96,7 @@ sub plot_histogram_mean{
 		my $line = $_;
 		$line =~ s/\n//;
 		if(-e $line.".png"){
-			system("mv ".$line.".png Kmasker_plots_".$kindex."/".$line."_hist.png");
+			system("mv ".$line.".png Kmasker_plots". "/".$line."_hist.png");
 		}
    	}
    	
@@ -89,7 +112,72 @@ sub plot_histogram_mean{
 sub plot_histogram_raw{
     my $occ		=	$_[0];
     my $list	=	$_[1];    
+    my $force   =   $_[3];
+    #VAR
+    my $arguments = "";
+    if(defined $force) {
+        $arguments = $arguments . " -f";
+    }
     
+    my $outlist = "kmasker_seq.ids";
+    
+    if(defined $list){
+    #SUBSET
+        my $systemcall_wc = `wc -l $list`;  
+        $systemcall_wc =~ s/ /\t/;
+        $systemcall_wc =~ s/ //g;
+        my @ARRAY_sys = split("\t", $systemcall_wc);
+        my $number = $ARRAY_sys[0];
+        print "\n ".$number." sequences selected for plotting.";
+        if($number >= 10000){
+            print "\n WARNING: Generating more than 10000 plots will take long and is not reccomended!\n";
+        }   
+    
+        #subset
+        system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>log.txt 2>&1");
+        my $occ_subset = $occ.".selection";
+    
+        #vis
+        system($path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>log.txt 2>&1");
+        #The script will generate one plot per contig in the current working directory
+        #The script will skip large contigs to avoid long running times
+        #You can force it to do it anyway with -f
+        
+        #clean
+        system("rm ".$occ_subset);
+        
+    }else{
+    #FULL DATASET
+        $list = $outlist;
+        system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
+        system($path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>log.txt 2>&1");
+        #The script will generate one plot per contig in the current working directory
+        #If you do not want to provide a contig list (instead running on all entries
+        #in the occ file) use the following
+        
+    }
+    
+    #STORE results
+    #my @ARRAY_info = split("_", $occ);
+    #my $kindex = $ARRAY_info[1];
+    if(!( -d "./Kmasker_raw_plots")){
+        system("mkdir Kmasker_raw_plots");
+    }   
+    my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";    
+    while(<$LIST>){
+        next if($_ =~ /^$/);
+        next if($_ =~ /^#/);
+        my $line = $_;
+        $line =~ s/\n//;
+        if(-e $line.".png"){
+            system("mv ".$line.".png Kmasker_raw_plots" . "/".$line."_hist.png");
+        }
+    }
+    
+    #clean    
+    if(-e "kmasker_seq.ids"){
+        system("rm kmasker_seq.ids");
+    }
 }
 
 
