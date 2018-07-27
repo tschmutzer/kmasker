@@ -18,7 +18,7 @@ gff_construction
 our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.1 rc180720";
+my $version_PM_explore 	= "0.0.2 rc180727";
 
 my $path        = dirname abs_path $0;      
 
@@ -183,6 +183,40 @@ sub plot_histogram_raw{
 
 ## subroutine
 #
+sub plot_violin_split{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+## subroutine
+#
+sub plot_hexagon{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+## subroutine
+#
+sub plot_boxplot{
+    my $occ		=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+
+## subroutine
+#
+sub barplot_of_means_per_contig{
+    my $file	=	$_[0];
+    my $list	=	$_[1];    
+    
+}
+
+
+## subroutine
+#
 sub report_statistics{
 #implement
 	
@@ -230,10 +264,17 @@ sub custom_annotation{
     
     kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
     (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
-    if(-x "$path/${name}_with_annotation${suffix}") {
-      print("\nAnnotation of GFF was done!\n");
-      unlink($gff);
-      system("mv" . " " . "$path/${name}_with_annotation${suffix}" . " " . $gff);
+    if(-x "$path/${name}_annotated${suffix}") {
+    	print("\nIntegration of annotation information in GFF finished!\n");
+      	unlink($gff);
+      	system("mv" . " " . "$path/${name}_annotated${suffix}" . " " . $gff);
+      	
+      	my $substring = "_annotated_annotated";
+      	if($gff =~ /$substring/){
+      		my $gff_new = $gff;
+      		$gff_new =~ s/_annotated_annotated/_annotated/;
+      		system("mv ".$gff." ".$gff_new);
+      	}
     }
     else{
         print("An annotated GFF was not created. Something went wrong!");

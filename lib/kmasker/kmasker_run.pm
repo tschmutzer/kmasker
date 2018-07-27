@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.29 rc180712";
+my $version_PM_run 	= "0.0.30 rc180726";
 
 ## subroutine
 #
@@ -48,6 +48,7 @@ sub run_kmasker_SK{
 		my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
 		my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
 		my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
+		my $bed					= $HASH_info_this{"bed"}; 					# default : 'no'
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
 		my $absolut_path		= $ARRAY_repository[4];
@@ -57,6 +58,7 @@ sub run_kmasker_SK{
 		print "\n parameter setting: minseed    = ".$min_seed;
 		print "\n parameter setting: pctgap     = ".$percent;
 		print "\n parameter setting: mingff     = ".$min_gff;
+		print "\n parameter setting: bed     	= ".$bed;
 		print "\n temp path: $temp_path";
 		print "\n\n";
 
@@ -103,8 +105,19 @@ sub run_kmasker_SK{
 		#extract repeat regions
 		kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
        
-        system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff" . " RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff");
+       	my $gffname = "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff";
+        system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff " . $gffname);
+        
+        if($bed eq "1"){
+        	#Feedback
+			print "\n .. start to generate BED" ;#if(!defined $silent);
+        	#BED format output is activated
+        	&write_gff2bed($gffname); 		
+        }
+        
         #Statistics
+        #Feedback
+        print "\n .. start to generate statistics" ;#if(!defined $silent);
         system("$path/stats.R " . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c sequence" . " >>log.txt 2>&1");
         system("$path/stats.R "  . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c " . $feature . " >>log.txt 2>&1");
         if((!(-e "Report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "Report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
@@ -149,24 +162,26 @@ sub run_kmasker_MK{
 	
 	# GET info from repository
 	my @ARRAY_INFO_Kx		= @{$aref_info_Kx};
-	my %HASH_info_task		= %{$ARRAY_INFO_Kx[0]};
+	my %HASH_info_this		= %{$ARRAY_INFO_Kx[0]};
 		
 	# GET info
-	my $rept 				= $HASH_info_task{"rept"};
-	my $length_threshold 	= $HASH_info_task{"min_length"};
-	my $percent 			= $HASH_info_task{"MK_percent_gapsize"}; 	# default : 10 (%)
-	my $min_seed			= $HASH_info_task{"MK_min_seed"};			# default :  5 (bp)
-	my $min_gff				= $HASH_info_task{"MK_min_gff"}; 			# default : 10 (bp)
+	my $rept 				= $HASH_info_this{"rept"};
+	my $length_threshold 	= $HASH_info_this{"min_length"};
+	my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
+	my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
+	my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
+	my $bed					= $HASH_info_this{"bed"}; 					# default : 'no'
 	my @ARRAY_full_kindex_names = ();
 	my @ARRAY_seq_depth			= ();
-	my $temp_path       	= $HASH_info_task{"temp_path"};
-	my $verbose				= $HASH_info_task{"verbose"};
+	my $temp_path       	= $HASH_info_this{"temp_path"};
+	my $verbose				= $HASH_info_this{"verbose"};
 	
 	print "\n parameter setting: rept       = ".$rept;
 	print "\n parameter setting: min_length = ".$length_threshold;
 	print "\n parameter setting: minseed    = ".$min_seed;
 	print "\n parameter setting: pctgap     = ".$percent;
 	print "\n parameter setting: mingff     = ".$min_gff;
+	print "\n parameter setting: bed     	= ".$bed;
 	print "\n temp path: $temp_path";
 	print "\n";
 	
@@ -252,19 +267,29 @@ sub run_kmasker_MK{
 	print "\n .. start to generate GFF" ;#if(!defined $silent);
 	
 	#PRODUCE GFF
-	my $feature = "KRC";
-	my $subfeature = "KRR";
+	my $feature 	= "KRC";
+	my $subfeature 	= "KRR";
+	my $gffname_D1 	= "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff";
+	my $gffname_D2 	= "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff";	
 	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $subfeature);
 	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $subfeature);
-	system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff");
-    system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged".".gff" . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff");
+	system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged".".gff " . $gffname_D1);
+    system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged".".gff " . $gffname_D2);
+    
+    if($bed eq "1"){
+    	#Feedback
+		print "\n .. start to generate BED" ;#if(!defined $silent);
+   		#BED format output is activated
+    	&write_gff2bed($gffname_D1); 
+    	&write_gff2bed($gffname_D2); 		
+    }
     
     #Statistics
-    system("$path/stats.R " . "-i " . $occ1 . " -g"  . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff" . " -c sequence" .  " >>log.txt 2>&1");
-    system("$path/stats.R " . "-i " . $occ2 . " -g " . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff" . " -c sequence" .  " >>log.txt 2>&1");
+    system("$path/stats.R " . "-i " . $occ1 . " -g"  .$gffname_D1. " -c sequence" .  " >>log.txt 2>&1");
+    system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c sequence" .  " >>log.txt 2>&1");
 
-    system("$path/stats.R " . "-i " . $occ1 . " -g"  . " KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff" . " -c " . $feature . " >>log.txt 2>&1");
-    system("$path/stats.R " . "-i " . $occ2 . " -g " . " KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff" . " -c " . $feature . " >>log.txt 2>&1");
+    system("$path/stats.R " . "-i " . $occ1 . " -g"  .$gffname_D1. " -c " . $feature . " >>log.txt 2>&1");
+    system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c " . $feature . " >>log.txt 2>&1");
 
     
     if( (!(-e "Report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab")) || (!(-e "Report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab"))) {
@@ -291,8 +316,6 @@ sub run_kmasker_MK{
     else{
        	unlink("log.txt");
     }
-
-
 }
 
 
@@ -307,8 +330,36 @@ sub get_kindex_info{
 	
 }
 
+## subroutine
+#
 sub show_version_PM_run{
 	print "\n\nVERSION of module run: ".$version_PM_run."\n\n";
+}
+
+## subroutine
+#
+sub write_gff2bed{
+	my $gffname = $_[0];
+	
+	my $bedname = $gffname;
+    $bedname =~ s/\.gff$/.bed/;
+    my $GFFFILE = new IO::File($gffname, "r") or die "\n unable to read gff ".$gffname." $!";	
+    my $BEDFILE = new IO::File($bedname, "w") or die "\n unable to write bed ".$bedname." $!";
+        	
+    #WRITE
+    while(<$GFFFILE>){
+    	next if($_ =~ /^$/);
+		next if($_ =~ /^#/);
+		my @ARRAY_gff = split("\t", $_);
+		my $substring = "KRC";
+		if($ARRAY_gff[2] =~ m/$substring/){
+			print $BEDFILE $ARRAY_gff[0]."\t".$ARRAY_gff[3]."\t".$ARRAY_gff[4]."\n";
+		}
+	}
+		   	
+	#CLOSE
+	$GFFFILE->close();
+	$BEDFILE->close();	
 }
 
 	

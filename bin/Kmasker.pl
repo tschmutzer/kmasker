@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
 
-my $version 	= "0.0.31 rc180723";
+my $version 	= "0.0.31 rc180726";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -220,10 +220,11 @@ $HASH_info{"verbose"}				= $verbose if(defined $verbose);
 $HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
 $HASH_info{"MK_min_seed"}			= $MK_min_seed;
 $HASH_info{"MK_min_gff"}			= $MK_min_gff;
+$HASH_info{"bed"}					= 0;
 $HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
 $HASH_info{"expert setting blast"}	= $expert_setting_blast;
-$HASH_info{"size"}				= $size;
+$HASH_info{"size"}					= $size;
 
 
 ########
@@ -856,6 +857,13 @@ sub use_expert_settings(){
 						$hash_info_entry					.= " " if($hash_info_entry ne "");
 						$hash_info_entry 					.= "--min_length ".$length_threshold.";";
 					}
+					
+					if($PAR eq "bed"){
+						print "\n\n .. changing default parameter for BED from ".$HASH_info{"bed"}." to ". $VALUE." !\n";
+						$HASH_info{"bed"}					= $VALUE;
+						$hash_info_entry					.= " " if($hash_info_entry ne "");
+						$hash_info_entry 					.= "--bed ".$VALUE.";";
+					}
 										
 					#INSERT
 					$HASH_info{"user setting kmasker"} 		= $hash_info_entry;
@@ -908,7 +916,7 @@ sub use_expert_settings(){
 		}
 	}
 	
-	print "\n parameter settings for ".$type." : ".$hash_info_entry."\n" if($hash_info_entry ne "");
+	print "\n .. modified parameter settings for ".$type." : ".$hash_info_entry."\n" if($hash_info_entry ne "");
 	
 }
 
