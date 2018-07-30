@@ -31,7 +31,7 @@ input<-args[1]
 dt<-fread(input,h=T)
 A<-colnames(dt)[2]
 B<-colnames(dt)[3]
-colnames(dt)<-c("k-mer","data set A"," data set B")
+colnames(dt)<-c("k-mer","A","B")
 
 output<-paste0("Kmasker_plots_hexplot_",A,"_",B,"_",date,".png")
 
@@ -40,5 +40,5 @@ p<-ggplot(dt,aes(A,B))+geom_hex(bins=30)+theme_classic()+labs(title=paste0("k-me
 
 # generate visualisation in PNG format
 png(output, width = 1800, height = 1800, res = 300)
-p
+p+geom_abline(intercept=0,col="red")
 dev.off()
