@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
 
-my $version 	= "0.0.31 rc180726";
+my $version 	= "0.0.31 rc180801";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -147,6 +147,7 @@ my $result = GetOptions (	#MAIN
 							"dynamic"			=> \$dynamic,
 							"window"			=> \$sws,		
 							"log"				=> \$log,					
+							
 							#GLOBAL
 							"show_repository"			=> \$show_kindex_repository,
 							"show_details=s"			=> \$show_details_for_kindex,
@@ -696,8 +697,7 @@ sub check_install(){
 	}
 	
 	#REQUIREMENTs
-	my %HASH_requirments	= ("PATH_kindex_external" => $ENV{"HOME"}."/KINDEX/",
-								"jellyfish" => "",
+	my %HASH_requirments	= (	"jellyfish" => "",
 								"fastq-stats" => "",
 								"gffread" => "");
 			
@@ -724,14 +724,6 @@ sub check_install(){
 			$line =~ s/\n//;
 			my @ARRAY_tmp = split("=", $line);
 			
-			#PATH
-			if($line =~ /^PATH_kindex_external/){
-				if(defined $ARRAY_tmp[1]){
-					$HASH_requirments{"PATH_kindex_external"} = $ARRAY_tmp[1];
-					$HASH_requirments{"PATH_kindex_external"}	.= "/" if($HASH_requirments{"PATH_kindex_external"} !~ /\/$/ );
-				}
-			}
-			
 			$HASH_provided{"jellyfish"} 	= $line if($line =~ /^jellyfish=/);
 			$HASH_provided{"fastq-stats"} 	= $line if($line =~ /^fastq-stats=/);
 			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);			
@@ -749,36 +741,20 @@ sub check_install(){
 		$HASH_requirments{"gffread"} = &check_routine_for_requirement("gffread", $HASH_provided{"gffread"}, $HASH_requirments{"gffread"});
 				
 		#WRITE
-		print $gCFG "#path requirements\n";
-		print $gCFG "PATH_kindex_external=".$HASH_requirments{"PATH_kindex_external"}."\n\n";
 		print $gCFG "#external tool requirements\n";
 		foreach my $required (keys %HASH_requirments){
 			if($required !~ /^PATH_kindex/){
 				system("which $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
 				print $gCFG $required."=".$HASH_requirments{$required}."\n";
-				print "\n write ".$required." --> ".$HASH_requirments{$required};
+				print "\n info ".$required." --> ".$HASH_requirments{$required};
 			}			
 		}
 		
-		if($HASH_requirments{"PATH_kindex_external"} eq $ENV{"HOME"}."/KINDEX/"){					
-			print "\n PATH_kindex_external=".$ENV{"HOME"}."/KINDEX/\n\n";
-			print "\n The external path variable is not defined and was automatically set to your home directory."; 
-			print "\n Its recommended to use another directoty because large data volumes will be produced and stored in that directory.";
-			print "\n Please edit the external path variable for storage of constructed KINDEX by using the following command";
-			print "\n\n  Kmasker --set_external_path /external_path/\n\n"; 
-		}
-		
-		if($HASH_requirments{"PATH_kindex_private"} eq $ENV{"HOME"}."/KINDEX/"){					
-			print "\n PATH_kindex_private=".$ENV{"HOME"}."/KINDEX/\n\n";
-			print "\n The private path variable is not defined and was automatically set to your home directory."; 
-			print "\n Its recommended to use another directoty because large data volumes will be produced and stored in that directory.";
-			print "\n Please edit the private path variable for storage of constructed KINDEX by using the following command";
-			print "\n\n  Kmasker --set_private_path /private_path/\n\n"; 
-		}
-		
+		print "\n\n";
 		$gCFG_old->close();
 		$gCFG->close();
 		system("mv ".$gconf.".tmp ".$gconf)	
+
 	}
 }
 
@@ -1094,7 +1070,17 @@ sub read_user_config(){
 						system("mkdir "."\"".$PATH_kindex_external."\"");
 					}	
 				}	
-			}					
+			}
+			
+			#EXTERNAL
+			if(($ARRAY_tmp[0] =~ "export")&&(defined $ARRAY_tmp[1])){
+				system($ARRAY_tmp[0]."=".$ARRAY_tmp[1]);
+				if(defined $verbose){
+					print "\n user settings applied:\n";
+					print " ".$ARRAY_tmp[0]."=".$ARRAY_tmp[1]."\n";
+				}
+			}		
+								
 		}
 	}else{
 		#SETUP user
@@ -1214,6 +1200,13 @@ sub intro_call(){
 	if(defined $check_install){
 		&check_install();
 		exit();
+	}
+
+	#CHECK export
+	my $export			= $path."/.kmasker_settings.sh";
+	if(-e $export){
+		system(".".$export);
+		print "\n EXPORT paths\n\n";
 	}
 	
 	#SET private path
