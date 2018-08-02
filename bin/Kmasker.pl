@@ -69,6 +69,7 @@ my $blastableDB;
 my $dbfasta;
 my $dynamic;
 my $force;
+my $xtract;
 #visualisation
 my $hist;
 my $histm;
@@ -128,8 +129,8 @@ my $result = GetOptions (	#MAIN
 							"grna=s"			=> \$grna,
 							"compare"			=> \$compare,
 							"kindex=s{1,}"		=> \@multi_kindex,
-							"rept=s"			=> \$repeat_threshod_usr,
-							"min_length=s"		=> \$length_threshold_usr,							
+							"rept=i"			=> \$repeat_threshod_usr,
+							"minl=i"			=> \$length_threshold_usr,							
 											
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
@@ -146,7 +147,8 @@ my $result = GetOptions (	#MAIN
 							"stats"				=> \$stats,	
 							"dynamic"			=> \$dynamic,
 							"window"			=> \$sws,		
-							"log"				=> \$log,					
+							"log"				=> \$log,	
+							"xtract"			=> \$xtract,				
 							
 							#GLOBAL
 							"show_repository"			=> \$show_kindex_repository,
@@ -361,7 +363,7 @@ if(defined $run){
 	$HASH_info{"user_name"}				= $user_name;
 	$HASH_info{"kindex name"}			= $kindex;
 	$HASH_info{"rept"}					= $repeat_threshold;
-	$HASH_info{"min_length"}			= $length_threshold; 
+	$HASH_info{"minl"}					= $length_threshold; 
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
 	
@@ -499,6 +501,23 @@ if(defined $explore){
 			exit;
 		}		
 	}	
+	
+	
+	#EXTRACT
+	if(defined $xtract){
+		# EXPLORE EXTRACT non-masked regions
+		
+		#STATS requirements
+		my $check_settings = 1;
+		$check_settings = 0 if(!defined $fasta);
+				
+		if($check_settings == 1){
+    		kmasker::functions::Xtract($fasta, $length_threshold);
+		}else{
+			print "\n WARNING: Required parameter --fasta is missing. Kmasker was stopped.\n\n";
+			exit;
+		}		
+	}
 	
 	#VIZUALISATION
 	my $visualisation;
@@ -850,12 +869,12 @@ sub use_expert_settings(){
 						$hash_info_entry 					.= "--rept ".$repeat_threshold.";";
 					}
 					
-					if($PAR eq "min_length"){
-						print "\n\n .. changing default parameter for MIN_LENGTH from ".$length_threshold." to ". $VALUE." !\n";
+					if($PAR eq "minl"){
+						print "\n\n .. changing default parameter for MINL from ".$length_threshold." to ". $VALUE." !\n";
 						$length_threshold 					= $VALUE;
-						$HASH_info{"min_length"}			= $length_threshold;
+						$HASH_info{"minl"}					= $length_threshold;
 						$hash_info_entry					.= " " if($hash_info_entry ne "");
-						$hash_info_entry 					.= "--min_length ".$length_threshold.";";
+						$hash_info_entry 					.= "--minl ".$length_threshold.";";
 					}
 					
 					if($PAR eq "bed"){
@@ -1096,7 +1115,7 @@ sub read_user_config(){
 				}	
 			}
 			
-			#EXTERNAL
+			#EXTERNAL			FIXME ... does not fix the problem
 			if(($ARRAY_tmp[0] =~ "export")&&(defined $ARRAY_tmp[1])){
 				system($ARRAY_tmp[0]."=".$ARRAY_tmp[1]);
 				if(defined $verbose){
@@ -1330,7 +1349,7 @@ sub help(){
 		print "\n --kindex\t use single k-mer index";
 		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
-		print "\n --min_length\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
+		print "\n --minl\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
 	
 		print "\n\n";
 		exit();

@@ -39,7 +39,7 @@ sub run_kmasker_SK{
 		
 		# GET info from repository
 		my $rept 				= $HASH_info_this{"rept"};
-		my $length_threshold 	= $HASH_info_this{"min_length"};
+		my $length_threshold 	= $HASH_info_this{"minl"};
 		my $seq_depth			= sprintf("%.0f" , $HASH_info_this{"sequencing depth"});
 		my $k					= $HASH_info_this{"k-mer"};
 		my $threads				= $HASH_info_this{"threads"};
@@ -54,7 +54,7 @@ sub run_kmasker_SK{
 		my $absolut_path		= $ARRAY_repository[4];
 
 		print "\n parameter setting: rept       = ".$rept;
-		print "\n parameter setting: min_length = ".$length_threshold;
+		print "\n parameter setting: minl       = ".$length_threshold;
 		print "\n parameter setting: minseed    = ".$min_seed;
 		print "\n parameter setting: pctgap     = ".$percent;
 		print "\n parameter setting: mingff     = ".$min_gff;
@@ -166,7 +166,7 @@ sub run_kmasker_MK{
 		
 	# GET info
 	my $rept 				= $HASH_info_this{"rept"};
-	my $length_threshold 	= $HASH_info_this{"min_length"};
+	my $length_threshold 	= $HASH_info_this{"minl"};
 	my $percent 			= $HASH_info_this{"MK_percent_gapsize"}; 	# default : 10 (%)
 	my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
 	my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
@@ -177,7 +177,7 @@ sub run_kmasker_MK{
 	my $verbose				= $HASH_info_this{"verbose"};
 	
 	print "\n parameter setting: rept       = ".$rept;
-	print "\n parameter setting: min_length = ".$length_threshold;
+	print "\n parameter setting: minl       = ".$length_threshold;
 	print "\n parameter setting: minseed    = ".$min_seed;
 	print "\n parameter setting: pctgap     = ".$percent;
 	print "\n parameter setting: mingff     = ".$min_gff;
