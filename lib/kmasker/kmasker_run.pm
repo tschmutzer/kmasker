@@ -16,11 +16,11 @@ our @EXPORT = qw(
 	run_kmasker_MK
 	show_version_PM_run
 );
-our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
+our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.30 rc180726";
+my $version_PM_run 	= "0.0.30 rc180802";
 
 ## subroutine
 #
@@ -316,6 +316,31 @@ sub run_kmasker_MK{
     else{
        	unlink("log.txt");
     }
+}
+
+## subroutine
+#  run gRNA will check characteristics of custome FASTA
+sub run_gRNA(){
+	my $kindex_this = $_[0];
+	my $gRNA		= $_[1];
+	my $href_repo	= $_[2];
+		
+	#GET INFO
+	my $path 					= dirname abs_path $0;	
+	my %HASH_repository_kindex 	= %{$href_repo};
+	my @ARRAY_repository 		= split("\t", $HASH_repository_kindex{$kindex_this});
+	my $absolut_path			= $ARRAY_repository[4];
+		
+	print "\n\n ... start Kmasker gRNA module\n";	
+	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
+	if(-e $absolut_path.$full_kindex_name){
+		system("ln -s \"".$absolut_path.$full_kindex_name."\"");
+	}else{
+		print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
+		exit();
+	}	
+	system("$path/crispr.py ".$kindex_this." ".$gRNA);	
+	print "\n\n ... Kmasker gRNA module finished \n";
 }
 
 

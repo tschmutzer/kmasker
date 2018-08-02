@@ -11,7 +11,7 @@ use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
-use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
+use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
 
 my $version 	= "0.0.32 rc180802";
@@ -364,9 +364,19 @@ if(defined $run){
 	$HASH_info{"min_length"}			= $length_threshold; 
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
+	
+	
+	#CRISPR design modul
+	if(defined $grna){
+		if(exists $HASH_repository_kindex{$kindex}){
+			&run_gRNA($kindex, $grna, \%HASH_repository_kindex);
+		}
+		exit();	
+	}
 
 	
-	if((scalar(@multi_kindex == 1)){
+	# K-mer analysis
+	if(scalar(@multi_kindex) == 1){
 	#single kindex		
 	
 		#READ repository.info
@@ -415,8 +425,9 @@ if(defined $run){
 			$ARRAY_HASH_info_aref[$ki] 		= $href_info_Kx;
 				
 			if(!defined $compare){
-				#START RUN SK		
-				&run_kmasker_SK($fasta, $kindex_K, \%ARRAY_HASH_info_aref, \%HASH_repository_kindex);
+				#START RUN SK
+				%HASH_info_Kx				= %{$href_info_Kx};		
+				&run_kmasker_SK($fasta, $kindex_K, \%HASH_info_Kx, \%HASH_repository_kindex);
 			}					
 		}
 	
@@ -596,16 +607,16 @@ sub show_repository(){
 ## subroutine
 #
 sub show_details_for_kindex(){
-	my $kindex = $_[0];
-	if(exists $HASH_repository_kindex{$kindex}){
-		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
-		my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository_".$kindex.".info") or die " ... can not read/find repository_".$kindex.".info file in ".$ARRAY_repository[4]." details : $!\n\n";
-		print "\n  KINDEX details for ".$kindex.": \n";
+	my $kindex_this = $_[0];
+	if(exists $HASH_repository_kindex{$kindex_this}){
+		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex_this});
+		my $BUILD_file 		= new IO::File($ARRAY_repository[4]."repository_".$kindex_this.".info") or die " ... can not read/find repository_".$kindex_this.".info file in ".$ARRAY_repository[4]." details : $!\n\n";
+		print "\n  KINDEX details for ".$kindex_this.": \n";
 		while(<$BUILD_file>){
 			print "\t".$_;
 		}
 	}else{
-		print "\n\n WARNING: Requested kindex (".$kindex."). does not exist. Please check and use different index name.";
+		print "\n\n WARNING: Requested kindex (".$kindex_this."). does not exist. Please check and use different index name.";
 	}	
 	print "\n\n";
 }
