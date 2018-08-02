@@ -11,7 +11,7 @@ our @EXPORT_OK = qw(read_write_repository Xtract add_annotation);
 
 
 ## VERSION
-my $version_PM_functions 	= "0.0.1 rc180723";
+my $version_PM_functions 	= "0.0.1 rc180802";
 
 sub add_repository {
    # function adds local repository to global shared repository 
@@ -59,12 +59,12 @@ sub add_annotation {
 sub Xtract{
 	
 	my $fasta 		= $_[0];
-	my $sizelimit 	= 20;	#FIXME HASH_info	
+	my $sizelimit 	= $_[1];
 	
 	# Initiating Handler	
 	open( my $inFASTA, "<", "$fasta");
 	(my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
-	open( my $newFAST, ">", $path . "/Xsplit_" . $name . $suffix);
+	open( my $newFAST, ">", $path . "/KMASKER_extracted_regions_" . $name . $suffix);
 	my %seqdata; 	
 	while(read_sequence($inFASTA, \%seqdata)) {
 		

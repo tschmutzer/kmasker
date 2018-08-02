@@ -102,8 +102,8 @@ sub run_kmasker_SK{
 		my $subfeature = "KRR";
 		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $subfeature);
 		
-		#extract repeat regions
-		kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta);
+		#extract non-repetitive regions
+		kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta, $length_threshold);
        
        	my $gffname = "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff";
         system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff " . $gffname);
