@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
 
-my $version 	= "0.0.31 rc180801";
+my $version 	= "0.0.32 rc180802";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -42,7 +42,7 @@ my $PATH_kindex_external= "";
 #RUN
 my $fasta;
 my $grna;
-my $kindex_usr;
+my $compare;
 my $k_usr;
 my $k 					= 21;
 my $tool_jellyfish;
@@ -126,8 +126,8 @@ my $result = GetOptions (	#MAIN
 							#RUN
 							"fasta=s"			=> \$fasta,	
 							"grna=s"			=> \$grna,
-							"kindex=s"			=> \$kindex_usr,
-							"multi_kindex=s{1,}"=> \@multi_kindex,
+							"compare"			=> \$compare,
+							"kindex=s{1,}"		=> \@multi_kindex,
 							"rept=s"			=> \$repeat_threshod_usr,
 							"min_length=s"		=> \$length_threshold_usr,							
 											
@@ -235,11 +235,11 @@ my %HASH_db 						= ();
 
 #USER specification
 #kindex
-if(defined $kindex_usr){
-	if(exists $HASH_repository_kindex{$kindex_usr}){
-		$kindex = $kindex_usr;
+if(scalar(@multi_kindex) == 1){
+	if(exists $HASH_repository_kindex{$multi_kindex[0]}){
+		$kindex = $multi_kindex[0];
 	}else{
-		print "\n ERROR: defined kindex ('".$kindex_usr."') does not exist!\n\n";
+		print "\n ERROR: defined kindex ('".$multi_kindex[0]."') does not exist!\n\n";
 		exit();
 	}	
 }
@@ -366,7 +366,7 @@ if(defined $run){
 	$HASH_info{"version BUILD"} 		= "";
 
 	
-	if(defined $kindex){
+	if((scalar(@multi_kindex == 1)){
 	#single kindex		
 	
 		#READ repository.info
@@ -385,32 +385,45 @@ if(defined $run){
 		#START RUN			
 		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
 
-	}elsif(scalar(@multi_kindex > 1)){
+	}else{
 	#multiple kindex
 	
 		my @ARRAY_HASH_info_aref = ();
+		
+		#QUICK check existence if kindex
+		for(my $ki=0;$ki<scalar(@multi_kindex);$ki++){
+			#READ repository.info
+			my $kindex_K = $multi_kindex[$ki];
+			if(!exists $HASH_repository_kindex{$kindex_K}){
+				print "\n .. Kmasker was stopped. Info for kindex (".$kindex_K.") does not exists!\n";
+				exit(); 
+			}
+		}		
 		
 		for(my $ki=0;$ki<scalar(@multi_kindex);$ki++){
 			#READ repository.info
 			my $kindex_K = $multi_kindex[$ki];
 			my $FILE_repository_info = "";
-			if(exists $HASH_repository_kindex{$kindex_K}){
-				my %HASH_info_Kx 				= %HASH_info;
-				$HASH_info_Kx{"kindex name"}	= $kindex_K;
-				my @ARRAY_repository			= split("\t", $HASH_repository_kindex{$kindex_K});
-				$HASH_info_Kx{"k-mer"}			= $ARRAY_repository[1];
-				$FILE_repository_info 			= $ARRAY_repository[4]."repository_".$kindex_K.".info";				
+			my %HASH_info_Kx 				= %HASH_info;
+			$HASH_info_Kx{"kindex name"}	= $kindex_K;
+			my @ARRAY_repository			= split("\t", $HASH_repository_kindex{$kindex_K});
+			$HASH_info_Kx{"k-mer"}			= $ARRAY_repository[1];
+			$FILE_repository_info 			= $ARRAY_repository[4]."repository_".$kindex_K.".info";				
 				
-				#get all infos for repository
-				my $href_info_Kx 	= &read_config($FILE_repository_info, \%HASH_info_Kx, \%HASH_repository_kindex, "run");
-				$ARRAY_HASH_info_aref[$ki] 		= $href_info_Kx;
-			}else{
-				print "\n .. Kmasker was stopped. Info for kindex (".$kindex_K.") does not exists!\n";
-				exit ();
-			}			
+			#get all infos for repository
+			my $href_info_Kx 	= &read_config($FILE_repository_info, \%HASH_info_Kx, \%HASH_repository_kindex, "run");
+			$ARRAY_HASH_info_aref[$ki] 		= $href_info_Kx;
+				
+			if(!defined $compare){
+				#START RUN SK		
+				&run_kmasker_SK($fasta, $kindex_K, \%ARRAY_HASH_info_aref, \%HASH_repository_kindex);
+			}					
 		}
 	
-		&run_kmasker_MK($fasta, \@multi_kindex, \@ARRAY_HASH_info_aref, \%HASH_repository_kindex);
+		if(defined $compare){
+			#COMPARE
+			&run_kmasker_MK($fasta, \@multi_kindex, \@ARRAY_HASH_info_aref, \%HASH_repository_kindex);		
+		}
 	}
 	
 	#QUIT
