@@ -1,7 +1,7 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.25 rc180723)
+ (version:  0.0.26 rc180802)
 
 ## Description:
 
@@ -53,7 +53,7 @@ Kmasker --build --seq sequence.fastq --gs 135 --in At1
 
 Kmasker --run --fasta query.fasta --kindex At1
 
-Kmasker --explore --hexplot --multi_kindex At1 Hv1
+Kmasker --explore --hexplot --kindex At1 Hv1
 
 
 
@@ -68,15 +68,19 @@ Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 ## [RUN]:
 
-The run module starts the core process of Kmasker. There are three general options. 1.) Analyse input with SINGLE k-mer index structures, 2) perform a comparative analysis using MULTIPLE (2) k-mer index structures and 3) analysis of short sequence probes for its genome-wide specificity.
+The run module starts the core process of Kmasker. There are three general options. 1.) Analyse input with SINGLE or MULTIPLE k-mer index structures, 2) perform a comparative analysis searching for differences in applied k-mer index structures and 3) analysis of short sequence probes for its genome-wide specificity.
 
-#### SINGLE
+#### SINGLE or MULTIPLE
 
 Kmasker --run --fasta query.fasta --kindex At1
 
-#### MULTIPLE
+Kmasker --run --fasta query.fasta --kindex At1 Hv1
 
-Kmasker --run --fasta query.fasta --multi_kindex At1 Hv1
+#### COMPARATIVE
+
+Kmasker --run --fasta query.fasta --kindex At1 Hv1 --compare
+
+Perform a comparative study using multiple kindex. Kmasker will search for differences between both applied kindex.
 
 #### gRNA
 
