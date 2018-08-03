@@ -78,7 +78,7 @@ Kmasker --run --fasta query.fasta --kindex At1 Hv1
 
 #### COMPARATIVE
 
-Kmasker --run --fasta query.fasta --kindex At1 Hv1 --compare
+Kmasker --run --compare --fasta query.fasta --kindex At1 Hv1
 
 Perform a comparative study using multiple kindex. Kmasker will search for differences between both applied kindex.
 
