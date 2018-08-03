@@ -183,7 +183,7 @@ sub plot_histogram_raw{
 
 ## subroutine
 #
-sub plot_violin_split{
+sub plot_violin{
     my $occ		=	$_[0];
     my $list	=	$_[1];    
     
@@ -192,8 +192,18 @@ sub plot_violin_split{
 ## subroutine
 #
 sub plot_hexagon{
-    my $occ		=	$_[0];
-    my $list	=	$_[1];    
+    my $aref_input	=	$_[0];
+    my $list		=	$_[1];
+    
+    my @ARRAY_input = @{$aref_input};
+    if((scalar @ARRAY_input) == 1){
+    	#COMPARE FILE
+    	
+    }else{
+    	#OCC1 and OCC2 FILES
+    	
+    	
+    }
     
 }
 
@@ -207,8 +217,8 @@ sub plot_boxplot{
 
 
 ## subroutine
-#
-sub barplot_of_means_per_contig{
+#  Routine is plooting the means of k-mer frequency per size-binned sequence
+sub plot_barplot{
     my $file	=	$_[0];
     my $list	=	$_[1];    
     
@@ -218,8 +228,32 @@ sub barplot_of_means_per_contig{
 ## subroutine
 #
 sub report_statistics{
-#implement
+	my $occ	=	$_[0];
+	my $gff	=	$_[1];
+	my $out = 	$_[2];
 	
+	my $outtag = "";
+	if(defined $out){
+		$outtag = "_".$out;
+	}
+
+	#Statistics
+    print "\n .. call statistic calculation\n"; #if(!defined $silent);
+	my $path 		= dirname abs_path $0;
+ 	
+ 	system("$path/stats.R " . "-i " .$occ . " -g " . $gff . " -c sequence" . " -o report_statistics_sequences". $outtag .".txt " . " >>log.txt 2>&1");
+	print "\n finished calculating statistics for sequences \n";
+	system("$path/stats.R "  . "-i " . $occ . " -g " . $gff . " -c KRC" .    " -o report_statistics_KRC".$outtag.".txt " . " >>log.txt 2>&1");
+    print "\n finished calculating statistics for KRCs \n";
+         
+    if((!(-e "report_statistics_sequences".$outtag.".txt")) || (!(-e  "report_statistics_KRC".$outtag.".txt" ))) {
+    	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+    }
+    else {
+		system("$path/stats_overview.R " . " -s report_statistics_sequences".$outtag.".txt " . " -k report_statistics_KRC".$outtag.".txt >>log.txt 2>&1");
+    }
+     
+   	unlink("log.txt");
 }
 
 

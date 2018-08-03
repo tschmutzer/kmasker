@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.30 rc180802";
+my $version_PM_run 	= "0.0.30 rc180803";
 
 ## subroutine
 #
@@ -120,12 +120,11 @@ sub run_kmasker_SK{
         print "\n .. start to generate statistics" ;#if(!defined $silent);
         system("$path/stats.R " . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c sequence" . " >>log.txt 2>&1");
         system("$path/stats.R "  . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c " . $feature . " >>log.txt 2>&1");
-        if((!(-e "Report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "Report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
+        if((!(-e "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
         	print "Some statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
         }
         else {
-	       	system("$path/stats_overview.R " . " -s Report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab " . " -k " . "Report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab" . " >>log.txt 2>&1");
-        	system("mv " . "overview_stats.txt " . "Report_overview.txt")
+	       	system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab " . " -k " . "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab" . " >>log.txt 2>&1");
         }
         if($verbose) {
         	print "Output of external commands was written to log.txt\n";
@@ -292,26 +291,26 @@ sub run_kmasker_MK{
     system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c " . $feature . " >>log.txt 2>&1");
 
     
-    if( (!(-e "Report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab")) || (!(-e "Report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab"))) {
+    if( (!(-e "report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab")) || (!(-e "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab"))) {
         	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[0] ."). The main reason for this is that there are no significant features in the gff file.\n";
         }
     else {
- 		system("$path/stats_overview.R " . " -s Report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
- 		system("mv overview_stats.txt " . "Report_overview_" . $ARRAY_kindex[0] . ".txt");
-     }
+ 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
+ 		system("mv report_overview_statistics.txt " . "report_overview_statistics" . $ARRAY_kindex[0] . ".txt");
+ 	}
    # system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
-    if(!(-e "Report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab") || !(-e "Report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab")) {
+    if(!(-e "report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab") || !(-e "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab")) {
         	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[1] ."). The main reason for this is that there are no significant features in the gff file.\n";
         }
     else {
- 		system("$path/stats_overview.R " . " -s Report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "Report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab " . " >>log.txt 2>&1");
- 		system("mv overview_stats.txt " . "Report_overview_" . $ARRAY_kindex[0] . ".txt");
+ 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab " . " >>log.txt 2>&1");
+ 		system("mv report_overview_statistics.txt " . "report_overview_statistics" . $ARRAY_kindex[0] . ".txt");
      }
 
     #CALL comparative methods
     system("$path/OCC_compare.pl --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
     if($verbose) {
-      	print "Output of external commands was written to log.txt\n";
+      	print "\nOutput of external commands was written to log.txt\n";
     }
     else{
        	unlink("log.txt");

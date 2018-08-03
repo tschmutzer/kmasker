@@ -12,7 +12,7 @@ use lib dirname(dirname abs_path $0) . '/lib';
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
-use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
+use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics);
 
 my $version 	= "0.0.32 rc180803";
 my $path 		= dirname abs_path $0;		
@@ -63,6 +63,7 @@ my $MK_min_gff			= 25;   #Default	MK_min_gff (N) is the minimal length (bp) of a
 my $gff;
 my $list;
 my $occ;
+my @OCClist;
 my $stats;
 my $custom_annotate;
 my $blastableDB;
@@ -75,10 +76,12 @@ my $hist;
 my $histm;
 my $violin;
 my $hexplot;
+my $barplot;
 my $sws;
 my $log;
 #GENERAL parameter
 my $help;
+my $out;
 my $keep_temporary_files;
 my $show_kindex_repository;
 my $show_details_for_kindex;
@@ -138,12 +141,13 @@ my $result = GetOptions (	#MAIN
 							"feature=s"			=> \$feature,
 							"db=s"				=> \$blastableDB,
 							"dbfasta=s"			=> \$dbfasta,		
+							"barplot"			=> \$barplot,
 							"hexplot"			=> \$hexplot,
 							"hist"				=> \$hist,
 							"histm"				=> \$histm,
 							"violin"			=> \$violin,
 							"list=s"			=> \$list,
-							"occ=s"				=> \$occ,
+							"occ=s{1,}"			=> \@OCClist,
 							"stats"				=> \$stats,	
 							"dynamic"			=> \$dynamic,
 							"window"			=> \$sws,		
@@ -159,6 +163,7 @@ my $result = GetOptions (	#MAIN
 							"set_external_path=s"		=> \$set_external_path,							
 							"check_install"				=> \$check_install,	
 							"threads=i"					=> \$threads_usr,
+							"out=s"						=> \$out,
 							
 							#configuration
 							"expert_setting_jelly=s"	=> \$expert_setting_jelly,
@@ -493,11 +498,19 @@ if(defined $explore){
 		#STATS requirements
 		my $check_settings = 1;
 		$check_settings = 0 if(!defined $occ);
+		
+		#CALL comparative methods
+		if(scalar(@OCClist)>1){
+			system("$path/OCC_compare.pl --fc 5 --occ1 ".$OCClist[0]." --occ2 ".$OCClist[1]);
+			exit();
+		}
 				
+		#CALL REPORT method
+		$check_settings = 0 if(!defined $gff);		
 		if($check_settings == 1){
-    		&report_statistics($occ);
+    		&report_statistics($occ, $gff, $out);
 		}else{
-			print "\n WARNING: Required parameter --occ is missing. Kmasker was stopped.\n\n";
+			print "\n WARNING: Missing required parameter '--occ' or '--gff'. Kmasker was stopped.\n\n";
 			exit;
 		}		
 	}	
@@ -525,6 +538,7 @@ if(defined $explore){
 	$visualisation = 1 if(defined $histm);
 	$visualisation = 1 if(defined $violin);
 	$visualisation = 1 if(defined $hexplot);
+	$visualisation = 1 if(defined $barplot);
 		
 	#HISTOGRAM
 	if(defined $visualisation){
@@ -534,7 +548,7 @@ if(defined $explore){
 		# explore visualisations require an OCC file
 		
 				my $missing_parameter = "";
-				if(! -x $occ) {
+				if(! -e $occ) {
 					print "\n ERROR: $occ was not found. Kmasker was stopped.\n\n";
 					exit;
 				}
@@ -1308,6 +1322,11 @@ sub intro_call(){
 	if(defined $remove_kindex){
 		&remove_kindex($remove_kindex,\%HASH_repository_kindex);
 		exit();
+	}
+	
+	#OCClist
+	if(scalar(@OCClist) == 1){
+		$occ = $OCClist[0];
 	}	
 
 }
@@ -1359,8 +1378,8 @@ sub help(){
 		#HELP section explore
 		print "\n Command (subset):";
 		print "\n\n\t Kmasker --explore --annotate --fasta query.fasta --gff kmasker_result.gff --feature KRC --dbfasta repeats.fasta";
-		print "\n\n\t Kmasker --explore --hist --occ file.occ --list list_of_sequenceIDs.txt";
-		print "\n\n\t Kmasker --explore --hexplot --multi_kindex At1 Hv1";
+		print "\n\n\t Kmasker --explore --hist --occ file.occ --list sequence.ids";
+		print "\n\n\t Kmasker --explore --hexplot --kindex At1 Hv1";
 		print "\n\n\t Kmasker --explore --stats --occ file.occ";
 		
 		print "\n\n Options:";
@@ -1373,12 +1392,12 @@ sub help(){
 		print "\n --xtract\t\t extract non-masked regions from Xmasked FASTA (requires --fasta)";
 		print "\n --hist\t\t\t create histogram using raw values (requires --occ and optional --list)";
 		print "\n --histm\t\t create histogram using calulated means (requires --occ and optional --list)";
-		print "\n --violin\t\t create violin plot (comparison of two kindex)";
-		print "\n --hexplot\t\t create hexagon plot (comparison of two kindex)";
+		print "\n --violin\t\t create violin plot (apply after '--run --compare' mode)";
+		print "\n --hexplot\t\t create hexagon plot (apply after '--run --compare' mode)";
+		print "\n --barplot\t\t create barplot (apply after '--run --compare' mode)";
 		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
 		print "\n --list\t\t\t file containing a list of contig identifier for analysis";	
-
-		print "\n --stats\t\t print report of basic statistics like average k-mer frequency per contig etc. (requires --occ)";	
+		print "\n --stats\t\t print report of basic statistics (requires --occ and --gff)";	
 		
 		print "\n\n";
 		exit();

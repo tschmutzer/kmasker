@@ -7,12 +7,19 @@ spec=matrix(c(
   'input', 'i', 1, "character",
   'help', 'h', 0, "logical",
   'gff', 'g', 1, "character",
-  'class', 'c', 1, "character" 
+  'class', 'c', 1, "character",
+  'out', 'o', 1, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
   cat(getopt(spec, usage=TRUE));
   q(status=1);
+}
+
+feature<-opt$class
+outname=paste("report_statistics_", feature, "_", opt$gff , ".tab", sep="" );
+if ( !is.null(opt$out) ) {
+  outname=opt$out;
 }
 
 my.read.lines=function(fname) {
@@ -56,7 +63,6 @@ getAttributeField <- function (x, field, attrsep = ";") {
 
 ####
 #choose the feature (contig, KRC; KRR)
-feature<-opt$class
 gff<-gffRead(opt$gff)
 gff_feature<-gff[which(gff[,"feature"]==feature),]
 #pharse quality-data
@@ -115,11 +121,13 @@ for (pos in opentags){
       }
     }
     if(first == 0){
-      write.table(occsub, file=paste("Report_statistics_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, append=FALSE)
-      first<-1
+#	write.table(occsub, file=paste("report_statistics_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, append=FALSE)
+	write.table(occsub, file=outname, quote=FALSE, row.names = FALSE, append=FALSE)
+	first<-1
     }
     else{
-      write.table(occsub, file=paste("Report_statistics_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
+#	write.table(occsub, file=paste("report_statistics_", feature, "_", opt$gff , ".tab", sep="" ), quote=FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
+	write.table(occsub, file=outname, quote=FALSE, row.names = FALSE, col.names = FALSE, append=TRUE)
     }
   }
 }
