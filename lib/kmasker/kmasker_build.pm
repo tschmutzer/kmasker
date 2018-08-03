@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.8 rc180727";
+my $version_PM_build 	= "0.0.9 rc180803";
 
 
 sub build_kindex_jelly{	
@@ -89,26 +89,34 @@ sub build_kindex_jelly{
 	#create command shell script for background
 	my @ARRAY_input = split(" ", $seq);
 	my @ARRAY_shell = ();
-	my $sum_stats 	= 0;
-	$sum_stats = 1 if(scalar(@ARRAY_input) > 1);	#STATISTICS need to be merged
 	foreach my $call (@ARRAY_input){
-		push(@ARRAY_shell, $path_fastqstats." ".$call." >".$call.".stats ");
+		push(@ARRAY_shell, $path_fastqstats." ".$call." >".$call.".kmstats ");
 	}
 	
 	#BUILD JELLY index	
 	print "\n ... start construction of kindex with the following parameters ".$setting." \n";
 	my $FILE_jelly = "KINDEX_".$HASH_info{"kindex name"}.".jf";
-	push(@ARRAY_shell, "jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq." ");
-	#CREATE script
+	
+	#CHECK suffix 
+	my ($ext) = $seq =~ /(\.[^.]+)$/;
+	if($ext =~ /gz$/){
+		push(@ARRAY_shell, "zcat ".$seq." | jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly);
+	}else{
+		push(@ARRAY_shell, "jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq);
+	}
+		
+	#CREATE BUILD script
 	system("cp ".$path."/.kmasker_background_process .");
 	my $BASH 	= new IO::File(".kmasker_background_process", '>>') or die "could not write shell script: $!\n";
-		#print $BASH "#!/bin/sh\n";
-		foreach my $call (@ARRAY_shell){
-			print $BASH "{ ".$call." ;} &\n";
-		}
-		print $BASH "wait\n";
-		$BASH->close();
-		system("./.kmasker_background_process");	
+	#print $BASH "#!/bin/sh\n";
+	foreach my $call (@ARRAY_shell){
+		print $BASH "{ ".$call." ;} &\n";
+	}
+	print $BASH "wait\n";
+	$BASH->close();
+	system("./.kmasker_background_process");	
+		
+	system("cp ./.kmasker_background_process build_command.sh") if(defined $HASH_info{"verbose"});
 	print "\n ... finished kindex construction!\n";
 	
 	
@@ -420,13 +428,13 @@ sub read_config(){
 #
 sub read_stats(){
 	#INPUT
-	my $gs = $_[0];
+	my $gs 			= $_[0];
 	#VAR
 	my $calculation = 1;
 	my $total_bases	= 0;
 	
 	opendir(Dir, ".") or die "cannot open directory .";
-	@STATS = grep(/\.stats$/,readdir(Dir));
+	@STATS = grep(/\.kmstats$/,readdir(Dir));
 	foreach my $file (@STATS) {
 		my $INPUT_stats = new IO::File($file, "r") or die "could not read ".$file." $!\n";
 		while(<$INPUT_stats>){
@@ -440,15 +448,16 @@ sub read_stats(){
 		}
 		$INPUT_stats->close();
 	}
+	system("rm *.kmstats");
 	
 	$calculation 	= sprintf("%.1f", $total_bases / ($gs * 1000000));
 	if($calculation < 1){
 		print "\n Notification:";
-		print "\n The calculated sequencing depth of your dataset is below 1-fold!\n";
-		print "\n This is expected if you used an assembled dataset as input for the index construction, \n";
-		print "\n but might be too low if you used WGS data as input. It is possible to detect \n";
-		print "\n abundant sequences but its not recommended to use this dataset for detection \n";
-		print "\n of low-coverage regions. The normalisation factor of the constrcuted index is set to 1x\n\n";
+		print "\n The calculated sequencing depth of your dataset is below 1-fold!";
+		print "\n This is expected if you used an assembled dataset as input for the index construction,";
+		print "\n but might be too low if you used WGS data as input. It is possible to detect";
+		print "\n abundant sequences but its not recommended to use this dataset for detection";
+		print "\n of low-coverage regions. The normalisation factor of the constrcuted index is set to 1x\n";
 		$calculation 	= 1;		
 	}	
 	return $calculation;

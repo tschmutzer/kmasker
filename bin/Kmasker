@@ -1,3 +1,6 @@
 #!/usr/bin/env bash
 LOCATION=$(dirname `which $0`)
+cp $LOCATION/init.sh .
+./init.sh
+rm -f init.sh
 $LOCATION/Kmasker.pl $@

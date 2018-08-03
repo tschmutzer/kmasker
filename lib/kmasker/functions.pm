@@ -11,7 +11,7 @@ our @EXPORT_OK = qw(read_write_repository Xtract add_annotation);
 
 
 ## VERSION
-my $version_PM_functions 	= "0.0.1 rc180802";
+my $version_PM_functions 	= "0.0.2 rc180802";
 
 sub add_repository {
    # function adds local repository to global shared repository 
@@ -60,6 +60,11 @@ sub Xtract{
 	
 	my $fasta 		= $_[0];
 	my $sizelimit 	= $_[1];
+	my $N_ration 	= $_[2];
+	
+	if(!defined $N_ration){
+		$N_ration = 0.05;
+	}
 	
 	# Initiating Handler	
 	open( my $inFASTA, "<", "$fasta");
@@ -80,8 +85,12 @@ sub Xtract{
 			if(length($element) >= $sizelimit){
 				my $newID = $id."_".$split++;
 				my $desc  = length($element);
-                print $newFAST ">".$newID . " " . $desc ."\n";
-                print $newFAST $element . "\n";
+				my $str = $element;
+				my $nr_N = $str =~ tr/N//;
+				if(($nr_N/$desc)<$N_ration){
+                	print $newFAST ">".$newID . " " . $desc ."\n";
+                	print $newFAST $element . "\n";
+				}
 			}
 		}       				
 	}	

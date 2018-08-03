@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation);
 
-my $version 	= "0.0.32 rc180802";
+my $version 	= "0.0.32 rc180803";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -1344,10 +1344,10 @@ sub help(){
 		print "\n\t Kmasker --run --fasta sequence_to_be_analyzed.fasta\n";		
 		
 		print "\n\n Options:";
+		print "\n --kindex\t single or multiple k-mer indices (use space delimited list)";
 		print "\n --fasta\t sequences for k-mer analysis and masking in FASTA format";
 		print "\n --grna\t\t set of gRNA sequences in FASTA format";
-		print "\n --kindex\t use single k-mer index";
-		print "\n --multi_kindex\t use multiple k-mer indices for comparative analysis of FASTA sequence (e.g. bowman and morex)";
+		print "\n --compare\t perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --minl\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
 	
@@ -1370,6 +1370,7 @@ sub help(){
 		print "\n --dbfasta\t\t custom sequences [FASTA] with annotated features in sequence descriptions";
 		print "\n --db\t\t\t pre-calculated blastableDB of nucleotides used for annotation";	
 		
+		print "\n --xtract\t\t extract non-masked regions from Xmasked FASTA (requires --fasta)";
 		print "\n --hist\t\t\t create histogram using raw values (requires --occ and optional --list)";
 		print "\n --histm\t\t create histogram using calulated means (requires --occ and optional --list)";
 		print "\n --violin\t\t create violin plot (comparison of two kindex)";
