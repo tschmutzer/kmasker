@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-if (!require("pacman")) install.packages("pacman")
+if (!require("pacman")){install.packages("pacman"); library("pacman")}
 pacman::p_load(getopt, reshape2, ggplot2, scales)
 #use getopt for input file and help description
 spec=matrix(c(

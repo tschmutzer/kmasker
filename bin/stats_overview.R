@@ -1,5 +1,5 @@
 #!/usr/bin/env Rscript
-if (!require("pacman")) install.packages("pacman")
+if (!require("pacman")){install.packages("pacman"); library("pacman")}
 pacman::p_load(getopt, zoo, scales, stringr)
 #library('getopt')
 #use getopt for input file and help description
