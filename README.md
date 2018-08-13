@@ -33,7 +33,7 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
 
 ### Installation & Requirements:
 
-See our Wiki for details on how to install Kmasker. There, you find our list of requirements of external tools. 
+See our [Wiki](https://github.com/tschmutzer/kmasker/wiki/01-Installation) for details on how to install Kmasker. There, you find our list of requirements of external tools. 
 Please make sure, that these are in your PATH environemnt. If not please specify them in the 'kmasker.config' file.
 
 Kmasker uses an interal repository for reuse of kindex structures. The data (calculated kindex) will be stored either in local ('private') or in the external directory. The path to the external directory has to be set in the kmasker.config file after installation.
