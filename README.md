@@ -76,11 +76,11 @@ Kmasker --run --fasta query.fasta --kindex At1
 
 Kmasker --run --fasta query.fasta --kindex At1 Hv1
 
-#### COMPARATIVE
+#### FISH
 
-Kmasker --run --compare --fasta query.fasta --kindex At1 Hv1
+Kmasker --run --fish --fasta query.fasta --kindex At1
 
-Perform a comparative study using multiple kindex. Kmasker will search for differences between both applied kindex.
+Check input sequence for long sequence stretches with low repetitiveness. As a results candidate sequences with good target specififity and functionality are selected.
 
 #### gRNA
 
@@ -88,10 +88,16 @@ Kmasker --run --grna candidate_gRNA.fasta --kindex Hv1
 
 Check a set of gRNAs for their specificity in CRISPR/cas application. As a result for each given gRNA a score is calculated reflecting its target specififity. 
 
+#### COMPARATIVE
+
+Kmasker --run --compare --fasta query.fasta --kindex At1 Hv1
+
+Perform a comparative study using multiple kindex. Kmasker will search for differences between both applied kindex.
+
 
 ## [EXPLORE]:
 
-The explore module provides additional functionality for downstream analysisi e.g. vizualisations or annotation. 
+The explore module provides additional functionality for downstream analysis e.g. vizualisations or annotation. 
 
 #### EXPLORE - VISUALISATION
 
@@ -110,6 +116,8 @@ The first type ('hist') will construct histograms showing raw k-mer frequencies 
 HEXPLOT
 
 Kmasker --explore --hexplot --occ species_A.occ species_B.occ
+
+Kmasker --explore --hexplot --file comparative_analysis.stats
 
 This visualisation can be used for comparative inspection of two constructed Kmasker output files (occ). Keep in mind that only sequences are compared that are present in both files. The visualisation illustrates which sequences are the most different based on k-mer frequencies (e.g. to study two species by comparing the correpsonding WGS data).
 
