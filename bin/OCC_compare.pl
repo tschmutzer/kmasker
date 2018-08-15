@@ -5,17 +5,17 @@ use POSIX;
 
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# author:       Thomas Schmutzer
 # date:         2016_08_10
-# last update:	2018_03_29
-# institute:    @IPK Gatersleben
-my $version = "0.0.3 rc180329";
+# last update:	2018_08_15
+my $version = "0.0.4 rc180815";
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 my @ARRAY_occ;
 my %HASH_index;
 my $occ_file1;
 my $occ_file2;
+my $outname;
+my $kmersize;
 my $foldchange = 5;
 my $frame;
 my $foldchange_usr;
@@ -25,14 +25,22 @@ my $help;
 GetOptions(	'occ1=s' 	=>	\$occ_file1,
 			'occ2=s' 	=>	\$occ_file2,
 			'fc=s'		=>	\$foldchange_usr,
+			'out=s'		=>  \$outname,
 			'frame=i'	=>	\$frame,
 			'hn'		=>	\$header_normal,
+			'k=i'		=>	\$kmersize,
 			'help' 		=> 	\$help);
 
 #######################
 ##
 ##	MAIN
 ##
+
+#DEFAULT
+if(!defined $kmersize){
+	$kmersize = 21;	
+	print "\n WARNING: k-mer size was not provided. Using default size (k=21)! Provide k-mer size with parameter '--k'!\n\n";
+}
 
 if((!defined $occ_file1)||(!defined $occ_file2)){	
 	exit();	
@@ -109,7 +117,9 @@ sub read_OCC1(){
 sub read_OCC2(){	
 	
 	my $OUT;
-	if(defined $frame){
+	if(defined $outname){
+		$OUT = new IO::File($outname, "w") or die "\n unable to read list $!";	
+	}elsif(defined $frame){
 		$OUT = new IO::File("KMASKER_comparative_descriptives_FC".$foldchange."_frame".$frame."_".$loctime.".stats", "w") or die "\n unable to read list $!";	
 	}else{
 		$OUT = new IO::File("KMASKER_comparative_descriptives_FC".$foldchange."_".$loctime.".stats", "w") or die "\n unable to read list $!";	
@@ -122,6 +132,7 @@ sub read_OCC2(){
 		print $OUT "##\n";
 		print $OUT "## INPUT 1:".$occ_file1."\n";
 		print $OUT "## INPUT 2:".$occ_file2."\n";
+		print $OUT "## FRAME SIZE :".$frame."\n" if(defined $frame);
 		print $OUT "##\n";
 		
 		print $OUT "##\t1\tsid\n";
@@ -153,6 +164,7 @@ sub read_OCC2(){
 		print $OUT "##\n";
 		print $OUT "## INPUT 1:".$occ_file1."\n";
 		print $OUT "## INPUT 2:".$occ_file2."\n";
+		print $OUT "## FRAME SIZE :".$frame."\n" if(defined $frame);
 		print $OUT "##\n";
 		
 		print $OUT "#";
@@ -174,13 +186,16 @@ sub read_OCC2(){
 		if($line =~ m/^>/){
 			$line =~ s/^>//;
 			if($oid ne ""){
-				my $index_OCC1 		= $HASH_index{$oid};
-				my $occline_OCC1 	= $ARRAY_occ[$index_OCC1];
-				
-				if(defined $frame){
-					&compare_frames($oid, $occline_OCC1, $occline, $OUT);
-				}else{
-					&compare($oid, $occline_OCC1, $occline, $OUT);
+				#ONLY IDs present in both files will be used!!!
+				if(exists $HASH_index{$oid}){
+					my $index_OCC1 		= $HASH_index{$oid};
+					my $occline_OCC1 	= $ARRAY_occ[$index_OCC1];
+					
+					if(defined $frame){
+						&compare_frames($oid, $occline_OCC1, $occline, $OUT);
+					}else{
+						&compare($oid, $occline_OCC1, $occline, $OUT);
+					}
 				}
 			}
 			$occline 			= "";
@@ -195,12 +210,14 @@ sub read_OCC2(){
 		}	
 	}
 	#last
-	my $index_OCC1 		= $HASH_index{$oid};
-	my $occline_OCC1 	= $ARRAY_occ[$index_OCC1];
-	if(defined $frame){
-		&compare_frames($oid, $occline_OCC1, $occline, $OUT);
-	}else{
-		&compare($oid, $occline_OCC1, $occline, $OUT);
+	if(exists $HASH_index{$oid}){
+		my $index_OCC1 		= $HASH_index{$oid};
+		my $occline_OCC1 	= $ARRAY_occ[$index_OCC1];	
+		if(defined $frame){
+			&compare_frames($oid, $occline_OCC1, $occline, $OUT);
+		}else{
+			&compare($oid, $occline_OCC1, $occline, $OUT);
+		}
 	}
 }
 
@@ -217,6 +234,8 @@ sub compare(){
 	
 	my @ARRAY_occ1 = split(" ", $this_occline1);
 	my @ARRAY_occ2 = split(" ", $this_occline2);
+	my $LEN_occ1 = scalar(@ARRAY_occ1) - $kmersize;	# the last k positions always are filled with 0 values 
+	my $LEN_occ2 = scalar(@ARRAY_occ2) - $kmersize; # the last k positions always are filled with 0 values 
 	
 	print "\n WARNING: unqequal length at seqeunce ".$this_oid."\n" if(scalar(@ARRAY_occ1) != scalar(@ARRAY_occ2));
 		
@@ -227,7 +246,7 @@ sub compare(){
 	my $NUM_positions_with_absent_kmer_D1 = 0;
 	my $NUM_positions_with_absent_kmer_D2 = 0;
 	
-	for(my $i = 0; $i < scalar(@ARRAY_occ1);$i++){
+	for(my $i = 0; $i < $LEN_occ1; $i++){
 		my $value1 = $ARRAY_occ1[$i];
 		my $value2 = $ARRAY_occ2[$i];
 		$SUM1 += $value1;
@@ -254,14 +273,17 @@ sub compare(){
 		}		
 	}
 	
-	my $AVG1 = sprintf("%.2f", ($SUM1/scalar(@ARRAY_occ1)));
-	my $AVG2 = sprintf("%.2f", ($SUM2/scalar(@ARRAY_occ1)));
-	my $ABS1 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D1*100/scalar(@ARRAY_occ1)));
-	my $ABS2 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D2*100/scalar(@ARRAY_occ2)));
+	my $AVG1 = sprintf("%.2f", ($SUM1/$LEN_occ1));
+	my $AVG2 = sprintf("%.2f", ($SUM2/$LEN_occ2));
+	my $ABS1 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D1*100/$LEN_occ1));
+	my $ABS2 = sprintf("%.2f", ($NUM_positions_with_absent_kmer_D2*100/$LEN_occ2));
+	my $PFC1 = sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/$LEN_occ1));
+	my $PFC2 = sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/$LEN_occ2));
 	
 	printf $HANDLER "%-".$longest_ID."s", $this_oid;	
-	print  $HANDLER "\t".scalar(@ARRAY_occ1)."\t1\t".scalar(@ARRAY_occ1)."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t".$NUM_positions_with_foldchange_D1."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D1*100/scalar(@ARRAY_occ1)));
-	print  $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".sprintf("%.2f", ($NUM_positions_with_foldchange_D2*100/scalar(@ARRAY_occ2)));
+	print  $HANDLER "\t".scalar(@ARRAY_occ1)."\t1\t".scalar(@ARRAY_occ1)."\t".$SUM1."\t".$SUM2."\t".$AVG1."\t".$AVG2."\t";
+	print  $HANDLER $NUM_positions_with_foldchange_D1."\t".$PFC1;
+	print  $HANDLER "\t".$NUM_positions_with_foldchange_D2."\t".$PFC2;
 	print  $HANDLER "\t".$NUM_positions_with_absent_kmer_D1."\t".$ABS1."\t".$NUM_positions_with_absent_kmer_D2."\t".$ABS2."\n";
 	
 }
@@ -272,6 +294,9 @@ sub compare(){
 ##	subroutine
 ##
 sub compare_frames(){	
+	
+	# FIXME - subroutine need adjustment for length with kmersize like 'compare' method
+	
 	my $this_oid 		= $_[0];
 	my $this_occline1 	= $_[1];
 	my $this_occline2 	= $_[2];
