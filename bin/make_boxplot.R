@@ -7,7 +7,8 @@ spec=matrix(c(
   'help', 'h', 0, "logical",
   'column1', '1', 1, "character",
   'column2', '2', 1, "character",
-  'log', 'l', 0, "logical"
+  'log', 'l', 0, "logical",
+  'out', 'o', 0, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
@@ -26,13 +27,21 @@ plot<-ggplot(data_melt, aes(x=variable, y=value)) +
   theme_gray(base_size = 25)
 
 if(!is.null(opt$log)) {
+  outname<-paste(tools::file_path_sans_ext(opt$input), "_log", ".png", sep="")
+  if(!is.null(opt$out)) {
+    outname<-(opt$out)
+  }
   plot<-plot +   labs(title = paste("boxplot of",levels(data_melt[,"variable"])[1], levels(data_melt[,"variable"])[2] ,sep=" ", collapse=" "), x="variable", y="value [log10]")
   plot<-plot+scale_y_log10(labels=trans_format("log10", math_format(10^.x)))
-  png(paste(tools::file_path_sans_ext(opt$input),"_log", ".png", sep=""), width=2048, height=1024)
+  png(outname, width=2048, height=1024)
   
 } else {
+  outname<-paste(tools::file_path_sans_ext(opt$input), ".png", sep="")
+  if(!is.null(opt$out)) {
+    outname<-(opt$out)
+  }
   plot<-plot + labs(title = paste("boxplot of",levels(data_melt[,"variable"])[1], levels(data_melt[,"variable"])[2] ,sep=" ", collapse=" "), x="variable")
-  png(paste(tools::file_path_sans_ext(opt$input), ".png", sep=""), width=2048, height=1024)
+  png(outname, width=2048, height=1024)
   
 }
 

@@ -6,7 +6,8 @@
 #
 # ==========================================================
 
-## 180727
+## first version: 180727
+## last update  : 180814
 
 ## ####################
 ## Perl (internal call)
@@ -26,6 +27,8 @@ if (length(args)<1) {
   stop("No input data provided!", call.=FALSE)
 } 
 
+#setwd("D:/Clouds/ownCloud_MLU/Manuscripts/Manuscript_Kmasker_plants/Visualisation");
+
 date<-format(Sys.Date(),"%y%m%d")
 input<-args[1]
 dt<-fread(input,h=T)
@@ -33,10 +36,10 @@ A<-colnames(dt)[2]
 B<-colnames(dt)[3]
 colnames(dt)<-c("k-mer","A","B")
 
-output<-paste0("Kmasker_plots_hexplot_",A,"_",B,"_",date,".png")
+output<-paste0("KMASKER_plots_hexplot_",A,"_",B,"_",date,".png")
 
 # HEADER of columns will be used as axis names
-p<-ggplot(dt,aes(A,B))+geom_hex(bins=30)+theme_classic()+labs(title=paste0("k-mer comparison between ",A," & ",B),x=paste0("k-mer count ",A),y=paste0("k-mer count ",B))+theme(plot.title=element_text(hjust=0.5))
+p<-ggplot(dt,aes(A,B))+geom_hex(bins=30)+theme_classic()+labs(title=paste0("comparative analysis"),x=paste0(A),y=paste0(B))+theme(plot.title=element_text(hjust=0.5))
 
 # generate visualisation in PNG format
 png(output, width = 1800, height = 1800, res = 300)

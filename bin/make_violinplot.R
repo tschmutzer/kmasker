@@ -6,11 +6,12 @@
 #
 # ==========================================================
 
-## 180727
+## first version: 180727
+## last update  : 180814
 
 ## ####################
 ## Perl (internal call)
-## my $command = "Rscript --vanilla make_split_violinplot.R kmer_data_AB_small.txt";
+## my $command = "Rscript --vanilla make_violinplot.R kmer_data_AB_small.txt";
 ## system($command);
 ## ####################
 
@@ -75,7 +76,7 @@ mtab<-rbind(tab1,tab2)
 colnames(mtab)<-c("legend","frequency","distribution")
 
 # HEADER of columns will be used as axis names
-t<-ggplot(mtab,aes(distribution,frequency,fill=legend))+geom_split_violin()+theme_bw()+labs(title=paste0("k-mer comparison between ",A," and ",B))+theme(plot.title=element_text(hjust=0.5))
+t<-ggplot(mtab,aes(distribution,frequency,fill=legend))+geom_split_violin()+theme_bw()+labs(title=paste0("comparative analyis"))+theme(plot.title=element_text(hjust=0.5))
 
 # generate visualisation in PNG format
 png(output, width = 1800, height = 1800, res = 300)
