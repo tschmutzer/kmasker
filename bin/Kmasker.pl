@@ -12,9 +12,9 @@ use lib dirname(dirname abs_path $0) . '/lib';
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
-use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics);
+use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 
-my $version 	= "0.0.32 rc180803";
+my $version 	= "0.0.33 rc180815";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -35,13 +35,16 @@ my $index_name_usr;
 my $threads_usr;
 my $threads = 4;
 my $size_usr;
-my $size		= 24;
+my $size			= 24;
+my $foldchange		= 10;
+my $foldchange_usr;
 my $PATH_kindex_private = "";
 my $PATH_kindex_external= "";
 
 #RUN
 my $fasta;
 my $grna;
+my $fish;
 my $compare;
 my $k_usr;
 my $k 					= 21;
@@ -62,9 +65,12 @@ my $MK_min_gff			= 25;   #Default	MK_min_gff (N) is the minimal length (bp) of a
 #EXPLORE
 my $gff;
 my $list;
+my $file;
+my $cfile;
 my $occ;
 my @OCClist;
 my $stats;
+my $cstats;	
 my $custom_annotate;
 my $blastableDB;
 my $dbfasta;
@@ -75,9 +81,12 @@ my $xtract;
 my $hist;
 my $histm;
 my $violin;
+my $boxplot;
 my $hexplot;
 my $barplot;
 my $sws;
+my $max;
+my $bin;
 my $log;
 #GENERAL parameter
 my $help;
@@ -130,6 +139,7 @@ my $result = GetOptions (	#MAIN
 							#RUN
 							"fasta=s"			=> \$fasta,	
 							"grna=s"			=> \$grna,
+							"fish"				=> \$fish,
 							"compare"			=> \$compare,
 							"kindex=s{1,}"		=> \@multi_kindex,
 							"rept=i"			=> \$repeat_threshod_usr,
@@ -140,17 +150,23 @@ my $result = GetOptions (	#MAIN
 							"gff=s"				=> \$gff,
 							"feature=s"			=> \$feature,
 							"db=s"				=> \$blastableDB,
-							"dbfasta=s"			=> \$dbfasta,		
+							"dbfasta=s"			=> \$dbfasta,
 							"barplot"			=> \$barplot,
-							"hexplot"			=> \$hexplot,
+							"boxplot"			=> \$boxplot,
+							"hexplot"			=> \$hexplot,		
 							"hist"				=> \$hist,
 							"histm"				=> \$histm,
 							"violin"			=> \$violin,
+							"cfile=s"			=> \$cfile,
+							"file=s"			=> \$file,
 							"list=s"			=> \$list,
 							"occ=s{1,}"			=> \@OCClist,
 							"stats"				=> \$stats,	
+							"cstats"			=> \$cstats,	
 							"dynamic"			=> \$dynamic,
-							"window"			=> \$sws,		
+							"window"			=> \$sws,	
+							"max=i"				=> \$max,	
+							"bin=i"				=> \$bin,
 							"log"				=> \$log,	
 							"xtract"			=> \$xtract,				
 							
@@ -229,6 +245,7 @@ $HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
 $HASH_info{"MK_min_seed"}			= $MK_min_seed;
 $HASH_info{"MK_min_gff"}			= $MK_min_gff;
 $HASH_info{"bed"}					= 0;
+$HASH_info{"fold-change"}			= $foldchange;
 $HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
 $HASH_info{"expert setting blast"}	= $expert_setting_blast;
@@ -341,6 +358,8 @@ if(defined $build){
 	$HASH_info{"type"}					= "";
 	$HASH_info{"sequencing depth"}		= "";
 		
+	print "\n starting build module ... \n";	
+		
 	#CONSTRUCT
 	if(defined $input){
 		&build_kindex_jelly(\%HASH_info, $build_config, \%HASH_repository_kindex, \%HASH_path); 
@@ -372,11 +391,71 @@ if(defined $run){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
 	
+	print "\n starting run module ... \n";
 	
 	#CRISPR design modul
 	if(defined $grna){
 		if(exists $HASH_repository_kindex{$kindex}){
 			&run_gRNA($kindex, $grna, \%HASH_repository_kindex);
+		}
+		exit();	
+	}
+	
+	
+	#FISH design modul
+	if(defined $fish){
+		
+		if(scalar(@multi_kindex) == 1){
+			#single kindex	
+			
+			if(exists $HASH_repository_kindex{$kindex}){
+				
+				if(!defined $repeat_threshod_usr){
+					$repeat_threshold = 10;
+				}				
+				if(defined $length_threshold_usr){
+					if($length_threshold < 500){
+						print "\n WARNING: Provided length is too small for proper FISH candidate sequence. Setting '--minl' to 2500 bp!\n\n";
+						$length_threshold = 2500;
+					}else{
+						$length_threshold = 2500;
+					}
+				}
+				
+				my $this_setting = "--rept=".$repeat_threshold.";--minl=".$length_threshold;
+				&use_expert_settings("kmasker", $this_setting);
+				
+				#READ repository.info
+				my $FILE_repository_info = "";
+				if(exists $HASH_repository_kindex{$kindex}){
+					my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
+					$FILE_repository_info 	= $ARRAY_repository[4]."repository_".$kindex.".info";
+				}else{
+					print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
+					exit ();
+				}
+			
+				my $href_info 	= &read_config($FILE_repository_info, \%HASH_info, \%HASH_repository_kindex, "run");
+				%HASH_info		= %{$href_info};
+				
+				#START RUN			
+				&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
+				
+				#CHECK FISH results
+				my $call = "grep \">\" -cP KMASKER_extracted_regions_*".$fasta;
+				my $this = `$call`;
+				$this =~ s/\n//;
+				if($this > 0){
+					print "\n .. ".$this." candidates for FISH detected!!\n\n";
+					system("mv KMASKER_extracted_regions_*".$fasta." KMASKER_FISH_candidates_KINDEX_".$kindex."_".$fasta);
+				}else{
+					print "\n .. no candidates for FISH detected!!\n\n";
+					system("rm KMASKER_extracted_regions_*".$fasta);
+				}							
+			}
+		}else{
+			print "\n WARNING: Calling '--fish' settings is only permitted with single KINDEX.";
+			print "\n          Kmasker was stopped!\n\n"; 
 		}
 		exit();	
 	}
@@ -466,7 +545,7 @@ if(defined $explore){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";	
 	
-	print "\n starting explore module ... ";
+	print "\n starting explore module ... \n";
 	
 	#ANNOTATION
 	if(defined $custom_annotate){
@@ -492,6 +571,26 @@ if(defined $explore){
 	}	
 	
 	#REPORT
+	if(defined $cstats){
+		# EXPLORE STATS		
+		#STATS requirements
+		my $check_settings = 1;
+		$check_settings = 0 if(!defined $occ);
+		
+		#CALL comparative methods
+		if(scalar(@OCClist)>1){
+			my $k_correct = 21;
+			$k_correct = $k if(defined $k);	
+			system("$path/OCC_compare.pl --k ".$k_correct." --fc ".$foldchange." --occ1 ".$OCClist[0]." --occ2 ".$OCClist[1]);
+			exit();
+		}else{
+			print "\n You need to provide two OCC files. Process stopped!\n\n";
+			exit();
+		}
+	}
+	
+	
+	#REPORT
 	if(defined $stats){
 		# EXPLORE STATS
 		
@@ -499,9 +598,9 @@ if(defined $explore){
 		my $check_settings = 1;
 		$check_settings = 0 if(!defined $occ);
 		
-		#CALL comparative methods
+		#exit
 		if(scalar(@OCClist)>1){
-			system("$path/OCC_compare.pl --fc 5 --occ1 ".$OCClist[0]." --occ2 ".$OCClist[1]);
+			print "\n Too many file provided in '--occ'. Statistics only can be calculated for a single OCC file.\n\n";
 			exit();
 		}
 				
@@ -509,6 +608,12 @@ if(defined $explore){
 		$check_settings = 0 if(!defined $gff);		
 		if($check_settings == 1){
     		&report_statistics($occ, $gff, $out);
+    		
+    		if(defined $max){
+    			system("OCC_average.pl --occ ".$occ." --max ".$max." --out KMASKER_average_m".$max."_".$occ);
+    		}else{
+    			system("OCC_average.pl --occ ".$occ." --out KMASKER_average_".$occ);
+    		}
 		}else{
 			print "\n WARNING: Missing required parameter '--occ' or '--gff'. Kmasker was stopped.\n\n";
 			exit;
@@ -533,25 +638,28 @@ if(defined $explore){
 	}
 	
 	#VIZUALISATION
-	my $visualisation;
+	my $visualisation = 0;
+	#simple plots
 	$visualisation = 1 if(defined $hist);
 	$visualisation = 1 if(defined $histm);
-	$visualisation = 1 if(defined $violin);
-	$visualisation = 1 if(defined $hexplot);
 	$visualisation = 1 if(defined $barplot);
+	#comparative plots
+	$visualisation = 2 if(defined $violin);
+	$visualisation = 2 if(defined $hexplot);
+	$visualisation = 2 if(defined $boxplot);
 		
 	#HISTOGRAM
-	if(defined $visualisation){
+	if($visualisation == 1){
 		# EXPLORE VIZUALISATIONS
-	
+		
 		if(defined $occ){
 		# explore visualisations require an OCC file
 		
-				my $missing_parameter = "";
-				if(! -e $occ) {
-					print "\n ERROR: $occ was not found. Kmasker was stopped.\n\n";
-					exit;
-				}
+			my $missing_parameter = "";
+			if(! -e $occ) {
+				print "\n ERROR: $occ was not found. Kmasker was stopped.\n\n";
+				exit;
+			}
 		
 			#HISTOGRAM RAW or MEAN
 			if((defined $hist)||(defined $histm)){	
@@ -587,6 +695,20 @@ if(defined $explore){
 						unlink("log.txt");
 					}
 				}
+			}
+			
+			#BARPLOT
+			if(defined $barplot){				
+				my $outname = "KMASKER_average_".$occ;
+				if(defined $max){
+    				system("OCC_average.pl --occ ".$occ." --max ".$max." --out KMASKER_average_m".$max."_".$occ);
+    				$outname = "KMASKER_average_m".$max."_".$occ; 
+    			}else{
+    				system("OCC_average.pl --occ ".$occ." --out ".$outname);
+    			}	
+    			$outname =~ s/occ$/txt/;			
+				&plot_barplot($outname, $bin) if(defined $bin);
+				&plot_barplot($outname) if(!defined $bin);
 			}			
 			
 			if($missing_parameter ne ""){
@@ -598,9 +720,76 @@ if(defined $explore){
 			print "\n ERROR: no occ provided. For this 'Kmasker --explore' subfunction an occ file is required!\n\n";
 		}
 	}
+	# VISUALISATION 2 
+	elsif($visualisation == 2){
+		#COMPARATIVE PLOTS
+		
+		my $plottype = "";
+		$plottype = "boxplot" if(defined $boxplot);
+		$plottype = "violin"  if(defined $violin);
+		$plottype = "hexplot" if(defined $hexplot);
+		
+		if(scalar(@OCClist)>1){
+			#CALL comparative methods			
+			#system("$path/OCC_compare.pl --fc ".$foldchange." --occ1 ".$OCClist[0]." --occ2 ".$OCClist[1]." --out KMASKER_comparative_descriptives_FC".$foldchange.".stats");
+			#$cfile = "KMASKER_comparative_descriptives_FC".$foldchange.".stats";
+			
+			print "\n\ .. Please use '--cstats' before calling this method and subsequently provide result with '--cfile'. Process stopped!\n\n";
+			exit();
+		}
+		
+		my %HASH_list = ();
+		if(defined $list){				
+			if (-e $list) {
+				#READING
+				my $LIST 	 = new IO::File($list, "r") or die "\n unable to read list $list $!";
+				while(<$LIST>){
+					next if($_ =~ /^$/);
+					next if($_ =~ /^#/);
+					my $line = $_;
+					$line =~ s/\n//;
+					$line =~ s/ /\t/g;
+					my @ARRAY_in = split(/\t/, $line);			
+					$HASH_list{$ARRAY_in[0]} = 1;
+				}   				
+   			}else{
+				print "\n .. cannot find file ".$list."\n";
+				print "    process stopped!\n";
+				exit();
+   			}
+		}		
+		
+		#FILE SIMPLE & DIRECT
+		if(defined $file){
+			if(-e $file){
+				print "\n .. working with ".$file."\n";
+			}else{
+				print "\n .. cannot find file ".$file."\n";
+				print "    process stopped!\n";
+				exit();
+			}
+			#START	
+			&plot_maker_direct($file, $plottype) if(defined $file);
+		}
+	
+		
+		#CFILE USER & COMPLEX
+		if(defined $cfile){
+			if(-e $cfile){
+				print "\n .. working with ".$cfile."\n";
+			}else{
+				print "\n .. cannot find file ".$cfile."\n";
+				print "    process stopped!\n";
+				exit();
+			}
+			#START	
+			&plot_maker($cfile, $plottype, \%HASH_list);
+		}
+		
+	}
 	
 	#QUIT
-	print "\n - Thanks for using Kmasker! -\n\n";
+	print "\n\n - Thanks for using Kmasker! -\n\n";
 	exit();
 }
 	
@@ -878,7 +1067,7 @@ sub use_expert_settings(){
 					if($PAR eq "rept"){
 						print "\n\n .. changing default parameter for REPT from ".$repeat_threshold." to ". $VALUE." !\n";
 						$repeat_threshold					= $VALUE;
-						$HASH_info{"rept"}					= $MK_min_gff;
+						$HASH_info{"rept"}					= $repeat_threshold;
 						$hash_info_entry					.= " " if($hash_info_entry ne "");
 						$hash_info_entry 					.= "--rept ".$repeat_threshold.";";
 					}
@@ -1266,6 +1455,30 @@ sub intro_call(){
 		print "\n EXPORT paths\n\n";
 	}
 	
+	#CHECK existence of FASTA
+	if(defined $fasta){
+		if(!(-e $fasta)){
+			print "\n INPUT FASTA \'".$fasta."\' does not exists!";	
+			print "\n .. process stopped! \n\n";		
+			exit();	
+		}
+	}
+	
+	#CHECK existence of SEQ
+	if((scalar @seq_usr) > 0){
+		my $check_status = 1;
+		foreach my $seq (@seq_usr){
+			if(!(-e $seq)){
+				print "\n INPUT seq \'".$seq."\' does not exists!";		
+				$check_status = 0;	
+			}
+		}
+		if($check_status == 0){
+			print "\n .. process stopped! \n\n";		
+			exit();
+		}
+	}
+	
 	#SET private path
 	if(defined $set_private_path){
 		
@@ -1328,6 +1541,11 @@ sub intro_call(){
 	if(scalar(@OCClist) == 1){
 		$occ = $OCClist[0];
 	}	
+	
+	#THREADS
+	if(defined $foldchange_usr){
+		$foldchange = $foldchange_usr;
+	}
 
 }
 
@@ -1396,8 +1614,12 @@ sub help(){
 		print "\n --hexplot\t\t create hexagon plot (apply after '--run --compare' mode)";
 		print "\n --barplot\t\t create barplot (apply after '--run --compare' mode)";
 		print "\n --occ\t\t\t provide a Kmasker constructed occ file containing k-mer frequencies";
-		print "\n --list\t\t\t file containing a list of contig identifier for analysis";	
-		print "\n --stats\t\t print report of basic statistics (requires --occ and --gff)";	
+		print "\n --file\t\t\t provide simple file (three columns) for plotting";
+		print "\n --cfile\t\t\t provide comparative file for plotting";
+		print "\n --list\t\t\t file containing a subset of selected contig identifier";	
+		print "\n --stats\t\t create report of basic statistics (requires --occ and --gff)";	
+		print "\n --cstats\t\t create copmarative statistics (requires --occ)";
+		
 		
 		print "\n\n";
 		exit();

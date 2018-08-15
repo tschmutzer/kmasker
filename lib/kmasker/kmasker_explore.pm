@@ -8,6 +8,7 @@ use kmasker::occ;
 use kmasker::functions;
 use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
+use POSIX; 
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
@@ -15,10 +16,14 @@ plot_histogram
 repeat_annotation
 gff_construction
 );
-our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics);
+our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics plot_maker plot_maker_direct plot_barplot);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.2 rc180727";
+my $version_PM_explore 	= "0.0.2 rc180815";
+
+## DATE
+my $loctime = localtime;
+$loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
 
 my $path        = dirname abs_path $0;      
 
@@ -84,8 +89,6 @@ sub plot_histogram_mean{
     }
     
     #STORE results
-    #my @ARRAY_info = split("_", $occ);
-    #my $kindex = $ARRAY_info[1];
     if(!( -d "./Kmasker_plots")){
     	system("mkdir Kmasker_plots");
     }   
@@ -180,39 +183,161 @@ sub plot_histogram_raw{
     }
 }
 
+## subroutine
+#	Direct generation of plots for user filterd input
+#
+sub plot_maker_direct{
+	my $file		=	$_[0];
+	my $type		=	$_[1];
+	
+	#HEADER
+	my $systemcall_header 	= `head -n 1 $file`;
+	my @ARRAY_header		= split("\t", $systemcall_header);
+	if(scalar(@ARRAY_header) != 3){
+		print "\n\n This does not look like the expected format (3 columns). Process stopped!\n\n";
+		exit();
+	}	
+	
+	#MAKE BOXPLOT
+    if($type eq "boxplot"){
+    	system("make_boxplot.R --out KMASKER_boxplot_".$loctime.".png --column1 ".$ARRAY_header[1]." --column2 ".$ARRAY_header[2]." -i ".$file);
+    	system("make_boxplot.R --out KMASKER_boxplot_log_".$loctime.".png -l --column1 ".$ARRAY_header[1]." --column2 ".$ARRAY_header[2]." -i ".$file);
+    }
+    
+    #MAKE heaxgon plot
+    if($type eq "hexplot"){
+    	system("Rscript --vanilla ".$path . "/make_hexplot.R ".$file);
+    }
+    
+    #MAKE violin plot
+    if($type eq "violin"){
+    	system("Rscript --vanilla ".$path . "/make_violinplot.R ".$file);
+    }    
+}
+
+## subroutine
+#	Manages data processing for generation of plots
+#
+sub plot_maker{
+    my $cfile		=	$_[0];
+    my $type		=	$_[1];  
+    my $href_list  	=	$_[2];
+    
+    if(defined $href_list){
+    	#work with selection list
+    	my %HASH_list = %{$href_list};
+    	my $R_CFILE	 = new IO::File($cfile, "r") or die "\n unable to read list $cfile $!";
+		my $W_CFILE	 = new IO::File("tmp_".$cfile, "w") or die "\n unable to write tmp_$cfile $!";			
+		
+		print "\n .. start processing ".$cfile;
+		
+		if(scalar(keys %HASH_list) > 0){
+			print "\n .. working with provided ID list\n";		
+			my $counter = 0;
+			while(<$R_CFILE>){
+				next if($_ =~ /^$/);
+				next if($_ =~ /^#/);
+				print "\n COUNTER : ".$counter++;
+				my $line = $_;
+				my $orig = $line;
+				$line =~ s/\n//;
+				$line =~ s/ /\t/g;
+				my @ARRAY_file = split(/\t/, $line);
+					
+				#check file format
+				if(scalar(@ARRAY_file) < 16){
+					#
+					print "\n .. WARNING in line (".scalar(@ARRAY_file)."): ".$orig."\n"; 
+					print "\n This line was skipped because it does not look like expected format (by Kmasker).";
+					print "\n LINE: ".$orig."!\n";
+				}else{
+					if(exists $HASH_list{$ARRAY_file[0]}){
+						print $W_CFILE $orig;
+					}	
+				}				
+			}
+			#set new file as input
+			$cfile = "tmp_".$cfile;
+		}   	
+    }
+    
+    #MAKE BOXPLOT
+    if($type eq "boxplot"){
+    	&plot_boxplot($cfile)
+    }
+    
+    #MAKE heaxgon plot
+    if($type eq "hexplot"){
+    	print "\n\n\n Please prepare your data accordingly (data input should have 3 columns) and use --file for generating a hexplot!";
+    	print "\n Process stopped!\n\n";
+    }
+    
+    #MAKE violin plot
+    if($type eq "violin"){
+    	print "\n\n\n Please prepare your data accordingly (data input should have 3 columns) and use --file for generating a violin plot!";
+    	print "\n Process stopped!\n\n";
+    }
+    
+    
+    #clean
+    system("rm tmp_".$cfile) if(-e "tmp_".$cfile);
+    
+}
+
 
 ## subroutine
 #
 sub plot_violin{
-    my $occ		=	$_[0];
+    my $cfile	=	$_[0];
     my $list	=	$_[1];    
+    
+    #IMPLEMENT if costumer defined plot is required
     
 }
 
 ## subroutine
 #
 sub plot_hexagon{
-    my $aref_input	=	$_[0];
-    my $list		=	$_[1];
+    my $cfile	=	$_[0];
+    my $list	=	$_[1];
     
-    my @ARRAY_input = @{$aref_input};
-    if((scalar @ARRAY_input) == 1){
-    	#COMPARE FILE
-    	
-    }else{
-    	#OCC1 and OCC2 FILES
-    	
-    	
-    }
-    
+    #IMPLEMENT if costumer defined plot is required
+        
 }
 
 ## subroutine
 #
 sub plot_boxplot{
-    my $occ		=	$_[0];
-    my $list	=	$_[1];    
+    my $cfile	=	$_[0];
+       
+    #edit header
+    system("grep -v \"#\" ".$cfile." >C_".$cfile);
+    my $W_CFILE	 = new IO::File("H_".$cfile, "w") or die "\n unable to write H_$cfile $!";			
+    my @ARRAY_header = ("","","","","","","","","","","","","","","","");
+    $ARRAY_header[0] =~ s/#//g;   	
+  	$ARRAY_header[6] = "avg_kmer_count_in_set1";
+    $ARRAY_header[7] = "avg_kmer_count_in_set2";
+    $ARRAY_header[9] = "proportion_foldchange_in_set1";
+    $ARRAY_header[11] = "proportion_foldchange_in_set2";
+    $ARRAY_header[13] = "proportion_absent_in_set1";
+    $ARRAY_header[15] = "proportion_absent_in_set2";
+    print $W_CFILE join("\t", @ARRAY_header)."\n";
+    system("cat H_".$cfile." C_".$cfile." >N_".$cfile);
     
+    #average
+    system("make_boxplot.R --out KMASKER_boxplot_avg_log_".$loctime.".png -l --column1 ".$ARRAY_header[6]." --column2 ".$ARRAY_header[7]." -i N_".$cfile);   
+  	system("make_boxplot.R --out KMASKER_boxplot_avg_".$loctime.".png --column1 ".$ARRAY_header[6]." --column2 ".$ARRAY_header[7]." -i N_".$cfile);   
+  	
+  	#fold change
+  	#system("make_boxplot.R --out KMASKER_boxplot_pfc_log_".$loctime.".png -l --column1 ".$ARRAY_header[9]." --column2 ".$ARRAY_header[11]." -i N_".$cfile);   
+  	system("make_boxplot.R --out KMASKER_boxplot_pfc_".$loctime.".png --column1 ".$ARRAY_header[9]." --column2 ".$ARRAY_header[11]." -i N_".$cfile); 
+  	
+  	#absent
+  	#system("make_boxplot.R --out KMASKER_boxplot_absent_log_".$loctime.".png -l --column1 ".$ARRAY_header[13]." --column2 ".$ARRAY_header[15]." -i N_".$cfile);   
+  	system("make_boxplot.R --out KMASKER_boxplot_absent_".$loctime.".png --column1 ".$ARRAY_header[13]." --column2 ".$ARRAY_header[15]." -i N_".$cfile); 
+  	
+  	system("rm N_".$cfile." C_".$cfile." H_".$cfile)  
+   
 }
 
 
@@ -220,8 +345,12 @@ sub plot_boxplot{
 #  Routine is plooting the means of k-mer frequency per size-binned sequence
 sub plot_barplot{
     my $file	=	$_[0];
-    my $list	=	$_[1];    
-    
+    my $bin		= 	$_[1];
+    if(defined $bin){
+		system("make_barplot.R -c avg -b ".$bin." -i ".$file);   
+    }else{
+    	system("make_barplot.R -c avg -i ".$file);   
+    } 
 }
 
 

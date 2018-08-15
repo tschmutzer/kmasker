@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.30 rc180803";
+my $version_PM_run 	= "0.0.30 rc180813";
 
 ## subroutine
 #
@@ -58,7 +58,7 @@ sub run_kmasker_SK{
 		print "\n parameter setting: minseed    = ".$min_seed;
 		print "\n parameter setting: pctgap     = ".$percent;
 		print "\n parameter setting: mingff     = ".$min_gff;
-		print "\n parameter setting: bed     	= ".$bed;
+		print "\n parameter setting: bed        = ".$bed;
 		print "\n temp path: $temp_path";
 		print "\n\n";
 
@@ -121,7 +121,7 @@ sub run_kmasker_SK{
         system("$path/stats.R " . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c sequence" . " >>log.txt 2>&1");
         system("$path/stats.R "  . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c " . $feature . " >>log.txt 2>&1");
         if((!(-e "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
-        	print "Some statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
+        	print "\n Some statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
         }
         else {
 	       	system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab " . " -k " . "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab" . " >>log.txt 2>&1");
@@ -174,6 +174,7 @@ sub run_kmasker_MK{
 	my @ARRAY_seq_depth			= ();
 	my $temp_path       	= $HASH_info_this{"temp_path"};
 	my $verbose				= $HASH_info_this{"verbose"};
+	my $fold_change 		= $HASH_info_this{"fold-change"};
 	
 	print "\n parameter setting: rept       = ".$rept;
 	print "\n parameter setting: minl       = ".$length_threshold;
@@ -187,8 +188,7 @@ sub run_kmasker_MK{
 	#ADD info
 	my @ARRAY_occ = ();
 	
-	#USER info
-	my $fold_change = 10;
+	
 	
 	for(my $i=0;$i<scalar(@ARRAY_kindex);$i++){
 		
@@ -246,7 +246,7 @@ sub run_kmasker_MK{
 	#Convertion to TAB file
 	my $occ1 = $ARRAY_occ[0];
 	my $occ2 = $ARRAY_occ[1];
-	kmasker::occ::multi_occ($rept, $fold_change, $occ1, $occ2, "$temp_path/KMASKER_comparativ_FC".$fold_change."_");
+	kmasker::occ::multi_occ($rept, $fold_change, $occ1, $occ2, "$temp_path/KMASKER_comparative_FC".$fold_change."_");
 	(my $name1,my $path1,my $suffix1) = fileparse($occ1, qr/\.[^.]*/);
 	(my $name2,my $path2,my $suffix2) = fileparse($occ2, qr/\.[^.]*/);
 	
@@ -259,8 +259,8 @@ sub run_kmasker_MK{
 	my $tab2 = $occ2;
 	$tab1 =~ s/\.occ$//;
 	$tab2 =~ s/\.occ$//;
-	kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
-	kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
+	kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab1.".tab", $percent, $min_seed);
+	kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab2.".tab", $percent, $min_seed);
 	
 	#Feedback
 	print "\n .. start to generate GFF" ;#if(!defined $silent);
@@ -268,12 +268,12 @@ sub run_kmasker_MK{
 	#PRODUCE GFF
 	my $feature 	= "KRC";
 	my $subfeature 	= "KRR";
-	my $gffname_D1 	= "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff";
-	my $gffname_D2 	= "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff";	
-	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab1.".tab", $subfeature);
-	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparativ_FC".$fold_change."_".$tab2.".tab", $subfeature);
-	system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab1" . "_Regions_merged".".gff " . $gffname_D1);
-    system("cp" . " $temp_path/KMASKER_comparativ_FC".$fold_change."_$tab2" . "_Regions_merged".".gff " . $gffname_D2);
+	my $gffname_D1 	= "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff";
+	my $gffname_D2 	= "KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff";	
+	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab1.".tab", $subfeature);
+	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab2.".tab", $subfeature);
+	system("cp" . " $temp_path/KMASKER_comparative_FC".$fold_change."_$tab1" . "_Regions_merged".".gff " . $gffname_D1);
+    system("cp" . " $temp_path/KMASKER_comparative_FC".$fold_change."_$tab2" . "_Regions_merged".".gff " . $gffname_D2);
     
     if($bed eq "1"){
     	#Feedback
@@ -291,19 +291,19 @@ sub run_kmasker_MK{
     system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c " . $feature . " >>log.txt 2>&1");
 
     
-    if( (!(-e "report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab")) || (!(-e "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab"))) {
+    if( (!(-e "report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab")) || (!(-e "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab"))) {
         	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[0] ."). The main reason for this is that there are no significant features in the gff file.\n";
         }
     else {
- 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
+ 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
  		system("mv report_overview_statistics.txt " . "report_overview_statistics" . $ARRAY_kindex[0] . ".txt");
  	}
-   # system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "KMASKER_comparativ_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
-    if(!(-e "report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab") || !(-e "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab")) {
+   # system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab " . " >>log.txt 2>&1");
+    if(!(-e "report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab") || !(-e "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab")) {
         	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[1] ."). The main reason for this is that there are no significant features in the gff file.\n";
         }
     else {
- 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparativ_FC".$fold_change."_$tab2" . ".gff.tab " . " >>log.txt 2>&1");
+ 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab " . " >>log.txt 2>&1");
  		system("mv report_overview_statistics.txt " . "report_overview_statistics" . $ARRAY_kindex[0] . ".txt");
      }
 
