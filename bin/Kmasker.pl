@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 
-my $version 	= "0.0.33 rc180815";
+my $version 	= "0.0.33 rc180828";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -46,13 +46,15 @@ my $fasta;
 my $grna;
 my $fish;
 my $compare;
-my $k_usr;
 my $k 					= 21;
+my $k_usr;
+my $mismatch			= 0;
+my $mismatch_usr;
 my $tool_jellyfish;
 my @seq_usr;
 my $length_threshold	= 100;
 my $length_threshold_usr;
-my $repeat_threshold	= 5;
+my $repeat_threshold	= 10;
 my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
@@ -138,12 +140,13 @@ my $result = GetOptions (	#MAIN
 							
 							#RUN
 							"fasta=s"			=> \$fasta,	
-							"grna=s"			=> \$grna,
+							"grna"				=> \$grna,
 							"fish"				=> \$fish,
 							"compare"			=> \$compare,
 							"kindex=s{1,}"		=> \@multi_kindex,
 							"rept=i"			=> \$repeat_threshod_usr,
-							"minl=i"			=> \$length_threshold_usr,							
+							"minl=i"			=> \$length_threshold_usr,
+							"m=i"				=> \$mismatch,							
 											
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
@@ -250,6 +253,7 @@ $HASH_info{"expert setting kmasker"}= $expert_setting_kmasker;
 $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
 $HASH_info{"expert setting blast"}	= $expert_setting_blast;
 $HASH_info{"size"}					= $size;
+$HASH_info{"krisp mismatch"}		= $mismatch;
 
 
 ########
@@ -396,7 +400,7 @@ if(defined $run){
 	#CRISPR design modul
 	if(defined $grna){
 		if(exists $HASH_repository_kindex{$kindex}){
-			&run_gRNA($kindex, $grna, \%HASH_repository_kindex);
+			&run_gRNA($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
 		}
 		exit();	
 	}
@@ -414,7 +418,7 @@ if(defined $run){
 					$repeat_threshold = 10;
 				}				
 				if(defined $length_threshold_usr){
-					if($length_threshold < 500){
+					if($length_threshold < 2500){
 						print "\n WARNING: Provided length is too small for proper FISH candidate sequence. Setting '--minl' to 2500 bp!\n\n";
 						$length_threshold = 2500;
 					}else{
@@ -906,8 +910,8 @@ sub check_settings(){
 			exit(0);
 		}
 		
-		if(!(defined $fasta)){
-			print "\n .. kmasker was stopped: no sequence provided (--fasta) !";
+		if(((!defined $fasta)&&(!defined $grna))){
+			print "\n .. kmasker was stopped: no sequence provided (either '--fasta' or '--grna') !";
 			print "\n\n";
 			exit(0);
 		}
@@ -1545,6 +1549,11 @@ sub intro_call(){
 	#THREADS
 	if(defined $foldchange_usr){
 		$foldchange = $foldchange_usr;
+	}
+	
+	#MISMATCH
+	if(defined $mismatch_usr){
+		$mismatch = $mismatch_usr;
 	}
 
 }

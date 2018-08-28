@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.30 rc180813";
+my $version_PM_run 	= "0.0.31 rc180828";
 
 ## subroutine
 #
@@ -186,8 +186,8 @@ sub run_kmasker_MK{
 	print "\n";
 	
 	#ADD info
-	my @ARRAY_occ = ();
-	
+	my @ARRAY_occ 	= ();
+	my $global_k;
 	
 	
 	for(my $i=0;$i<scalar(@ARRAY_kindex);$i++){
@@ -198,6 +198,15 @@ sub run_kmasker_MK{
    		my $seq_depth			= $HASH_info_this{"sequencing depth"};
 		my $k					= $HASH_info_this{"k-mer"};	
 		my $threads				= $HASH_info_this{"threads"};
+		
+		if(!defined $global_k){
+			$global_k = $k;
+		}else{
+			if($global_k ne $k){
+				print "\n WARNING: You are using/comparing KINDEX with differnt k-mer size!!! This is not recommended!!!\n\n";
+			}
+		}
+		
 		print "\n .. starting multi kindex processing on ".$kindex."\n\n";
    		   		
    		#READ repository.info   		
@@ -308,7 +317,7 @@ sub run_kmasker_MK{
      }
 
     #CALL comparative methods
-    system("$path/OCC_compare.pl --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
+    system("$path/OCC_compare.pl --k ".$global_k." --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
     if($verbose) {
       	print "\nOutput of external commands was written to log.txt\n";
     }
@@ -323,12 +332,16 @@ sub run_gRNA(){
 	my $kindex_this = $_[0];
 	my $gRNA		= $_[1];
 	my $href_repo	= $_[2];
+	my $href_info	= $_[3];
 		
 	#GET INFO
 	my $path 					= dirname abs_path $0;	
 	my %HASH_repository_kindex 	= %{$href_repo};
+	my %HASH_info_this		 	= %{$href_info};
 	my @ARRAY_repository 		= split("\t", $HASH_repository_kindex{$kindex_this});
 	my $absolut_path			= $ARRAY_repository[4];
+	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
+	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
 		
 	print "\n\n ... start Kmasker gRNA module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
@@ -337,9 +350,18 @@ sub run_gRNA(){
 	}else{
 		print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 		exit();
-	}	
-	system("$path/crispr.py ".$kindex_this." ".$gRNA);	
+	}
+	
+	#SINGLE SEQ
+	# not activated in Kmasker
+	# system("python3.5 ".$path."/krispr.py single -q ".$gRNA_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
+	
+	#MULTI FASTA
+	system("python3.5 ".$path."/krispr.py multi -q ".$gRNA." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t");
 	print "\n\n ... Kmasker gRNA module finished \n";
+	
+	#CLEAN
+	system("rm ".$full_kindex_name);
 }
 
 
