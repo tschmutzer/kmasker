@@ -68,7 +68,7 @@ Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 ## [RUN]:
 
-The run module starts the core process of Kmasker. There are three general options. 1.) Analyse input with SINGLE or MULTIPLE k-mer index structures, 2) perform a comparative analysis searching for differences in applied k-mer index structures and 3) analysis of short sequence probes for its genome-wide specificity.
+The run module starts the core process of Kmasker. There are four general options: 1) basic k-mer analysis with SINGLE or MULTIPLE index structures, 2) screen a sequence for candidates applicable in 'fluorescent in situ hybridization' (FISH) 3) perform a comparative analysis searching for differences in applied k-mer index structures and 4) analysis of short sequence probes for its genome-wide specificity.
 
 #### SINGLE or MULTIPLE
 
@@ -80,7 +80,7 @@ Kmasker --run --fasta query.fasta --kindex At1 Hv1
 
 Kmasker --run --fish --fasta query.fasta --kindex At1
 
-Check input sequence for long sequence stretches with low repetitiveness. As a results candidate sequences with good target specififity and functionality are selected.
+Check input sequence for long sequence stretches with low repetitiveness. As a results candidate sequences with good target specificity and functionality are selected.
 
 #### gRNA
 
