@@ -1,7 +1,7 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.26 rc180802)
+ (version:  0.0.27 rc180828)
 
 ## Description:
 
@@ -84,7 +84,7 @@ Check input sequence for long sequence stretches with low repetitiveness. As a r
 
 #### gRNA
 
-Kmasker --run --grna candidate_gRNA.fasta --kindex Hv1
+Kmasker --run --grna --fasta candidate_gRNA.fasta --kindex Hv1
 
 Check a set of gRNAs for their specificity in CRISPR/cas application. As a result for each given gRNA a score is calculated reflecting its target specififity. 
 
