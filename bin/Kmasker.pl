@@ -46,6 +46,7 @@ my $fasta;
 my $grna;
 my $fish;
 my $compare;
+my $bed;
 my $k 					= 21;
 my $k_usr;
 my $mismatch			= 0;
@@ -192,6 +193,7 @@ my $result = GetOptions (	#MAIN
 							"config_kmasker=s"			=> \$expert_config_kmasker,
 							"config_blast=s"			=> \$expert_config_blast,
 							"force"						=> \$force,
+							"bed"						=> \$bed,
 							
 							#Houskeeping
 							"keep_tmp"					=> \$keep_temporary_files,
@@ -248,6 +250,7 @@ $HASH_info{"MK_percent_gapsize"}	= $MK_percent_gapsize;
 $HASH_info{"MK_min_seed"}			= $MK_min_seed;
 $HASH_info{"MK_min_gff"}			= $MK_min_gff;
 $HASH_info{"bed"}					= 0;
+$HASH_info{"bed"}					= 1 if(defined $bed);
 $HASH_info{"fold-change"}			= $foldchange;
 $HASH_info{"expert setting kmasker"}= $expert_setting_kmasker; 
 $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
@@ -1656,6 +1659,7 @@ sub help(){
 	print "\n\t\t\t\t for index construction)";
 	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
 	print "\n --threads\t\t\t set number of threads [4]";
+	print "\n --bed\t\t\t force additional BED output [off]";
 	
 	print "\n\n";
 	exit();

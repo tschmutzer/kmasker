@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.31 rc180828";
+my $version_PM_run 	= "0.0.31 rc180830";
 
 ## subroutine
 #
@@ -81,6 +81,17 @@ sub run_kmasker_SK{
             print "\n .. please provide a bug report!\n\n";
             exit();
         }
+        
+        #BED
+		if($bed eq "1"){
+		   	#BED format output is activated
+		  	my @HELP = split(".", $fasta);
+		   	pop @HELP;
+		   	my $name = join(".", @HELP);		   	
+		   	print "\n NAME = ".$name;		   	
+		   	system("OCC2BED.pl --occ KMASKER_".$kindex."_NORM"."_".$name.".occ --rept ".$rept." >>log.txt 2>&1");		
+   		}
+   		        
         mkdir($temp_path, 0775);
        
         #make tab from masked fasta
@@ -231,6 +242,12 @@ sub run_kmasker_MK{
 				print "\n NAME = ".$name."\n";
 				push(@ARRAY_occ, "KMASKER_".$kindex."_NORM"."_".$name.".occ");
 				
+				#BED
+				 if($bed eq "1"){
+			    	#BED format output is activated
+			    	system("OCC2BED.pl --occ KMASKER_".$kindex."_NORM"."_".$name.".occ --rept ".$rept." >>log.txt 2>&1");		
+   				}
+				
 				#clean
     			system("rm ".$full_kindex_name);
 				
@@ -343,6 +360,9 @@ sub run_gRNA(){
 	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
 	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
 		
+	#SETUP
+	system("cp ".$path."/data.RData .");
+		
 	print "\n\n ... start Kmasker gRNA module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
 	if(-e $absolut_path.$full_kindex_name){
@@ -361,7 +381,7 @@ sub run_gRNA(){
 	print "\n\n ... Kmasker gRNA module finished \n";
 	
 	#CLEAN
-	system("rm ".$full_kindex_name);
+	system("rm ".$full_kindex_name." data.RData");
 }
 
 

@@ -6,8 +6,8 @@ use POSIX;
 
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # date:         2018_08_13
-# last update:	2018_08_14
-my $version = "0.0.4 rc180814";
+# last update:	2018_08_29
+my $version = "0.0.4 rc180829";
 #+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 my $occ;
@@ -48,9 +48,11 @@ print "\n .. finished calculation";
 sub calculate_avg(){
 	
 	if(!defined $outname){
-		$outname = "KMASKER_average_".$occ;
+		my $name = $occ;
+		$name =~ s/^KMASKER_//;
+		$outname = "KMASKER_average_".$name;
 		if(defined $max){
-			$outname = "KMASKER_average_m".$max."_".$occ;
+			$outname = "KMASKER_average_m".$max."_".$name;
 		}
 	}
 	
