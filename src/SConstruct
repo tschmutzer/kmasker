@@ -1,6 +1,6 @@
 import os
 env = Environment(ENV = os.environ)
-cxxflags=''
-cxxflags=cxxflags+' -std=c++0x -Wall -O3'
-env.Append(CXXFLAGS=cxxflags)
+cxxflags=env['ENV']['CXXFLAGS']
+cxxflags=cxxflags+' -std=c++0x -Wall'
+env.Append(CXXFLAGS = cxxflags)
 env.Program(target = 'cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'])
