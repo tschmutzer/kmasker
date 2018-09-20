@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 LOCATION=$(dirname `which $0`)
-cp $LOCATION/init.sh .
-./init.sh
-rm -f init.sh
+if [ -f ~/.kmasker_user.config ]; then
+ 	source <(grep "^export " ~/.kmasker_user.config)
+fi
 $LOCATION/Kmasker.pl $@
