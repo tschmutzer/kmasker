@@ -32,6 +32,7 @@ sub build_kindex_jelly{
 	my %HASH_repo		= %{$href_repos};
 	my %HASH_path		= %{$href_path};
 	my $path_fastqstats	= $HASH_path{"fastq-stats"};
+	my $path_jellyfish      = $HASH_path{"jellyfish"};
 		
 	#LOAD info
 	if(defined $build_config){
@@ -100,20 +101,22 @@ sub build_kindex_jelly{
 	#CHECK suffix 
 	my ($ext) = $seq =~ /(\.[^.]+)$/;
 	if($ext =~ /gz$/){
-		push(@ARRAY_shell, "zcat ".$seq." | jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly);
+		push(@ARRAY_shell, "zcat ".$seq." | $path_jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly);
 	}else{
-		push(@ARRAY_shell, "jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq);
+		push(@ARRAY_shell, "$path_jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq);
 	}
 		
 	#CREATE BUILD script
-	system("cp ".$path."/.kmasker_background_process .");
-	my $BASH 	= new IO::File(".kmasker_background_process", '>>') or die "could not write shell script: $!\n";
-	#print $BASH "#!/bin/sh\n";
+	#system("cp ".$path."/.kmasker_background_process .");
+	
+	my $BASH 	= new IO::File(".kmasker_background_process", '>') or die "could not write shell script: $!\n";
+	print $BASH "#!/bin/sh\n";
 	foreach my $call (@ARRAY_shell){
 		print $BASH "{ ".$call." ;} &\n";
 	}
 	print $BASH "wait\n";
 	$BASH->close();
+	chmod(0775, ".kmasker_background_process");
 	system("./.kmasker_background_process");	
 		
 	system("cp ./.kmasker_background_process build_command.sh") if(defined $HASH_info{"verbose"});
