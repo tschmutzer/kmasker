@@ -53,9 +53,7 @@ sub build_kindex_jelly{
 		%HASH_info = %{$href_info_update};
 		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
-	
-	#
-	if(!-e "repository_".$HASH_info{"kindex name"}.".info"){
+	else{
 		&make_minimal_info_config(\%HASH_info);
 		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
