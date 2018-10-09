@@ -1379,7 +1379,7 @@ sub read_repository(){
 	close $DIR_P;
 	
 	#EXTERNAL
-	if($PATH_kindex_external !~ /^\/$/){
+	if($PATH_kindex_external !~ /^(\/)$|^(\s)$|^()$/){
 	# EXTERNAL PATH is set
 		
 		opendir( my $DIR_E, $PATH_kindex_external ) or die "Can not open \'$PATH_kindex_external\' (external path)\n";
