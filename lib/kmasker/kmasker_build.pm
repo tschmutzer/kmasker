@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.9 rc180803";
+my $version_PM_build 	= "0.0.10 rc181022";
 
 
 sub build_kindex_jelly{	
@@ -32,7 +32,7 @@ sub build_kindex_jelly{
 	my %HASH_repo		= %{$href_repos};
 	my %HASH_path		= %{$href_path};
 	my $path_fastqstats	= $HASH_path{"fastq-stats"};
-	my $path_jellyfish      = $HASH_path{"jellyfish"};
+	my $path_jellyfish  = $HASH_path{"jellyfish"};
 		
 	#LOAD info
 	if(defined $build_config){
@@ -66,6 +66,7 @@ sub build_kindex_jelly{
 	my $path			= $HASH_info{"path_bin"};
 	my $threads			= $HASH_info{"threads"};
 	my $size			= $HASH_info{"size"};
+	my $seq_type		= $HASH_info{"sequence type"};
 	
 	#LOAD expert setting for build
 	my $setting = "-s ".$size."G -t ".$threads;	#server setting
@@ -93,6 +94,9 @@ sub build_kindex_jelly{
 	}
 	
 	#BUILD JELLY index	
+	if($seq_type eq "reads"){
+		$setting .= " -C"
+	}
 	print "\n ... start construction of kindex with the following parameters ".$setting." \n";
 	my $FILE_jelly = "KINDEX_".$HASH_info{"kindex name"}.".jf";
 	

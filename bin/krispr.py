@@ -23,8 +23,8 @@ def get_probes_from_seq(sequence):
 	positions = [m.start() for m in pam.finditer(sequence)]
 	probes = []
 	for i in positions:
-		if i > 20:
-			probes.append(sequence[(i - 20):(i + 4)])
+		if i > 21:
+			probes.append(sequence[(i - 21):(i + 4)])
 		else:
 			continue
 	return probes
@@ -44,7 +44,7 @@ def calc_ent(probe):
 def kmer_complexity(probe):
 	p = Profile.from_sequences([probe], 3)
 	counts = p.counts
-	score = np.count_nonzero(counts == 1) / (len(counts) + 0.0)
+	score = np.count_nonzero(counts == 1) / (len(probe) - 2.0)
 	return score
 
 def make_eff_prediction(score, GC_all, GC_one, GC_two, ent, complexity, mismatches, coverage):
@@ -174,12 +174,12 @@ def calculate_values(probe, kindex, mutations, coverage, threads):
 
 if __name__ == "__main__":	
 	parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-	parser.add_argument("mode", help="single or multi; if multi all targets in a fasta file are being searched and analyzed", choices=['single', 'multi'])
+	parser.add_argument("mode", help="single: only 1 target is analyzed; multi: all targets in a fasta file are being searched and analyzed", choices=['single', 'multi'])
 	parser.add_argument("-j", "--jelly_db", help="the jellyfish database file (.jf)", required = True)
 	parser.add_argument("-q", "--query", help="target sequence to analyze; when mode is single: must be the target string; when mode is multi: must be a fasta file", required = True)
 	parser.add_argument("-m", "--mismatches", help="number of mismatches to search", default = 3, type = int, choices=[0,1,2,3])
 	parser.add_argument("-c", "--coverage", help="coverage of the jelly db", default = 1, type = int)
-	parser.add_argument("--threads", help="threads to use for search", default = 1, type = int)
+	parser.add_argument("--threads", help=argparse.SUPPRESS, default = 1, type = int) #"threads to use for search"
 	parser.add_argument("-t", "--tabular", help="tabular output; when mode is multi, output is always tabular", action='store_true')
 	args = parser.parse_args()
 	

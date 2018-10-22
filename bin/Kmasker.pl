@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 
-my $version 	= "0.0.33 rc180828";
+my $version 	= "0.0.34 rc182210";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -26,6 +26,8 @@ my $explore;
 my $repositories;
 my $build_config;
 my $make_config;
+my $seq_type 			= "reads";
+my $seq_type_usr;
 my $genome_size;
 my $genome_size_usr;
 my $common_name 		= "";
@@ -137,6 +139,7 @@ my $result = GetOptions (	#MAIN
 							"cn=s"				=> \$common_name_usr,
 							"in=s"				=> \$index_name_usr,
 							"config=s"			=> \$build_config,
+							"as"				=> \$seq_type_usr,
 							"make_config"		=> \$make_config,							
 							
 							#RUN
@@ -234,6 +237,11 @@ if(defined $threads_usr){
 #index name
 if(defined $index_name_usr){
 	$index_name = $index_name_usr;
+}
+
+#sequence type 
+if(defined $seq_type_usr){
+	$seq_type = "assembly";
 }
 
 ########
@@ -360,7 +368,7 @@ if(defined $build){
 	$HASH_info{"version BUILD"} 		= "";
 	$HASH_info{"status"}				= "";
 	$HASH_info{"scientific name"}		= "";
-	$HASH_info{"sequence type"}			= "";
+	$HASH_info{"sequence type"}			= $seq_type;
 	$HASH_info{"general notes"}			= "";
 	$HASH_info{"type"}					= "";
 	$HASH_info{"sequencing depth"}		= "";
@@ -1582,6 +1590,8 @@ sub help(){
 		print "\n --gs\t\t genome size of species (in Mbp)";
 		print "\n --in \t\t provide k-mer index name (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
 		print "\n --cn \t\t provide common name of species (e.g. barley)";
+		print "\n --as \t\t input is of sequence type 'assembly'. Set this option if your input is based on ";
+		print "\n      \t\t assembled sequences (e.g. genome reference). Default sequence type is 'reads'.";
 		
 		print "\n\n";
 		exit();
@@ -1659,7 +1669,7 @@ sub help(){
 	print "\n\t\t\t\t for index construction)";
 	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
 	print "\n --threads\t\t\t set number of threads [4]";
-	print "\n --bed\t\t\t force additional BED output [off]";
+	print "\n --bed\t\t\t\t force additional BED output [off]";
 	
 	print "\n\n";
 	exit();
