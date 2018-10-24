@@ -23,8 +23,8 @@ def get_probes_from_seq(sequence):
 	positions = [m.start() for m in pam.finditer(sequence)]
 	probes = []
 	for i in positions:
-		if i > 21:
-			probes.append(sequence[(i - 21):(i + 4)])
+		if i >= 20:
+			probes.append(sequence[(i - 20):(i + 4)])
 		else:
 			continue
 	return probes
@@ -49,7 +49,7 @@ def kmer_complexity(probe):
 
 def make_eff_prediction(score, GC_all, GC_one, GC_two, ent, complexity, mismatches, coverage):
 	values = [str(x) for x in [score, score, score, score, GC_all, GC_one, GC_two, complexity, ent, mismatches, coverage]]
-	all = "Rscript " + "models.R " + ' '.join(values)
+	all = "Rscript " + "models_krispr.R " + ' '.join(values)
 	#print(all)
 	proc = subprocess.Popen([all], shell=True, stdout=subprocess.PIPE)
 	#proc.wait()

@@ -14,7 +14,7 @@ use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_extern
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 
-my $version 	= "0.0.34 rc182210";
+my $version 	= "0.0.34 rc181023";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -30,6 +30,8 @@ my $seq_type 			= "reads";
 my $seq_type_usr;
 my $genome_size;
 my $genome_size_usr;
+my $scientific_name 	= "";
+my $scientific_name_usr;
 my $common_name 		= "";
 my $common_name_usr ;
 my $index_name;
@@ -136,6 +138,7 @@ my $result = GetOptions (	#MAIN
 							"seq=s{1,}"   		=> \@seq_usr,  			# provide the fasta or fastqfile
 							"k=i"				=> \$k_usr,
 							"gs=i"				=> \$genome_size_usr,
+							"sn=s"				=> \$scientific_name_usr,
 							"cn=s"				=> \$common_name_usr,
 							"in=s"				=> \$index_name_usr,
 							"config=s"			=> \$build_config,
@@ -306,6 +309,11 @@ if(defined $common_name_usr){
 	$common_name = $common_name_usr;
 }
 
+#scientific name
+if(defined $scientific_name_usr){
+	$scientific_name = $scientific_name_usr;
+}
+
 #k-mer size
 if(defined $k_usr){
 	if($k_usr =~ /^[+-]?\d+$/){
@@ -367,7 +375,7 @@ if(defined $build){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
 	$HASH_info{"status"}				= "";
-	$HASH_info{"scientific name"}		= "";
+	$HASH_info{"scientific name"}		= $scientific_name;
 	$HASH_info{"sequence type"}			= $seq_type;
 	$HASH_info{"general notes"}			= "";
 	$HASH_info{"type"}					= "";

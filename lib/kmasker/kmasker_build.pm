@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.10 rc181022";
+my $version_PM_build 	= "0.0.10 rc181023";
 
 
 sub build_kindex_jelly{	
@@ -411,6 +411,10 @@ sub read_config(){
 				print "\n\n WARNING: Kmasker (build) was stopped!!!\
 					     \n Missing information in configuration!\n\n";
 				exit(0);
+			}
+			
+			if($HASH_info_this{"sequence type"} ne "assembly"){
+				$HASH_info_this{"sequence type"} = "reads";
 			}
 			
 			#CEHCK for extisting entry

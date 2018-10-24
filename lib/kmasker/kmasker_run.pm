@@ -20,7 +20,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.31 rc180830";
+my $version_PM_run 	= "0.0.32 rc181024";
 
 ## subroutine
 #
@@ -359,10 +359,13 @@ sub run_gRNA(){
 	my $absolut_path			= $ARRAY_repository[4];
 	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
 	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
+	my $OUT_krispr				= "KMASKER_krispr_results.txt";
+	
 		
 	#SETUP
-	system("cp ".$path."/data.RData .");
-		
+	system("cp ".$path."/data_krispr.RData .");
+	system("cp ".$path."/models_krispr.R .");
+			
 	print "\n\n ... start Kmasker gRNA module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
 	if(-e $absolut_path.$full_kindex_name){
@@ -377,11 +380,11 @@ sub run_gRNA(){
 	# system("python3.5 ".$path."/krispr.py single -q ".$gRNA_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
 	
 	#MULTI FASTA
-	system("python3.5 ".$path."/krispr.py multi -q ".$gRNA." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t");
+	system("python3.5 ".$path."/krispr.py multi -q ".$gRNA." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >&".$OUT_krispr);
 	print "\n\n ... Kmasker gRNA module finished \n";
 	
 	#CLEAN
-	system("rm ".$full_kindex_name." data.RData");
+	system("rm ".$full_kindex_name." data_krispr.RData models_krispr.R");
 }
 
 

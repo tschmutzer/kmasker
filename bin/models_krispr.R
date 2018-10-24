@@ -1,4 +1,4 @@
-load("data.RData")
+load("data_krispr.RData")
 options(warn=-1)
 
 
