@@ -6,30 +6,51 @@ use Exporter qw(import);
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(read_write_repository Xtract add_annotation);
-our @EXPORT_OK = qw(read_write_repository Xtract add_annotation);
+our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation);
+our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation);
 
 
 ## VERSION
-my $version_PM_functions 	= "0.0.2 rc180802";
+my $version_PM_functions 	= "0.0.2 rc181025";
 
-sub add_repository {
+#sub add_repository {
    # function adds local repository to global shared repository 
-}
+#}
 
 
-sub show_repository {
+#sub show_repository {
    # return list of available k-mer indices
    
    
-}
+#}
 
-sub read_write_repository {
+#sub read_write_repository {
 	#read config 
 	
-	my $usr = `echo \$USER`;
-	print "\n USER is: ".$usr;
+#	my $usr = `echo \$USER`;
+#	print "\n USER is: ".$usr;
 	
+#}
+
+sub fasta_to_uppercase {
+	my $fasta 		= $_[0];
+	open( my $inFASTA, "<", "$fasta");
+	(my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
+	open( my $newFASTA, ">", $path . "/UC_" . $name . $suffix);
+	my %seqdata; 	
+	while(read_sequence($inFASTA, \%seqdata)) {
+		
+		my $id 			= $seqdata{header};
+		my $seq			= $seqdata{seq};
+		print $newFASTA ">$id\n ." uc($seq) ."\n";
+
+   				
+	}	
+		   
+   	close($inFASTA);
+	close($newFASTA);
+	return( $path . "/UC_" . $name . $suffix);
+
 }
 
 sub add_annotation {
