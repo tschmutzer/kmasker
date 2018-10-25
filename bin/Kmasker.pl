@@ -5,8 +5,8 @@ use IO::File;
 use Getopt::Long;
 use Digest::MD5 qw(md5 md5_hex md5_base64);
 #setup package directory
-use File::Basename qw(dirname);
-use Cwd  qw(abs_path);
+use File::Basename;
+use Cwd  qw(abs_path getcwd);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
@@ -1485,6 +1485,13 @@ sub intro_call(){
 			print "\n .. process stopped! \n\n";		
 			exit();	
 		}
+		my $cwd = getcwd();
+		my $filename = fileparse($fasta);
+		if(!(-e $cwd . "/" . $filename)) {
+			symlink($fasta, $cwd . "/" . $filename);
+			$fasta = $filename;
+		}
+
 	}
 	
 	#CHECK existence of SEQ
