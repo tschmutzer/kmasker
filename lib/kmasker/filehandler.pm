@@ -310,7 +310,7 @@ sub tab_to_gff {
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
-            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
             if($lengthcheck==1){
                print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             }
