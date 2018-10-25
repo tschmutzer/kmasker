@@ -18,13 +18,13 @@ def get_seqs_from_fasta(sequence_path):
 		seqs.append([x.id, str(x.seq)])
 	return seqs
 
-def get_probes_from_seq(sequence):
+def get_probes_from_seq(sequence, length):
 	pam = re.compile("[ATGC]GG")
 	positions = [m.start() for m in pam.finditer(sequence)]
 	probes = []
 	for i in positions:
-		if i >= 20:
-			probes.append(sequence[(i - 20):(i + 4)])
+		if i >= length:
+			probes.append(sequence[(i - length):(i + 4)])
 		else:
 			continue
 	return probes
@@ -181,12 +181,16 @@ if __name__ == "__main__":
 	parser.add_argument("-c", "--coverage", help="coverage of the jelly db", default = 1, type = int)
 	parser.add_argument("--threads", help=argparse.SUPPRESS, default = 1, type = int) #"threads to use for search"
 	parser.add_argument("-t", "--tabular", help="tabular output; when mode is multi, output is always tabular", action='store_true')
+	parser.add_argument("-l", "--length", help="the length of the target sequence", default = 20, type = int, choices = [19,20,21])
 	args = parser.parse_args()
 	
 	print("\nThis is KRISPR -- CRISPR offtarget and efficiency prediction with k-mers", file=sys.stderr)
 	print("\nDisclaimer: These values are only predictions and can not be taken as ground truth.\n\n", file=sys.stderr)
 	
-	if args.mode == "single":	
+	if args.mode == "single":
+		if len(args.query) != args.length+4:
+			print("Sequence matches not the given length")
+			exit(1)
 		if args.tabular == True:
 			print("target\tscore\tGC_all\tGC_dist\tGC_prox\tent\tcomplexity\tstart_AG\tPAMX_G\te_eff", file=sys.stderr)
 			res = [str(x) for x in calculate_values(args.query, args.jelly_db, args.mismatches, args.coverage, args.threads)]
@@ -214,7 +218,14 @@ if __name__ == "__main__":
 		print("seqid\ttarget\tscore\tGC_all\tGC_dist\tGC_prox\tent\tcomplexity\tstart_AG\tPAMX_G\te_eff", file=sys.stderr)
 		
 		for sq in get_seqs_from_fasta(args.query):
-			for q in get_probes_from_seq(sq[1]):
+			if len(sq[1]) < args.length+4:
+				print(sq[0] + '\t' + '\t'.join(['--' for _ in range(0,7)]))
+				continue
+			pfs = get_probes_from_seq(sq[1], args.length)
+			if not pfs:
+                        	print(sq[0] + '\t' + '\t'.join(['-' for _ in range(0,7)]))
+                        	continue
+			for q in pfs:
 				res = [str(x) for x in calculate_values(q, args.jelly_db, args.mismatches, args.coverage, args.threads)]
 				e_eff = make_eff_prediction(res[1], res[2], res[3], res[4], res[5], res[6], args.mismatches, args.coverage)
 				print(sq[0] + '\t' + '\t'.join(res) + '\t' + str(e_eff))
