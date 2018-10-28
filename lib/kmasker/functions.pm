@@ -42,7 +42,7 @@ sub fasta_to_uppercase {
 		
 		my $id 			= $seqdata{header};
 		my $seq			= $seqdata{seq};
-		print $newFASTA ">$id\n ." uc($seq) ."\n";
+		print $newFASTA ">$id\n" . uc($seq) ."\n";
 
    				
 	}	

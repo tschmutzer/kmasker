@@ -13,7 +13,7 @@ use lib dirname(dirname abs_path $0) . '/lib';
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
-use kmasker::functions qw(fasta_to_uppercase)
+use kmasker::functions qw(fasta_to_uppercase);
 
 my $version 	= "0.0.34 rc181023";
 my $path 		= dirname abs_path $0;		
