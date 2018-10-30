@@ -3,4 +3,5 @@ LOCATION=$(dirname `which $0`)
 if [ -f ~/.kmasker_user.config ]; then
  	source <(grep "^export " ~/.kmasker_user.config)
 fi
+export PATH=$LOCATION:$PATH
 $LOCATION/Kmasker.pl $@

@@ -463,7 +463,18 @@ sub add_annotation_to_gff{
          $blastresults{$line[0]} = \@line;
       }
       else{
-         print "Please run blast with -max_targer_seqs=1. I will skip all entries except the first one\n";
+         my $old_eval = @{$blastresults{$line[0]}}[10];
+         my $old_bit = @{$blastresults{$line[0]}}[11];
+         my $new_eval = $line[10];
+         my $new_bit = $line[11];
+         if($new_eval < $old_eval) {
+            $blastresults{$line[0]} = \@line;
+         }
+         elsif($new_eval == $old_eval) {
+            if($new_bit > $old_bit) {
+                $blastresults{$line[0]} = \@line;
+            }
+         }
       }
    }
    print $gff_out "##gff-version 3\n";

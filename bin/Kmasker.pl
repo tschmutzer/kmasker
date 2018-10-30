@@ -585,7 +585,7 @@ if(defined $explore){
 		if($check_settings eq ""){
     		$HASH_db{"db_fasta"} 	= $dbfasta if(defined $dbfasta);
     		$HASH_db{"db"} 			= $blastableDB if(defined $blastableDB);
-			&custom_annotation($fasta, $gff, $feature ,\%HASH_db, \%HASH_info);
+			&custom_annotation($fasta, $gff, $feature ,\%HASH_db, \%HASH_info, \%HASH_path);
 		}else{
 			print "\n WARNING: Required parameter are missing.";
 			print "\n WARNINGS are ".$check_settings;
@@ -1303,6 +1303,31 @@ sub read_user_config(){
 					system("which ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 				}
 				print "\n gffread=".$HASH_path{"gffread"}."\n" if(defined $verbose);
+			}
+			#BLAST
+			if($line =~ /^blastn=/){
+				my @ARRAY_tmp = split("=", $line);
+				if(!defined $ARRAY_tmp[1]){
+					system("which blastn >/dev/null 2>&1 ||  echo >&2 \"Kmasker requires partly BLAST but it's not installed! You can not use the explore function.\"");
+					$HASH_path{"blast"} = `which blastn`;
+					$HASH_path{"blast"} =~ s/\n//;
+				}else{
+					$HASH_path{"blast"} = $ARRAY_tmp[1];
+					system("which ".$HASH_path{"blast"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires blast but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+				}
+				print "\n blast=".$HASH_path{"blast"}."\n" if(defined $verbose);
+			}
+			if($line =~ /^makeblastdb=/){
+				my @ARRAY_tmp = split("=", $line);
+				if(!defined $ARRAY_tmp[1]){
+					system("which makeblastdb >/dev/null 2>&1 || echo >&2 \"Kmasker may requires makeblastdb but it's not installed! You can not use the explore function without exisiting blast dbs.\"");
+					$HASH_path{"makeblastdb"} = `which makeblastdb`;
+					$HASH_path{"makeblastdb"} =~ s/\n//;
+				}else{
+					$HASH_path{"makeblastdb"} = $ARRAY_tmp[1];
+					system("which ".$HASH_path{"makeblastdb"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires makeblastdb but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+				}
+				print "\n makeblastdb=".$HASH_path{"makeblastdb"}."\n" if(defined $verbose);
 			}
 		}
 	}

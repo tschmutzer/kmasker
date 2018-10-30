@@ -394,9 +394,17 @@ sub custom_annotation{
     my $feature     =   $_[2];
     my $href_DB 	=   $_[3]; 
     my $href_info	=	$_[4];
-    
+    my $href_path	=	$_[5];
+
+
+   	my %HASH_path		= %{$href_path};
     my %HASH_info 	= %{$href_info};
     my %HASH_DB		= %{$href_DB};
+    my $threads = $HASH_info{"threads"};
+    my $temp_dir = $HASH_info{"temp_path"};
+   	my $path_blast  = $HASH_path{"blast"};
+   	my $path_makeblastdb = $HASH_path{"makeblastdb"};
+
     my $db_fasta;
     my $db;
     mkdir($HASH_info{"temp_path"}, 0755);
@@ -415,7 +423,7 @@ sub custom_annotation{
         $db=$dirs."/".$db_prefix.$suffix;
         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("BLASTdb is missing. It will be built now!\n");
-            system("makeblastdb -in \"".$db."\" -dbtype nucl ");
+            system("$path_makeblastdb -in \"".$db."\" -dbtype nucl ");
             print("BLASTdb was built. You can use the path to your fasta just with -db in the future.\n");   
         }
     }
@@ -424,23 +432,31 @@ sub custom_annotation{
     	print   "\n Kmasker was stopped.\n\n";
     	exit();
     }
-    
-    kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
+     kmasker::filehandler::extract_feature_gff($fasta, $gff, $feature, $HASH_info{"temp_path"});
+     if(exists $HASH_info{"user setting blast"}) {
+        my $parameterstring = $HASH_info{"user setting blast"};
+        system("$path_blast -db \"" . $db . "\" -query " . "${temp_dir}/selected_" . $fasta . " -num_threads ".$threads." -outfmt 6 " . $parameterstring . " -ungapped" . "  -out ${temp_dir}/kmasker_blast.txt");
+     }
+     else{
+      	system("$path_blast -db \"" . $db . "\" -query " . "${temp_dir}/selected_" . $fasta . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped" . " -out ${temp_dir}/kmasker_blast.txt");
+     }
+    kmasker::filehandler::add_annotation_to_gff($gff, "${temp_dir}/kmasker_blast.txt");
+    #kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
     (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
-    if(-x "$path/${name}_annotated${suffix}") {
+    if(-e "$path${name}_with_annotation${suffix}") {
     	print("\nIntegration of annotation information in GFF finished!\n");
       	unlink($gff);
-      	system("mv" . " " . "$path/${name}_annotated${suffix}" . " " . $gff);
+      	system("mv" . " " . "$path/${name}_with_annotation${suffix}" . " " . $gff);
       	
-      	my $substring = "_annotated_annotated";
+      	my $substring = "_with_annotation_with_annotation";
       	if($gff =~ /$substring/){
       		my $gff_new = $gff;
-      		$gff_new =~ s/_annotated_annotated/_annotated/;
+      		$gff_new =~ s/_with_annotation_with_annotationd/_with_annotation/;
       		system("mv ".$gff." ".$gff_new);
       	}
     }
     else{
-        print("An annotated GFF was not created. Something went wrong!");
+        print("An annotated GFF was not created ($path${name}_with_annotation${suffix}). Something went wrong!");
     }
 	
 }
