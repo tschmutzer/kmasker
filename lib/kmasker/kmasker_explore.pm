@@ -402,7 +402,7 @@ sub custom_annotation{
     my %HASH_DB		= %{$href_DB};
     my $threads = $HASH_info{"threads"};
     my $temp_dir = $HASH_info{"temp_path"};
-   	my $path_blast  = $HASH_path{"blast"};
+   	my $path_blast  = $HASH_path{"blastn"};
    	my $path_makeblastdb = $HASH_path{"makeblastdb"};
 
     my $db_fasta;

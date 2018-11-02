@@ -3,7 +3,8 @@ use strict;
 use warnings;
 use IO::File;
 use Getopt::Long;
-use Digest::MD5 qw(md5 md5_hex md5_base64);
+#use Digest::MD5 qw(md5 md5_hex md5_base64);
+use File::stat;
 #setup package directory
 use File::Basename;
 use Cwd  qw(abs_path getcwd);
@@ -109,7 +110,7 @@ my $set_external_path;
 my $check_install;
 my $remove_kindex;
 my $set_global;
-my $user_name;
+my $user_name = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
 my $verbose;
 my $temp_path			= "./temp/";
 my $feature 			= "KRC";
@@ -121,6 +122,10 @@ my $expert_setting_blast	= "";
 my $expert_config_kmasker;
 my $expert_config_jelly;
 my $expert_config_blast;
+my $gconf = dirname($path)."/config/kmasker.config";
+my $uconf = $ENV{"HOME"}."/.kmasker_user.config";
+
+
 
 #HASH
 my %HASH_repository_kindex;
@@ -201,7 +206,8 @@ my $result = GetOptions (	#MAIN
 							"config_blast=s"			=> \$expert_config_blast,
 							"force"						=> \$force,
 							"bed"						=> \$bed,
-							
+							"global_conf"				=> \$gconf,
+							"user_conf"					=> \$uconf,
 							#Houskeeping
 							"keep_tmp"					=> \$keep_temporary_files,
 							"verbose"					=> \$verbose,
@@ -872,12 +878,13 @@ sub show_details_for_kindex(){
 #
 sub initiate_user(){
 	
-	$user_name 			= `whoami`;
-	$user_name			=~ s/\n//g;
-	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
+	#$user_name 			= `whoami`;
+	#$user_name			=~ s/\n//g;
+	#my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
 
 	if(-e $uconf){
 		#USER already exists, do nothing
+		print "\n Using $uconf as user configuration. \n" if(defined $verbose);
 	}else{
 		#SETUP user conf
 		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
@@ -952,24 +959,30 @@ sub check_settings(){
 #
 sub check_install(){
 
-	$user_name 			= `whoami`;
-	$user_name			=~ s/\n//g;
-	my $gconf 			= $path."/kmasker.config";
+	#$user_name 			= `whoami`;
+	#$user_name			=~ s/\n//g;
+	#my $gconf 			= $path."/kmasker.config";
 	
 	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
-	my $fp			 =  $path."/kmasker.config";
-	my $installed_by = `stat -c "%U" $fp`;
-	$installed_by =~ s/\n//;
-	if($installed_by ne $user_name){
-		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
-		print "I=(".$installed_by.") U=(".$user_name.")\n";
-		exit();	
+	#my $fp			 =  $path."/kmasker.config";
+	print "\n Global configuration: $gconf\n" if(defined $verbose);
+	if (-e $gconf) {
+		my ($installed_by) = getpwuid(stat($gconf)->uid);
+		#$installed_by =~ s/\n//;
+		if($installed_by ne $user_name){
+			print "\n Your user rights are not sufficient to create or modify this global configuration file.\n";
+			print "I=(".$installed_by.") U=(".$user_name.")\n";
+			exit();	
+		}
 	}
 	
 	#REQUIREMENTs
 	my %HASH_requirments	= (	"jellyfish" => "",
 								"fastq-stats" => "",
-								"gffread" => "");
+								"gffread" => "",
+								"blastn"  => "",
+								"makeblastdb" => "",
+								"R" => "");
 			
 	#SET default path if tool is detected
 	foreach my $tool (keys %HASH_requirments){
@@ -996,7 +1009,10 @@ sub check_install(){
 			
 			$HASH_provided{"jellyfish"} 	= $line if($line =~ /^jellyfish=/);
 			$HASH_provided{"fastq-stats"} 	= $line if($line =~ /^fastq-stats=/);
-			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);			
+			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);
+			$HASH_provided{"blastn"} 	= $line if($line =~ /^blastn=/);
+			$HASH_provided{"makeblastdb"} 	= $line if($line =~ /^makeblastdb=/);
+			$HASH_provided{"R"}		= $line if($line =~ /^R=/);				
 		}
 		
 		
@@ -1009,6 +1025,15 @@ sub check_install(){
 		
 		#GFFREAD
 		$HASH_requirments{"gffread"} = &check_routine_for_requirement("gffread", $HASH_provided{"gffread"}, $HASH_requirments{"gffread"});
+
+		#blastn
+		$HASH_requirments{"blastn"} = &check_routine_for_requirement("blastn", $HASH_provided{"blastn"}, $HASH_requirments{"blastn"});
+		
+		#makeblastdb
+		$HASH_requirments{"makeblastdb"} = &check_routine_for_requirement("makeblastdb", $HASH_provided{"makeblastdb"}, $HASH_requirments{"makeblastdb"});
+		
+		#R
+		$HASH_requirments{"R"} = &check_routine_for_requirement("R", $HASH_provided{"R"}, $HASH_requirments{"R"});
 				
 		#WRITE
 		print $gCFG "#external tool requirements\n";
@@ -1025,7 +1050,10 @@ sub check_install(){
 		$gCFG->close();
 		system("mv ".$gconf.".tmp ".$gconf)	
 
+	} else {
+		
 	}
+	#create global config here
 }
 
 
@@ -1228,18 +1256,34 @@ sub reading_file(){
 	return $readline;
 }
 
+sub check_tool () {
+my $line = $_[0];
+my $tool = $_[1]; 
+if($line =~ /^$tool=/){
+	my @ARRAY_tmp = split("=", $line);
+	if(!defined $ARRAY_tmp[1]){
+		system("which $tool >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+		$HASH_path{"$tool"} = `which $tool`;
+		$HASH_path{"$tool"} =~ s/\n//;
+		}else{
+			$HASH_path{"$tool"} = $ARRAY_tmp[1];
+			system("which ".$HASH_path{"$tool"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
+		}
+		print "\n $tool=".$HASH_path{"$tool"}."\n" if(defined $verbose);
+	}
+}
 
 ## subroutine
 #
 sub read_user_config(){
-	$user_name 			= `whoami`;
-	$user_name			=~ s/\n//g;
-	my $gconf 			= $path."/kmasker.config";
-	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
+	#$user_name 			= `whoami`;
+	#$user_name			=~ s/\n//g;
+	#my $gconf 			= $path."/kmasker.config";
+	#my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
 	
 	if(-e $gconf){
 		#LOAD info for external tools
-		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read user config $!";	
+		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read global config $!";	
 		
 		while(<$gCFG>){
 			next if($_ =~ /^$/);
@@ -1263,72 +1307,13 @@ sub read_user_config(){
 			}		
 			
 			#READ external tool path
-			#JELLYFISH
-			if($line =~ /^jellyfish=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"jellyfish"} = `which jellyfish`;
-					$HASH_path{"jellyfish"} =~ s/\n//;
-				}else{
-					$HASH_path{"jellyfish"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n jellyfish=".$HASH_path{"jellyfish"}."\n" if(defined $verbose);
-			}
-			
-			#FASTQ-STATs
-			if($line =~ /^fastq-stats=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"fastq-stats"} = `which fastq-stats`;
-					$HASH_path{"fastq-stats"} =~ s/\n//;
-				}else{
-					$HASH_path{"fastq-stats"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n fastq-stats=".$HASH_path{"fastq-stats"}."\n" if(defined $verbose);
-			}
-			
-			#GFFREAD
-			if($line =~ /^gffread=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"gffread"} = `which gffread`;
-					$HASH_path{"gffread"} =~ s/\n//;
-				}else{
-					$HASH_path{"gffread"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n gffread=".$HASH_path{"gffread"}."\n" if(defined $verbose);
-			}
-			#BLAST
-			if($line =~ /^blastn=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which blastn >/dev/null 2>&1 ||  echo >&2 \"Kmasker requires partly BLAST but it's not installed! You can not use the explore function.\"");
-					$HASH_path{"blast"} = `which blastn`;
-					$HASH_path{"blast"} =~ s/\n//;
-				}else{
-					$HASH_path{"blast"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"blast"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires blast but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n blast=".$HASH_path{"blast"}."\n" if(defined $verbose);
-			}
-			if($line =~ /^makeblastdb=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which makeblastdb >/dev/null 2>&1 || echo >&2 \"Kmasker may requires makeblastdb but it's not installed! You can not use the explore function without exisiting blast dbs.\"");
-					$HASH_path{"makeblastdb"} = `which makeblastdb`;
-					$HASH_path{"makeblastdb"} =~ s/\n//;
-				}else{
-					$HASH_path{"makeblastdb"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"makeblastdb"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires makeblastdb but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n makeblastdb=".$HASH_path{"makeblastdb"}."\n" if(defined $verbose);
-			}
+			check_tool($line, "jellyfish");
+			check_tool($line, "fastq-stats");
+			check_tool($line, "gffread");
+			check_tool($line, "blastn");
+			check_tool($line, "makeblastdb");
+			check_tool($line, "R");
+
 		}
 	}
 	
@@ -1341,6 +1326,14 @@ sub read_user_config(){
 			my $line = $_;
 			$line =~ s/\n//;
 			my @ARRAY_tmp = split("=", $line);
+
+			check_tool($line, "jellyfish");
+			check_tool($line, "fastq-stats");
+			check_tool($line, "gffread");
+			check_tool($line, "blastn");
+			check_tool($line, "makeblastdb");
+			check_tool($line, "R");
+			
 			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
 			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
 			
@@ -1471,7 +1464,17 @@ sub check_routine_for_requirement(){
 			my $path_check 	= `which $path_given`;
 			$path_check		=~ s/\n$//;
 			if($path_check eq ""){
-				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
+				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";
+				my $path_which = `which $requirement`;
+				$path_which =~ s/\n$//;
+				if($path_which eq "") {
+					print "\n No success! Your configuration for $requirement is might be wrong!\n";
+					print "\n Current path is $default!\n";
+				} else {
+					print "\n Success! Set path for $requirement to $path_which!\n";
+					$default = path_which;
+			    }
+
 			}else{
 				$default = $path_check;
 			}					
