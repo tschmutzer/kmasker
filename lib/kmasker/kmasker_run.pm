@@ -364,7 +364,7 @@ sub run_gRNA(){
 		
 	#SETUP
 	system("cp ".$path."/data_krispr.RData .");
-	system("cp ".$path."/models_krispr.R .");
+	system("cp ".$path."../config/models_krispr.R .");
 			
 	print "\n\n ... start Kmasker gRNA module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
