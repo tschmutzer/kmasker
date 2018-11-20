@@ -10,7 +10,7 @@ use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
 
 my $timestamp = getLoggingTime();
-my $log = "log_" . $timestamp . "_run.txt";
+our $log = "log_" . $timestamp . "_run.txt";
 
 #adapt
 our @ISA = qw(Exporter);
@@ -20,7 +20,7 @@ our @EXPORT = qw(
 	show_version_PM_run
 	$log
 );
-our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
+our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run $log);
 
 
 ## VERSION

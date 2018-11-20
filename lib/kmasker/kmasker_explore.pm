@@ -11,7 +11,7 @@ use Cwd  qw(abs_path);
 use POSIX; 
 
 my $timestamp = getLoggingTime();
-my $log = "log_" . $timestamp . "_explore.txt";
+our $log = "log_" . $timestamp . "_explore.txt";
 
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
