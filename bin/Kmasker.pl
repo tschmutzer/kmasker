@@ -97,7 +97,7 @@ my $barplot;
 my $sws;
 my $max;
 my $bin;
-my $log;
+#my $log;
 #GENERAL parameter
 my $help;
 my $out;
@@ -184,7 +184,7 @@ my $result = GetOptions (	#MAIN
 							"window"			=> \$sws,	
 							"max=i"				=> \$max,	
 							"bin=i"				=> \$bin,
-							"log"				=> \$log,	
+#							"log"				=> \$log,	
 							"xtract"			=> \$xtract,				
 							
 							#GLOBAL
@@ -705,7 +705,7 @@ if(defined $explore){
 				if(defined $list){				
 					if (-e $list) {
    						&plot_histogram_raw($occ, $list, $force) if(defined $hist);
-   						&plot_histogram_mean($occ, $list, $dynamic, $force, $sws, $log) if(defined $histm);
+   						&plot_histogram_mean($occ, $list, $dynamic, $force, $sws) if(defined $histm);
 					}else{
 						$missing_parameter .= " --list (file ".$list." not found)";
 					}				
@@ -718,7 +718,7 @@ if(defined $explore){
 						
 						if(defined $force){
 							&plot_histogram_raw($occ, undef, $force) if(defined $hist);
-							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws, $log) if(defined $histm);
+							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws) if(defined $histm);
 						}else{						
 							print "\n\n WARNING: Your input contains ".$number." sequences. We do not recommend to build more than 10.000 in one step.\n";
 							print     " This might take very long. You can force this by using '--force'. Kmasker has been stopped \n\n";	
@@ -727,7 +727,7 @@ if(defined $explore){
 						}
 					}else{
 							&plot_histogram_raw($occ, undef, undef) if(defined $hist);
-							&plot_histogram_mean($occ, undef, $dynamic, undef, $sws, $log) if(defined $histm);
+							&plot_histogram_mean($occ, undef, $dynamic, undef, $sws) if(defined $histm);
 					}
 					#clean logs
 					#if((! defined $verbose) && -e "log.txt") {

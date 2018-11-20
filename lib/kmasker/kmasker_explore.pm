@@ -40,7 +40,6 @@ sub plot_histogram_mean{
     my $dynamic =   $_[2];
     my $force   =   $_[3];
     my $sws     =   $_[4];
-    my $log     =   $_[5];
     #VAR
     my $arguments = "";
     if(defined $dynamic) {
