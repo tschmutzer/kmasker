@@ -6,8 +6,8 @@ use Exporter qw(import);
 use strict;
 use warnings;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation);
-our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation);
+our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime);
+our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime);
 
 
 ## VERSION
@@ -31,6 +31,14 @@ my $version_PM_functions 	= "0.0.2 rc181025";
 #	print "\n USER is: ".$usr;
 	
 #}
+
+sub getLoggingTime {
+
+    my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime(time);
+    my $nice_timestamp = sprintf ( "%04d%02d%02d_%02d%02d%02d",
+                                   $year+1900,$mon+1,$mday,$hour,$min,$sec);
+    return $nice_timestamp;
+}
 
 sub fasta_to_uppercase {
 	my $fasta 		= $_[0];

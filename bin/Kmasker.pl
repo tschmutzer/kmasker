@@ -5,6 +5,7 @@ use IO::File;
 use Getopt::Long;
 #use Digest::MD5 qw(md5 md5_hex md5_base64);
 use File::stat;
+use File::Copy qw(move);
 #setup package directory
 use File::Basename;
 use Cwd  qw(abs_path getcwd);
@@ -401,6 +402,14 @@ if(defined $build){
 		
 	#QUIT
 	print "\n - Thanks for using Kmasker! -\n\n";
+	if($verbose) {
+        	print "Output of external commands was written to kmasker::kmasker_explore::$log and kmasker::kmasker_run::$log\n";
+        }
+    else{
+        	unlink("kmasker::kmasker_explore::$log");
+        	unlink("kmasker::kmasker_run::$log");
+
+        }
 	exit();
 }
 
@@ -721,9 +730,9 @@ if(defined $explore){
 							&plot_histogram_mean($occ, undef, $dynamic, undef, $sws, $log) if(defined $histm);
 					}
 					#clean logs
-					if((! defined $verbose) && -e "log.txt") {
-						unlink("log.txt");
-					}
+					#if((! defined $verbose) && -e "log.txt") {
+					#	unlink("log.txt");
+					#}
 				}
 			}
 			
@@ -996,8 +1005,8 @@ sub check_install(){
 	#GLOBAL
 	if(-e $gconf){
 		#LOAD global info
-		my $gCFG_old 	= new IO::File($gconf, "r") or die "\n unable to read user config $!";	
-		my $gCFG 		= new IO::File($gconf.".tmp", "w") or die "\n unable to update user config $!";
+		my $gCFG_old 	= new IO::File($gconf, "r") or die "\n unable to read global config $!";	
+		my $gCFG 		= new IO::File($gconf.".tmp", "w") or die "\n unable to update global config $!";
 		
 		my %HASH_provided = ();
 		while(<$gCFG_old>){
@@ -1048,12 +1057,43 @@ sub check_install(){
 		print "\n\n";
 		$gCFG_old->close();
 		$gCFG->close();
-		system("mv ".$gconf.".tmp ".$gconf)	
+		#system("mv ".$gconf.".tmp ".$gconf)	
+		move "$gconf.tmp", $gconf;
 
-	} else {
+	} else { #global config is missing
+		my $gCFG 		= new IO::File($gconf, "w") or die "\n unable to create global config $!";
+		#CHECK tool requirments
+		#JELLYFISH
+		$HASH_requirments{"jellyfish"} = &check_routine_for_requirement("jellyfish", "", $HASH_requirments{"jellyfish"});
 		
+		#FASTQ-STATs
+		$HASH_requirments{"fastq-stats"} = &check_routine_for_requirement("fastq-stats", "", $HASH_requirments{"fastq-stats"});
+		
+		#GFFREAD
+		$HASH_requirments{"gffread"} = &check_routine_for_requirement("gffread", "", $HASH_requirments{"gffread"});
+
+		#blastn
+		$HASH_requirments{"blastn"} = &check_routine_for_requirement("blastn", "", $HASH_requirments{"blastn"});
+		
+		#makeblastdb
+		$HASH_requirments{"makeblastdb"} = &check_routine_for_requirement("makeblastdb", "", $HASH_requirments{"makeblastdb"});
+		
+		#R
+		$HASH_requirments{"R"} = &check_routine_for_requirement("R", "", $HASH_requirments{"R"});
+				
+		#WRITE
+		print $gCFG "#external tool requirements\n";
+		foreach my $required (keys %HASH_requirments){
+			if($required !~ /^PATH_kindex/){
+				system("which $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
+				print $gCFG $required."=".$HASH_requirments{$required}."\n";
+				print "\n info ".$required." --> ".$HASH_requirments{$required};
+			}			
+		}
+		
+		print "\n\n";
+		$gCFG->close();
 	}
-	#create global config here
 }
 
 
@@ -1307,12 +1347,12 @@ sub read_user_config(){
 			}		
 			
 			#READ external tool path
-			check_tool($line, "jellyfish");
-			check_tool($line, "fastq-stats");
-			check_tool($line, "gffread");
-			check_tool($line, "blastn");
-			check_tool($line, "makeblastdb");
-			check_tool($line, "R");
+			&check_tool($line, "jellyfish");
+			&check_tool($line, "fastq-stats");
+			&check_tool($line, "gffread");
+			&check_tool($line, "blastn");
+			&check_tool($line, "makeblastdb");
+			&check_tool($line, "R");
 
 		}
 	}
@@ -1327,12 +1367,12 @@ sub read_user_config(){
 			$line =~ s/\n//;
 			my @ARRAY_tmp = split("=", $line);
 
-			check_tool($line, "jellyfish");
-			check_tool($line, "fastq-stats");
-			check_tool($line, "gffread");
-			check_tool($line, "blastn");
-			check_tool($line, "makeblastdb");
-			check_tool($line, "R");
+			&check_tool($line, "jellyfish");
+			&check_tool($line, "fastq-stats");
+			&check_tool($line, "gffread");
+			&check_tool($line, "blastn");
+			&check_tool($line, "makeblastdb");
+			&check_tool($line, "R");
 			
 			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
 			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
@@ -1472,7 +1512,7 @@ sub check_routine_for_requirement(){
 					print "\n Current path is $default!\n";
 				} else {
 					print "\n Success! Set path for $requirement to $path_which!\n";
-					$default = path_which;
+					$default = $path_which;
 			    }
 
 			}else{
@@ -1716,6 +1756,9 @@ sub help(){
 	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
 	print "\n --threads\t\t\t set number of threads [4]";
 	print "\n --bed\t\t\t\t force additional BED output [off]";
+	print "\n --user_conf\t\t set specific user configuration file [$uconf]";
+	print "\n --global_conf\t\t set specific global configuration file [$gconf]";
+
 	
 	print "\n\n";
 	exit();

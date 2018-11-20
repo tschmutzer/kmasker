@@ -10,11 +10,15 @@ use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
 use POSIX; 
 
+my $timestamp = getLoggingTime();
+my $log = "log_" . $timestamp . "_explore.txt";
+
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
 plot_histogram
 repeat_annotation
 gff_construction
+$log
 );
 our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics plot_maker plot_maker_direct plot_barplot);
 
@@ -24,6 +28,7 @@ my $version_PM_explore 	= "0.0.2 rc180815";
 ## DATE
 my $loctime = localtime;
 $loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
+
 
 my $path        = dirname abs_path $0;      
 
@@ -65,11 +70,11 @@ sub plot_histogram_mean{
 		}   
 	
 		#subset
-		system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>log.txt 2>&1");
+		system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>$log 2>&1");
 		my $occ_subset = $occ.".selection";
     
 	    #vis
-	    system($path . "/" ."occVisualizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>log.txt 2>&1");
+	    system($path . "/" ."occVisualizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>$log 2>&1");
 	    #The script will generate one plot per contig in the current working directory
 	    #The script will skip large contigs to avoid long running times
 	    #You can force it to do it anyway with -f
@@ -81,7 +86,7 @@ sub plot_histogram_mean{
     #FULL DATASET
     	$list = $outlist;
     	system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
-    	system($path . "/" ."occVisualizer.R -i ".$occ . "$arguments". " >>log.txt 2>&1");
+    	system($path . "/" ."occVisualizer.R -i ".$occ . "$arguments". " >>$log 2>&1");
     	#The script will generate one plot per contig in the current working directory
 	    #If you do not want to provide a contig list (instead running on all entries
 	    #in the occ file) use the following
@@ -137,11 +142,11 @@ sub plot_histogram_raw{
         }   
     
         #subset
-        system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>log.txt 2>&1");
+        system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>$log 2>&1");
         my $occ_subset = $occ.".selection";
     
         #vis
-        system($path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>log.txt 2>&1");
+        system($path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>$log 2>&1");
         #The script will generate one plot per contig in the current working directory
         #The script will skip large contigs to avoid long running times
         #You can force it to do it anyway with -f
@@ -153,7 +158,7 @@ sub plot_histogram_raw{
     #FULL DATASET
         $list = $outlist;
         system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
-        system($path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>log.txt 2>&1");
+        system($path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>$log 2>&1");
         #The script will generate one plot per contig in the current working directory
         #If you do not want to provide a contig list (instead running on all entries
         #in the occ file) use the following
@@ -352,8 +357,6 @@ sub plot_barplot{
     	system("make_barplot.R -c avg -i ".$file);   
     } 
 }
-
-
 ## subroutine
 #
 sub report_statistics{
@@ -370,19 +373,17 @@ sub report_statistics{
     print "\n .. call statistic calculation\n"; #if(!defined $silent);
 	my $path 		= dirname abs_path $0;
  	
- 	system("$path/stats.R " . "-i " .$occ . " -g " . $gff . " -c sequence" . " -o report_statistics_sequences". $outtag .".txt " . " >>log.txt 2>&1");
+ 	system("$path/stats.R " . "-i " .$occ . " -g " . $gff . " -c sequence" . " -o report_statistics_sequences". $outtag .".txt " . " >>$log 2>&1");
 	print "\n finished calculating statistics for sequences \n";
-	system("$path/stats.R "  . "-i " . $occ . " -g " . $gff . " -c KRC" .    " -o report_statistics_KRC".$outtag.".txt " . " >>log.txt 2>&1");
+	system("$path/stats.R "  . "-i " . $occ . " -g " . $gff . " -c KRC" .    " -o report_statistics_KRC".$outtag.".txt " . " >>$log 2>&1");
     print "\n finished calculating statistics for KRCs \n";
          
     if((!(-e "report_statistics_sequences".$outtag.".txt")) || (!(-e  "report_statistics_KRC".$outtag.".txt" ))) {
     	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
     }
     else {
-		system("$path/stats_overview.R " . " -s report_statistics_sequences".$outtag.".txt " . " -k report_statistics_KRC".$outtag.".txt >>log.txt 2>&1");
+		system("$path/stats_overview.R " . " -s report_statistics_sequences".$outtag.".txt " . " -k report_statistics_KRC".$outtag.".txt >>$log 2>&1");
     }
-     
-   	unlink("log.txt");
 }
 
 
