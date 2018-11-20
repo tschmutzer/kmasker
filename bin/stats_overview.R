@@ -33,8 +33,8 @@ avgkkrc<-mean(stats_krc[,"Avg"])
 
 fileConn<-file("report_overview_statistics.txt")
 writeLines(c(
-paste("Input file SEQ :", "\t", $sequence_stats ),
-paste("Input file KRC :", "\t", $KRC_stats),
+paste("Input file SEQ :", "\t", opt$sequence_stats ),
+paste("Input file KRC :", "\t", opt$KRC_stats),
 paste("Number of sequences:", "\t", ncontigs),
 paste("Number of Kmer Repeat Clusters:", "\t", nkrc),
 paste("Number of sequences with average Kmer density > 10:", "\t", avgk10),
