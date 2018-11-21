@@ -21,7 +21,7 @@ local({r <- getOption("repos")
        r["CRAN"] <- "http://cran.r-project.org" 
        options(repos=r)
 })
-setRepositories(graphics = F, ind=c(1,2,5,7)
+setRepositories(graphics = F, ind=c(1,2,5,7))
 
 if (!require("ggplot2")) install.packages("ggplot2")
 library(ggplot2) 
