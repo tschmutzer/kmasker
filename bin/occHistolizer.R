@@ -1,7 +1,22 @@
 #!/usr/bin/env Rscript
-if (!require("pacman")){install.packages("pacman"); library("pacman")}
-pacman::p_load(getopt, zoo, pillar, ggplot2, scales, stringr)
-#library('getopt')
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+setRepositories(graphics = F, ind=c(1,2,5,7)
+if (!require("getopt")){install.packages("getopt")}
+library("getopt")
+if (!require("zoo")){install.packages("zoo")}
+library("zoo")
+if (!require("pillar")){install.packages("pillar")}
+library("pillar")
+if (!require("ggplot2")){install.packages("ggplot2")}
+library("ggplot2")
+if (!require("scales")){install.packages("scales")}
+library("scales")
+if (!require("stringr")){install.packages("stringr")}
+library("stringr")
+
 #use getopt for input file and help description
 spec=matrix(c(
   'input', 'i', 1, "character",
