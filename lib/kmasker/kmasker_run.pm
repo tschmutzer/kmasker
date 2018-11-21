@@ -57,7 +57,7 @@ sub run_kmasker_SK{
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
 		my $absolut_path		= $ARRAY_repository[4];
-
+		print "\n .. starting kindex processing on ".$kindex."\n\n";
 		print "\n parameter setting: rept       = ".$rept;
 		print "\n parameter setting: minl       = ".$length_threshold;
 		print "\n parameter setting: minseed    = ".$min_seed;
@@ -133,7 +133,7 @@ sub run_kmasker_SK{
         
         #Statistics
         #Feedback
-        print "\n .. start to generate statistics" ;#if(!defined $silent);
+        print "\n .. start to generate statistics\n" ;#if(!defined $silent);
         system("$path/stats.R " . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c sequence" . " >>$log 2>&1");
         system("$path/stats.R "  . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c " . $feature . " >>$log 2>&1");
         if((!(-e "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
@@ -185,7 +185,7 @@ sub run_kmasker_MK{
 	my $temp_path       	= $HASH_info_this{"temp_path"};
 	my $verbose				= $HASH_info_this{"verbose"};
 	my $fold_change 		= $HASH_info_this{"fold-change"};
-	
+
 	print "\n parameter setting: rept       = ".$rept;
 	print "\n parameter setting: minl       = ".$length_threshold;
 	print "\n parameter setting: minseed    = ".$min_seed;
@@ -309,6 +309,8 @@ sub run_kmasker_MK{
     }
     
     #Statistics
+    print "\n .. start to generate statistics\n" ;#if(!defined $silent);
+
     system("$path/stats.R " . "-i " . $occ1 . " -g"  .$gffname_D1. " -c sequence" .  " >>$log 2>&1");
     system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c sequence" .  " >>$log 2>&1");
 
