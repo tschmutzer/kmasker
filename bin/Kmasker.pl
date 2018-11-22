@@ -557,10 +557,10 @@ if(defined $run){
 	#QUIT
 	print "\n - Thanks for using Kmasker! -\n\n";
 		if($verbose) {
-        	print "Output of external commands was written to " . kmasker::kmasker_run::$log."\n";
+        	print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";
         }
     else{
-        	unlink(kmasker::kmasker_run::$log);
+        	unlink($kmasker::kmasker_run::log);
         }
 	exit();
 }
@@ -828,10 +828,10 @@ if(defined $explore){
 	#QUIT
 	print "\n\n - Thanks for using Kmasker! -\n\n";
 		if($verbose) {
-        	print "Output of external commands was written to " . kmasker::kmasker_explore::$log ."\n";
+        	print "Output of external commands was written to " . $kmasker::kmasker_explore::log ."\n";
         }
     else{
-        	unlink(kmasker::kmasker_explore::$log);
+        	unlink($kmasker::kmasker_explore::log);
         }
 	exit();
 }
