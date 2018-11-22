@@ -4,7 +4,7 @@ local({r <- getOption("repos")
        r["CRAN"] <- "http://cran.r-project.org" 
        options(repos=r)
 })
-setRepositories(graphics = F, ind=c(1,2,5,7)
+setRepositories(graphics = F, ind=c(1,2,5,7))
 if (!require("getopt")){install.packages("getopt")}
 if (!require("zoo")){install.packages("zoo")}
 if (!require("pillar")){install.packages("pillar")}
