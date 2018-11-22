@@ -88,7 +88,7 @@ cp gffread ../kmasker/bin/
 cd ..
 cd kmasker/src
 scons
-cp cmakser ../bin
+cp cmasker ../bin
 cd ..
 #if you want you can add KMASKERs bin directory
 #to your path
@@ -101,5 +101,53 @@ cd setup
 ```
 
 ### MacOS
-On MacOS the instructions are slightly different.
-To be done.
+
+**Information: You should be able to use the terminal in OSX. Please note that whether kmasker nor its depedencies has a graphical user interface.** 
+
+Install brew from https://brew.sh/ (you can also use macports or fink, but this unsupported) and its depenedencies (like OSX command line tools). Brew will guide you through its installation. 
+#### Install prerequisites
+Add the bioinformatics repository to brew.
+```bash
+brew tap brewsci/bio
+brew install jellyfish blast scons
+```
+Download and install R from https://cloud.r-project.org/bin/macosx/
+
+### General instructions (executed after the distrubution dependencies)
+Create a directory for the source code of the different tools. 
+For example in our home directory. 
+`mkdir ~/src`
+#### Check out the tools
+```bash
+cd ~/src
+git clone https://github.com/ExpressionAnalysis/ea-utils
+git clone https://github.com/gpertea/gclib
+git clone https://github.com/gpertea/gffread
+git clone https://github.com/tschmutzer/kmasker
+```
+#### Compile the tools
+```bash
+cd ea-utils/clipper
+make fastq-stats
+#Copy the binary file to a location which is in your path
+#or to KMASKERs bin directory
+cp fastq-stats ../../kmasker/bin/
+cd ../..
+cd gffread
+make
+cp gffread ../kmasker/bin/
+cd ..
+cd kmasker/src
+export CXXFLAGS="-I/usr/local/include/jellyfish-2.2.10 -L/usr/local/lib $CXXFLAGS"
+#Modify the above command to fit your jellyfish version
+#You can get the current version with brew info jellyfish
+scons
+cp cmasker ../bin
+cd..
+```
+#### Install R packages
+```bash
+cd setup
+./install_packages.R
+```
+You are done. You can use Kmasker with ~/src/kmasker/bin/Kmasker
