@@ -131,44 +131,40 @@ for (pos in opentags){
     dataframe <- data.frame(positions, occs, mean10)
     dataframe<-as.data.frame(apply(dataframe, c(1,2), function(x) if(x<1){return(1)}else{return(x)}))
     colnames(dataframe) <- c('pos', 'occ', 'mean10')
-    if(! is.null(opt$log)){
-      plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
-        #geom_line( aes(colour = occ), size=1.1) +
-        #scale_colour_gradient(low='blue', high='red', guide = guide_colorbar(title = "frequency\n")) +
+     plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
         geom_area( aes( x = pos, y = mean10), fill='blue')  +
-        geom_line( aes( x = pos, y = mean10), size=1.2)  +
-        labs(title = paste("k-mer distribution of", id, "sws", wsize, sep=" "), x="position (bp)", y="k-mer frequency [log10]") +
-        theme_gray(base_size = 19) + 
-        theme(legend.text=element_text(size=15)) +
-        #guides(fill = guide_legend(keywidth = 3, keyheight = 2)) +
-        scale_y_log10(breaks=trans_breaks("log10",function(x) 10^x), labels=trans_format("log10", math_format(10^.x))) +
-        #geom_hline(aes(yintercept=m, fill="avg"), colour="blue", linetype=3, size=1.2) + 
-        #geom_hline(aes(yintercept=q25, fill="q25"), colour="red", linetype=3, size=1.2) + 
-        #geom_hline(aes(yintercept=q50, fill="q50"), colour="brown", linetype=4, size=1.2) + 
-        #geom_hline(aes(yintercept=q75, fill="q75"), colour="darkgreen", linetype=5, size=1.2) + 
-        #geom_hline(aes(yintercept=q90, fill="q90"), colour="violet", linetype=6, size=1.2) +
-        geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
-        geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-        #geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
-        scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
-        #scale_color_hue("Group") +
-        #scale_fill_manual("Lines", values=rep(1,5),guide=guide_legend(override.aes = list(colour=c("blue", "red", "brown", "darkgreen", "violet"))))
+        geom_line( aes( x = pos, y = mean10), size=1.2) 
+    if(! is.null(opt$log)){
+        plot + labs(title = paste("k-mer distribution of", id, "sws", wsize, sep=" "), x="position (bp)", y="k-mer frequency [log10]")
+        plot + scale_y_log10(breaks=trans_breaks("log10",function(x) 10^x), labels=trans_format("log10", math_format(10^.x))) +
+
     } else {
       plot <- ggplot(data = dataframe, aes(x = pos, y = occ)) + 
-        geom_area( aes( x = pos, y = mean10), fill='blue')  +
-        geom_line( aes( x = pos, y = mean10), size=1.2)  +
-        labs(title = paste("k-mer distribution of", id, "sws", wsize, sep=" "), x="position (bp)", y="k-mer frequency") +
-        theme_gray(base_size = 19) + 
-        theme(legend.text=element_text(size=15)) +
-        geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
-        geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
-        geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-        #geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
-        scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
+        plot + labs(title = paste("k-mer distribution of", id, "sws", wsize, sep=" "), x="position (bp)", y="k-mer frequency") +
     }
+    plot + theme_gray(base_size = 19) + theme(legend.text=element_text(size=15))
+    values<-c()
+      if(m > 0) { 
+        plot + geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2)
+        values<-c(values, "avg" = "blue")
+      }
+      if(q25 > 0) { 
+        plot + geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2)
+        values<-c(values, "q25" = "red")
+      }
+      if(q50 > 0) { 
+        plot + geom_line(aes(y=q50, colour="q50"), linetype=3, size=1.2)
+        values<-c(values, "q50" = "brown")
+      }
+      if(q75 > 0) { 
+        plot + geom_line(aes(y=q75, colour="q75"), linetype=3, size=1.2)
+        values<-c(values, "q75" = "darkgreen")
+      }      
+      if(m > 0) { 
+        plot + geom_line(aes(y=q90, colour="q90"), linetype=3, size=1.2)
+        values<-c(values, "q90" = "violet")
+      }
+      plot + scale_color_manual(values = values) +labs(color="")
     png(paste(id, ".png", sep=""), width=2048, height=1024)
     #in a loop we have to explicitly print the plot
     print(plot)
