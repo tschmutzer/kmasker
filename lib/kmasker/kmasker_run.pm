@@ -358,7 +358,7 @@ sub run_gRNA(){
 	
 		
 	#SETUP
-	system("cp ".$path."../config/data_krispr.RData .");
+	system("cp ".$path."/../config/data_krispr.RData .");
 	system("cp ".$path."/models_krispr.R .");
 			
 	print "\n\n ... start Kmasker gRNA module\n";	
