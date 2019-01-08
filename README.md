@@ -11,7 +11,7 @@ Kmasker is a tool for the automatic detection of repetitive sequence regions.
 
  --build                 construction of new index
  
- --run                   run k-mer repeat detection, masking, abundance and comparative analysis
+ --run                   perform k-mer repeat detection, masking, abundance and comparative analysis
  
  --explore               perform downstream analysis with constructed index and detected repeats
  
