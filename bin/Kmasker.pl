@@ -13,11 +13,11 @@ use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
-use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
+use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions qw(fasta_to_uppercase);
 
-my $version 	= "0.0.34 rc181023";
+my $version 	= "0.0.35 rc190108";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 
@@ -50,7 +50,7 @@ my $PATH_kindex_external= "";
 
 #RUN
 my $fasta;
-my $grna;
+my $krispr;
 my $fish;
 my $compare;
 my $bed;
@@ -154,7 +154,7 @@ my $result = GetOptions (	#MAIN
 							
 							#RUN
 							"fasta=s"			=> \$fasta,	
-							"grna"				=> \$grna,
+							"krispr"			=> \$krispr,
 							"fish"				=> \$fish,
 							"compare"			=> \$compare,
 							"kindex=s{1,}"		=> \@multi_kindex,
@@ -425,9 +425,9 @@ if(defined $run){
 	print "\n starting run module ... \n";
 	
 	#CRISPR design modul
-	if(defined $grna){
+	if(defined $krispr){
 		if(exists $HASH_repository_kindex{$kindex}){
-			&run_gRNA($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
+			&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
 		}
 		exit();	
 	}
@@ -950,7 +950,7 @@ sub check_settings(){
 			exit(0);
 		}
 		
-		if(((!defined $fasta)&&(!defined $grna))){
+		if(((!defined $fasta)&&(!defined $krispr))){
 			print "\n .. kmasker was stopped: no sequence provided (either '--fasta' or '--grna') !";
 			print "\n\n";
 			exit(0);
@@ -1694,11 +1694,11 @@ sub help(){
 		
 		print "\n\n Options:";
 		print "\n --kindex\t single or multiple k-mer indices (use space delimited list)";
-		print "\n --fasta\t sequences for k-mer analysis and masking in FASTA format";
-		print "\n --grna\t\t set of gRNA sequences in FASTA format";
+		print "\n --fasta\t sequences in FASTA format for k-mer analysis and masking";
+		print "\n --krispr\t provide gRNA sequences in FASTA format for specificity analysis";
 		print "\n --compare\t perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
-		print "\n --minl\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
+		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
 	
 		print "\n\n";
 		exit();

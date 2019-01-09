@@ -20,11 +20,11 @@ our @EXPORT = qw(
 	show_version_PM_run
 	$log
 );
-our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run $log);
+our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run $log);
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.32 rc181024";
+my $version_PM_run 	= "0.0.33 rc190108";
 
 
 ## subroutine
@@ -339,13 +339,13 @@ sub run_kmasker_MK{
 }
 
 ## subroutine
-#  run gRNA will check characteristics of custome FASTA
-sub run_gRNA(){
+#  run krispr will check characteristics of custome FASTA
+sub run_krispr(){
 	my $kindex_this = $_[0];
-	my $gRNA		= $_[1];
+	my $krispr		= $_[1];
 	my $href_repo	= $_[2];
 	my $href_info	= $_[3];
-		
+	
 	#GET INFO
 	my $path 					= dirname abs_path $0;	
 	my %HASH_repository_kindex 	= %{$href_repo};
@@ -361,7 +361,7 @@ sub run_gRNA(){
 	system("cp ".$path."/../config/data_krispr.RData .");
 	system("cp ".$path."/models_krispr.R .");
 			
-	print "\n\n ... start Kmasker gRNA module\n";	
+	print "\n\n ... start Kmasker krispr module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
 	if(-e $absolut_path.$full_kindex_name){
 		system("ln -s \"".$absolut_path.$full_kindex_name."\"");
@@ -372,11 +372,11 @@ sub run_gRNA(){
 	
 	#SINGLE SEQ
 	# not activated in Kmasker
-	# system("python3.5 ".$path."/krispr.py single -q ".$gRNA_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
+	# system("python3.5 ".$path."/krispr.py single -q ".$krispr_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
 	
 	#MULTI FASTA
-	system("python3.5 ".$path."/krispr.py multi -q ".$gRNA." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >&".$OUT_krispr);
-	print "\n\n ... Kmasker gRNA module finished \n";
+	system("python3.5 ".$path."/krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >&".$OUT_krispr);
+	print "\n\n ... Kmasker krispr module finished \n";
 	
 	#CLEAN
 	system("rm ".$full_kindex_name." data_krispr.RData models_krispr.R");
