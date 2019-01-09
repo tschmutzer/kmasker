@@ -24,7 +24,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.33 rc190108";
+my $version_PM_run 	= "0.0.34 rc190109";
 
 
 ## subroutine
@@ -54,6 +54,7 @@ sub run_kmasker_SK{
 		my $min_seed			= $HASH_info_this{"MK_min_seed"};			# default :  5 (bp)
 		my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
 		my $bed					= $HASH_info_this{"bed"}; 					# default : 'no'
+		my $PID					= $HASH_info_this{"PID"};
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
 		my $absolut_path		= $ARRAY_repository[4];
@@ -75,6 +76,9 @@ sub run_kmasker_SK{
 			print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 			exit();
 		}
+		
+		# OCC NAME
+		my $occ_kmer_counts = "KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta;		
 		
 		#start
 		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . " >>$log 2>&1");
@@ -142,6 +146,7 @@ sub run_kmasker_SK{
         else {
 	       	system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab " . " -k " . "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab" . " >>$log 2>&1");
         }
+        
 
 	}else{
 		#KINDEX is missing in repository
@@ -354,7 +359,9 @@ sub run_krispr(){
 	my $absolut_path			= $ARRAY_repository[4];
 	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
 	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
-	my $OUT_krispr				= "KMASKER_krispr_results.txt";
+	my $PID						= $HASH_info_this{"PID"};
+	#my $OUT_krispr				= "KMASKER_krispr_results.txt";
+	my $OUT_krispr				= "KMASKER_krispr_KDX_".$kindex_this."_".$PID.".txt";
 	
 		
 	#SETUP

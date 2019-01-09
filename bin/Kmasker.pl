@@ -8,6 +8,7 @@ use File::stat;
 use File::Copy qw(move);
 #setup package directory
 use File::Basename;
+use POSIX qw(strftime);
 use Cwd  qw(abs_path getcwd);
 use lib dirname(dirname abs_path $0) . '/lib';
 
@@ -17,9 +18,11 @@ use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_versio
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions qw(fasta_to_uppercase);
 
-my $version 	= "0.0.35 rc190108";
+my $version 	= "0.0.35 rc190109";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
+my $PID;
+my $LONG_PID;
 
 #MODULES
 #BUILD
@@ -219,6 +222,7 @@ my $result = GetOptions (	#MAIN
 #READ global settings
 &read_user_config;
 &read_repository;
+&create_PID;
 
 
 #############
@@ -276,6 +280,8 @@ $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
 $HASH_info{"expert setting blast"}	= $expert_setting_blast;
 $HASH_info{"size"}					= $size;
 $HASH_info{"krisp mismatch"}		= $mismatch;
+$HASH_info{"PID"}					= $PID;
+$HASH_info{"LONG_PID"}				= $LONG_PID;
 
 
 ########
@@ -448,12 +454,14 @@ if(defined $run){
 					if($length_threshold < 2500){
 						print "\n WARNING: Provided length is too small for proper FISH candidate sequence. Setting '--minl' to 2500 bp!\n\n";
 						$length_threshold = 2500;
-					}else{
-						$length_threshold = 2500;
 					}
+				}else{
+						$length_threshold = 2500;
 				}
 				
 				my $this_setting = "--rept=".$repeat_threshold.";--minl=".$length_threshold;
+				$HASH_info{"rept"} = $repeat_threshold;
+				$HASH_info{"minl"} = $length_threshold;
 				&use_expert_settings("kmasker", $this_setting);
 				
 				#READ repository.info
@@ -475,14 +483,27 @@ if(defined $run){
 				#CHECK FISH results
 				my $call = "grep \">\" -cP KMASKER_extracted_regions_*".$fasta;
 				my $this = `$call`;
+				
+				#CALL PLOT routines
+				
+				#FIXME (@CHRIS) - RENAME OCC File and also it should not be in temp 
+				my $occ_kmer_counts = "KMASKER_KM_plants_barley_10xC_NORM_UC_HVVMRXALLhA0731G05_c5_addon.occ";
+				system("cp ./temp/".$occ_kmer_counts." .");
+				system("Kmasker --explore --hist --occ ".$occ_kmer_counts);
+				system("Kmasker --explore --histm --occ ".$occ_kmer_counts);		
+				
 				$this =~ s/\n//;
 				if($this > 0){
-					print "\n .. ".$this." candidates for FISH detected!!\n\n";
-					system("mv KMASKER_extracted_regions_*".$fasta." KMASKER_FISH_candidates_KINDEX_".$kindex."_".$fasta);
+					print "\n .. Kmasker detected ".$this." candidates for FISH !!\n\n";
+					system("mv KMASKER_extracted_regions_*".$fasta." KMASKER_filtered_fish_KDX_".$kindex."_".$HASH_info{"PID"}.".fasta");	
+					
 				}else{
 					print "\n .. no candidates for FISH detected!!\n\n";
 					system("rm KMASKER_extracted_regions_*".$fasta);
-				}							
+				}
+				
+				
+											
 			}
 		}else{
 			print "\n WARNING: Calling '--fish' settings is only permitted with single KINDEX.";
@@ -1494,7 +1515,9 @@ sub read_repository(){
 	
 }
 
-
+#################
+#
+#
 sub check_routine_for_requirement(){
 	my $requirement = $_[0];
 	my $line 		= $_[1];
@@ -1526,6 +1549,22 @@ sub check_routine_for_requirement(){
 	}	
 	return $default;
 }
+
+
+#################
+#
+#
+sub create_PID(){
+	#FIXME
+	# @Chris: please continue to create PID and LONG_PID
+	
+	my $loctime = localtime;
+	$loctime = strftime('%Y%m%d%H%M%S',localtime); ## outputs 120817100834	
+	
+	$PID		= $loctime;	#PLACE HOLDER
+	$LONG_PID	= $loctime;	
+}
+
 
 #################
 #
