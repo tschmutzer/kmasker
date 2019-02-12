@@ -12,7 +12,7 @@ our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime gets
 
 
 ## VERSION
-my $version_PM_functions 	= "0.0.2 rc181025";
+my $version_PM_functions 	= "0.0.3 rc190212";
 
 #sub add_repository {
    # function adds local repository to global shared repository 

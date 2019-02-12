@@ -18,7 +18,7 @@ use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_versio
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions qw(fasta_to_uppercase getsID getlID);
 
-my $version 	= "0.0.35 rc190109";
+my $version 	= "0.0.35 rc190212";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 my $PID = getsID;
