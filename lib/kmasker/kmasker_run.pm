@@ -78,80 +78,89 @@ sub run_kmasker_SK{
 		}
 		
 		# OCC NAME
-		my $occ_kmer_counts = "KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta;		
-		
+		my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_".$kindex."_".$PID.".occ";		
+		my $masked_fasta;
 		#start
-		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . " >>$log 2>&1");
+		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . " >>$log 2>&1");
        
        #clean
 		unlink($full_kindex_name);
-        if(!(-e "KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta)) {
-            print "\n .. KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta." was not generated!\n";
+        if(!(-e "KMASKER_masked_KDX_".$kindex."_".$PID.".fasta")) {
+            print "\n .. KMASKER_masked_KDX_".$kindex."_".$PID."fasta" . " was not generated!\n";
             print "\n .. please provide a bug report!\n\n";
             exit();
         }
+        else {
+        	$masked_fasta = "KMASKER_masked_KDX_".$kindex."_".$PID."fasta";
+        }
         
-        #BED
+        #BED #FIXME
 		if($bed eq "1"){
 		   	#BED format output is activated
 		  	my @HELP = split(".", $fasta);
 		   	pop @HELP;
 		   	my $name = join(".", @HELP);		   	
 		   	print "\n NAME = ".$name;		   	
-		   	system("OCC2BED.pl --occ KMASKER_".$kindex."_NORM"."_".$name.".occ --rept ".$rept." >>$log 2>&1");		
+		   	system("OCC2BED.pl --occ $occ_kmer_counts >>$log 2>&1");		
    		}
    		        
         mkdir($temp_path, 0775);
        
         #make tab from masked fasta
         print "\n .. start to generate TAB file" ;#if(!defined $silent);
-        system ("mv" . " *.occ \"$temp_path\"");
-        kmasker::filehandler::fasta_to_tab("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta, $temp_path); #just change .fasta to .tab in temp
+        #system ("mv" . " *.occ \"$temp_path\"");
+        kmasker::filehandler::fasta_to_tab($masked_fasta, $temp_path); #just change .fasta to .tab in temp
         kmasker::filehandler::sequence_length($fasta);
-        system( "mv" ." $fasta.length" . " \"$temp_path/$fasta.length\"" );
+        move("$fasta.length" , "\"$temp_path/$fasta.length\"" );
         
-		#merge seeds
+		#MERGE SEEDS
 		print "\n .. start to generate extended region" ;#if(!defined $silent);
 		my $tab = $fasta;
 		$tab =~ s/(\.fasta$)|(\.fa$)//; 
-		kmasker::filehandler::merge_tab_seeds("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $percent, $min_seed);
+		kmasker::filehandler::merge_tab_seeds("$temp_path/$tab.tab", $percent, $min_seed);
 		
 		#PRODUCE GFF
 		print "\n .. start to generate GFF" ;#if(!defined $silent);
 		my $feature = "KRC";
 		my $subfeature = "KRR";
-		kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".tab", $subfeature);
+		kmasker::filehandler::tab_to_gff("$temp_path/$tab"."_regions_merged.tab", "$temp_path/$fasta.length" ,$min_gff, $feature ,"$temp_path/$tab". ".tab", $subfeature);
 		
 		#extract non-repetitive regions
-		kmasker::functions::Xtract("KMASKER_".$kindex."_RT".$rept."_NORM"."_".$fasta, $length_threshold);
+		kmasker::functions::Xtract($masked_fasta, $length_threshold, "KDX_${kindex}_$PID");
        
-       	my $gffname = "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff";
-        system("mv" . " $temp_path/KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab."_Regions_merged.gff " . $gffname);
+       	my $gffname = "KMASKER_repeat_regions_KDX_${kindex}_$PID.gff";
+        move("$temp_path/$tab.gff",$gffname);
         
         if($bed eq "1"){
         	#Feedback
 			print "\n .. start to generate BED" ;#if(!defined $silent);
         	#BED format output is activated
-        	&write_gff2bed($gffname); 		
+        	kmasker::filehandler::write_gff2bed($gffname); 		
         }
         
         #Statistics
         #Feedback
         print "\n .. start to generate statistics\n" ;#if(!defined $silent);
-        system("$path/stats.R " . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c sequence" . " >>$log 2>&1");
-        system("$path/stats.R "  . "-i " . "\"" .$temp_path . "\"" . "/KMASKER_" . $kindex . "_NORM_" . $tab . ".occ" . " -g " . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff" . " -c " . $feature . " >>$log 2>&1");
-        if((!(-e "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab")) || (!(-e  "report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab" ))) {
+        system("$path/stats.R " . "-i " . $occ_kmer_counts . " -g " . $gffname . " -c sequence" . " >>$log 2>&1");
+        system("$path/stats.R " . "-i " . $occ_kmer_counts . " -g " . $gffname . " -c " . $feature . " >>$log 2>&1");
+        if((!(-e "KMASKER_report_statistics_". $feature . ".tab")) || (!(-e  "KMASKER_report_statistics_sequence" . ".tab"))) {
         	print "\n Some statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
         }
         else {
-	       	system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab. ".gff.tab " . " -k " . "report_statistics_". $feature . "_RESULT_KMASKER_".$kindex."_RT".$rept."_NORM"."_".$tab.".gff.tab" . " >>$log 2>&1");
+        	move("KMASKER_report_statistics_". $feature . ".tab", "KMASKER_report_statistics_". $feature . "_$PID" . ".tab");
+        	move("KMASKER_report_statistics_". "sequence" . ".tab", "KMASKER_report_statistics_". "sequence" . "_$PID" . ".tab");
+	       	system("$path/stats_overview.R " . " -s KMASKER_report_statistics_". "sequence" . "_$PID" . ".tab" . " -k " . "KMASKER_report_statistics_". $feature . "_$PID" . ".tab" . " >>$log 2>&1");
+	       	if(!-e("report_overview_statistics.txt")) {
+	       		print "\n Statistics overview could not be calculated!\n";
+	       	}
+	       	else {
+	       		move("report_overview_statistics.txt", "KMASKER_report_overview_$PID.txt");
+	       	}
         }
-        
-
 	}else{
 		#KINDEX is missing in repository
 		print "\n .. Kmasker was stopped!\n";
-		print "\n .. The kindex (".$kindex.") you requested is not available in repository!\n\n";
+		print "\n .. The kindex (".$kindex.") you requested is not available in the repositories!\n\n";
 	}	
 }
 
@@ -190,6 +199,8 @@ sub run_kmasker_MK{
 	my $temp_path       	= $HASH_info_this{"temp_path"};
 	my $verbose				= $HASH_info_this{"verbose"};
 	my $fold_change 		= $HASH_info_this{"fold-change"};
+	my $PID					= $HASH_info_this{"PID"};
+
 
 	print "\n parameter setting: rept       = ".$rept;
 	print "\n parameter setting: minl       = ".$length_threshold;
@@ -238,22 +249,22 @@ sub run_kmasker_MK{
 				system("ln -s ".$absolut_path.$full_kindex_name);
 				
 				#PRODUCE OCC
-				system("$path/cmasker -f ".$fasta." -j ".$full_kindex_name." -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex." -s" . " >>$log 2>&1");
+				system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . " >>$log 2>&1");
 				
-				my @NAME = split(/\./, $fasta);
-				pop @NAME;
-				my $name = join(".", @NAME);
-				print "\n NAME = ".$name."\n";
-				push(@ARRAY_occ, "KMASKER_".$kindex."_NORM"."_".$name.".occ");
+				#my @NAME = split(/\./, $fasta);
+				#pop @NAME;
+				#my $name = join(".", @NAME);
+				#print "\n NAME = ".$name."\n";
+				push(@ARRAY_occ, "KMASKER_kmer_counts_KDX_".$kindex."_$PID.occ");
 				
 				#BED
-				 if($bed eq "1"){
+				 if($bed eq "1"){ #FIX ME
 			    	#BED format output is activated
-			    	system("OCC2BED.pl --occ KMASKER_".$kindex."_NORM"."_".$name.".occ --rept ".$rept." >>$log 2>&1");		
+			    	system("OCC2BED.pl --occ KMASKER_kmer_counts_KDX_".$kindex."_$PID.occ --rept ".$rept." >>$log 2>&1");		
    				}
 				
 				#clean
-    			system("rm ".$full_kindex_name);
+    			unlink($full_kindex_name);
 				
 			}else{
 				print "\n ... using path ".$absolut_path;
@@ -269,7 +280,7 @@ sub run_kmasker_MK{
 	
     mkdir($temp_path, 0775);
 	kmasker::filehandler::sequence_length($fasta);
-    system( "mv" ." $fasta.length" . " \"$temp_path/$fasta.length\"" );
+    move("$fasta.length" , " \"$temp_path/$fasta.length\"");
 	#Feedback
 	print "\n .. start to generate TAB" ;#if(!defined $silent);
 		
@@ -298,49 +309,50 @@ sub run_kmasker_MK{
 	#PRODUCE GFF
 	my $feature 	= "KRC";
 	my $subfeature 	= "KRR";
-	my $gffname_D1 	= "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff";
-	my $gffname_D2 	= "KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff";	
-	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab1" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab1.".tab", $subfeature);
-	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab2" . "_Regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab2.".tab", $subfeature);
-	system("cp" . " $temp_path/KMASKER_comparative_FC".$fold_change."_$tab1" . "_Regions_merged".".gff " . $gffname_D1);
-    system("cp" . " $temp_path/KMASKER_comparative_FC".$fold_change."_$tab2" . "_Regions_merged".".gff " . $gffname_D2);
+	my $gffname_D1 	= "KMASKER_diverse_regions_KDX_" .$ARRAY_kindex[0].  "_$PID" . ".gff";
+	my $gffname_D2 	= "KMASKER_diverse_regions_KDX_" .$ARRAY_kindex[1].  "_$PID" . ".gff";
+	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab1" . "_regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab1.".tab", $subfeature);
+	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab2" . "_regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_".$tab2.".tab", $subfeature);
+	move("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab1" . "_regions_merged".".gff " , $gffname_D1);
+    move("$temp_path/KMASKER_comparative_FC".$fold_change."_$tab2" . "_regions_merged".".gff " , $gffname_D2);
     
-    if($bed eq "1"){
+    if($bed eq "1"){ #FIXME 
     	#Feedback
 		print "\n .. start to generate BED" ;#if(!defined $silent);
    		#BED format output is activated
-    	&write_gff2bed($gffname_D1); 
-    	&write_gff2bed($gffname_D2); 		
+    	kmasker::filehandler::write_gff2bed($gffname_D1); 
+    	kmasker::filehandler::write_gff2bed($gffname_D2); 		
     }
     
     #Statistics
     print "\n .. start to generate statistics\n" ;#if(!defined $silent);
 
     system("$path/stats.R " . "-i " . $occ1 . " -g"  .$gffname_D1. " -c sequence" .  " >>$log 2>&1");
-    system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c sequence" .  " >>$log 2>&1");
-
     system("$path/stats.R " . "-i " . $occ1 . " -g"  .$gffname_D1. " -c " . $feature . " >>$log 2>&1");
-    system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c " . $feature . " >>$log 2>&1");
 
-    
-    if( (!(-e "report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab")) || (!(-e "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab"))) {
-        	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[0] ."). The main reason for this is that there are no significant features in the gff file.\n";
-        }
+    if((!(-e "KMASKER_report_statistics_sequence.tab")) || (!(-e "KMASKER_report_statistics_$feature.tab"))) {  	
+      	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[0] ."). The main reason for this is that there are no significant features in the gff file.\n";
+    }
     else {
- 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab " . " >>$log 2>&1");
- 		system("mv report_overview_statistics.txt " . "report_overview_statistics" . $ARRAY_kindex[0] . ".txt");
+ 		system("$path/stats_overview.R " . " -s KMASKER_report_statistics_sequence.tab" . " -k " . "KMASKER_report_statistics_". $feature . ".tab " . " >>$log 2>&1");
+ 		move("KMASKER_report_statistics_sequence.tab", "KMASKER_report_statistics_KDX_". $ARRAY_kindex[0] ."_sequence_$PID.tab");
+ 		move("report_overview_statistics.txt" , "KINDEX_report_overview_statistics_KDX_" . $ARRAY_kindex[0] . "_$PID.txt");
  	}
-   # system("$path/stats_overview.R " . " -s Stats_Sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab" . " -k " . "Stats_". $feature . "KMASKER_comparative_FC".$fold_change."_$tab1" . ".gff.tab " . " >>$log 2>&1");
-    if(!(-e "report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab") || !(-e "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab")) {
-        	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[1] ."). The main reason for this is that there are no significant features in the gff file.\n";
-        }
+
+    system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c sequence" .  " >>$log 2>&1");
+    system("$path/stats.R " . "-i " . $occ2 . " -g " .$gffname_D2. " -c " . $feature . " >>$log 2>&1");
+    
+    if((!(-e "KMASKER_report_statistics_sequence.tab")) || (!(-e "KMASKER_report_statistics_$feature.tab"))) {  	
+      	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[1] ."). The main reason for this is that there are no significant features in the gff file.\n";
+    }
     else {
- 		system("$path/stats_overview.R " . " -s report_statistics_sequence_" . "KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab" . " -k " . "report_statistics_". $feature . "_KMASKER_comparative_FC".$fold_change."_$tab2" . ".gff.tab " . " >>$log 2>&1");
- 		system("mv report_overview_statistics.txt " . "report_overview_statistics" . $ARRAY_kindex[0] . ".txt");
-     }
+ 		system("$path/stats_overview.R " . " -s KMASKER_report_statistics_sequence.tab" . " -k " . "KMASKER_report_statistics_". $feature . ".tab " . " >>$log 2>&1");
+ 		move("KMASKER_report_statistics_sequence.tab", "KMASKER_report_statistics_KDX_". $ARRAY_kindex[1] ."_sequence_$PID.tab");
+ 		move("report_overview_statistics.txt" , "KINDEX_report_overview_statistics_KDX_" . $ARRAY_kindex[1] . "_$PID.txt");
+ 	}
 
     #CALL comparative methods
-    system("$path/OCC_compare.pl --k ".$global_k." --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2."");
+    system("$path/OCC_compare.pl --k ".$global_k." --fc ".$FC_compare." --occ1 ".$occ1." --occ2 ".$occ2." --out KMASKER_report_statistics_compare_$PID.txt");
 }
 
 ## subroutine
@@ -409,29 +421,6 @@ sub show_version_PM_run{
 
 ## subroutine
 #
-sub write_gff2bed{
-	my $gffname = $_[0];
-	
-	my $bedname = $gffname;
-    $bedname =~ s/\.gff$/.bed/;
-    my $GFFFILE = new IO::File($gffname, "r") or die "\n unable to read gff ".$gffname." $!";	
-    my $BEDFILE = new IO::File($bedname, "w") or die "\n unable to write bed ".$bedname." $!";
-        	
-    #WRITE
-    while(<$GFFFILE>){
-    	next if($_ =~ /^$/);
-		next if($_ =~ /^#/);
-		my @ARRAY_gff = split("\t", $_);
-		my $substring = "KRC";
-		if($ARRAY_gff[2] =~ m/$substring/){
-			print $BEDFILE $ARRAY_gff[0]."\t".$ARRAY_gff[3]."\t".$ARRAY_gff[4]."\n";
-		}
-	}
-		   	
-	#CLOSE
-	$GFFFILE->close();
-	$BEDFILE->close();	
-}
 
 	
 	

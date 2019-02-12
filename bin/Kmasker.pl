@@ -16,12 +16,12 @@ use lib dirname(dirname abs_path $0) . '/lib';
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
-use kmasker::functions qw(fasta_to_uppercase);
+use kmasker::functions qw(fasta_to_uppercase getsID getlID);
 
 my $version 	= "0.0.35 rc190109";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
-my $PID;
+my $PID = getsID;
 my $LONG_PID;
 
 #MODULES
@@ -216,27 +216,16 @@ my $result = GetOptions (	#MAIN
 							"keep_tmp"					=> \$keep_temporary_files,
 							"verbose"					=> \$verbose,
 							"show_version"				=> \$show_version,
+							"long_pid"					=> \$LONG_PID,
 							"help"						=> \$help										
 						);
 						
 #READ global settings
 &read_user_config;
 &read_repository;
-&create_PID;
+#&create_PID;
 
 
-#############
-# CALLING general commands and tasks
-&intro_call();					
-			
-			
-#############
-# CALLING HELP if requested						
-$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
-
-if(defined $help){
-	&help();	
-}
 
 #######
 ## MAIN
@@ -257,6 +246,22 @@ if(defined $index_name_usr){
 #sequence type 
 if(defined $seq_type_usr){
 	$seq_type = "assembly";
+}
+if(defined $LONG_PID){
+	$PID = getlID;
+}
+
+#############
+# CALLING general commands and tasks
+&intro_call();					
+			
+			
+#############
+# CALLING HELP if requested						
+$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
+
+if(defined $help){
+	&help();	
 }
 
 ########
@@ -481,25 +486,24 @@ if(defined $run){
 				&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
 				
 				#CHECK FISH results
-				my $call = "grep \">\" -cP KMASKER_extracted_regions_*".$fasta;
+				my $call = "grep \">\" -c KMASKER_filtered_regions_*".$fasta;
 				my $this = `$call`;
+
 				
 				#CALL PLOT routines
 				
-				#FIXME (@CHRIS) - RENAME OCC File and also it should not be in temp 
-				my $occ_kmer_counts = "KMASKER_KM_plants_barley_10xC_NORM_UC_HVVMRXALLhA0731G05_c5_addon.occ";
-				system("cp ./temp/".$occ_kmer_counts." .");
+				my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_$PID.occ";
 				system("Kmasker --explore --hist --occ ".$occ_kmer_counts);
 				system("Kmasker --explore --histm --occ ".$occ_kmer_counts);		
 				
 				$this =~ s/\n//;
 				if($this > 0){
 					print "\n .. Kmasker detected ".$this." candidates for FISH !!\n\n";
-					system("mv KMASKER_extracted_regions_*".$fasta." KMASKER_filtered_fish_KDX_".$kindex."_".$HASH_info{"PID"}.".fasta");	
+					system("mv KMASKER_filtered_regions_*".$fasta." KMASKER_filtered_fish_KDX_".$kindex."_".$HASH_info{"PID"}.".fasta");	
 					
 				}else{
 					print "\n .. no candidates for FISH detected!!\n\n";
-					system("rm KMASKER_extracted_regions_*".$fasta);
+					system("rm KMASKER_filtered_regions_*".$fasta);
 				}
 				
 				
@@ -658,7 +662,7 @@ if(defined $explore){
 		
 		#exit
 		if(scalar(@OCClist)>1){
-			print "\n Too many file provided in '--occ'. Statistics only can be calculated for a single OCC file.\n\n";
+			print "\n Too many files provided in '--occ'. Statistics only can be calculated for a single OCC file.\n\n";
 			exit();
 		}
 				
@@ -1554,16 +1558,16 @@ sub check_routine_for_requirement(){
 #################
 #
 #
-sub create_PID(){
+#ub create_PID(){
 	#FIXME
 	# @Chris: please continue to create PID and LONG_PID
 	
-	my $loctime = localtime;
-	$loctime = strftime('%Y%m%d%H%M%S',localtime); ## outputs 120817100834	
+#	my $loctime = localtime;
+#	$loctime = strftime('%Y%m%d%H%M%S',localtime); ## outputs 120817100834	
 	
-	$PID		= $loctime;	#PLACE HOLDER
-	$LONG_PID	= $loctime;	
-}
+#	$PID		= $loctime;	#PLACE HOLDER
+#	$LONG_PID	= $loctime;	
+#}
 
 
 #################
@@ -1704,8 +1708,8 @@ sub intro_call(){
 #
 sub help(){
 
-	print "\n Usage of program Kmasker: ";
-    print "\n (version:  ".$version.")";
+	print "\n Usage of program Kmasker:";
+    print "\n (version:  ".$version.")\t\t\t\t(session id: $PID)";
     print "\n";
 	
 	if(defined $build){
@@ -1801,6 +1805,8 @@ sub help(){
 	print "\n --bed\t\t\t\t force additional BED output [off]";
 	print "\n --user_conf\t\t set specific user configuration file [$uconf]";
 	print "\n --global_conf\t\t set specific global configuration file [$gconf]";
+	print "\n --long_pid\t\t create a process id that is unique for this host (e.g. for use in cluster environments)";
+
 
 	
 	print "\n\n";

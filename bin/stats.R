@@ -28,7 +28,7 @@ if ( !is.null(opt$help) ) {
 }
 
 feature<-opt$class
-outname=paste("report_statistics_", feature, "_", opt$gff , ".tab", sep="" );
+outname=paste("KMASKER_report_statistics_", feature, "_", ".tab", sep="" );
 if ( !is.null(opt$out) ) {
   outname=opt$out;
 }

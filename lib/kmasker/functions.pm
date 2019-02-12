@@ -5,9 +5,10 @@ use File::Basename;
 use Exporter qw(import);
 use strict;
 use warnings;
+use Data::Uniqid qw ( suniqid luniqid );
 our @ISA = qw(Exporter);
-our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime);
-our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime);
+our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime getsID getlID);
+our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime getsID getlID);
 
 
 ## VERSION
@@ -31,6 +32,13 @@ my $version_PM_functions 	= "0.0.2 rc181025";
 #	print "\n USER is: ".$usr;
 	
 #}
+
+sub getsID {
+	return(suniqid);
+}
+sub getlID {
+	return(luniqid);
+}
 
 sub getLoggingTime {
 
@@ -89,7 +97,8 @@ sub Xtract{
 	
 	my $fasta 		= $_[0];
 	my $sizelimit 	= $_[1];
-	my $N_ration 	= $_[2];
+	my $suffix		= $_[2];
+	my $N_ration 	= $_[3];
 	
 	if(!defined $N_ration){
 		$N_ration = 0.05;
@@ -97,8 +106,8 @@ sub Xtract{
 	
 	# Initiating Handler	
 	open( my $inFASTA, "<", "$fasta");
-	(my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
-	open( my $newFAST, ">", $path . "/KMASKER_extracted_regions_" . $name . $suffix);
+	(my $name,my $path,my $fsuffix) = fileparse($fasta, qr/\.[^.]*/);
+	open( my $newFAST, ">", $path . "/KMASKER_filtered_regions_" . $suffix . ".fasta");
 	my %seqdata; 	
 	while(read_sequence($inFASTA, \%seqdata)) {
 		
