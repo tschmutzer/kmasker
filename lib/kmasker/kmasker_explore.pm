@@ -55,7 +55,7 @@ sub plot_histogram_mean{
     if(defined $log) {
         $arguments = $arguments . " -g";
     }
-    my $outlist = "kmasker_seq.ids";
+    my $outlist = "kmasker_seq_$PID.ids";
     
     if(defined $list){
     #SUBSET
@@ -109,8 +109,8 @@ sub plot_histogram_mean{
    	}
    	
    	#clean    
-   	if(-e "kmasker_seq.ids"){
- 		system("rm kmasker_seq.ids");
+   	if(-e "kmasker_seq_$PID.ids"){
+ 		system("rm kmasker_seq_$PID.ids");
    	}
 }
 
@@ -120,14 +120,14 @@ sub plot_histogram_mean{
 sub plot_histogram_raw{
     my $occ		=	$_[0];
     my $list	=	$_[1];    
-    my $force   =   $_[3];
+    my $force   =   $_[2];
     #VAR
     my $arguments = "";
     if(defined $force) {
-        $arguments = $arguments . " -f";
+        $arguments = $arguments . " --force";
     }
     
-    my $outlist = "kmasker_seq.ids";
+    my $outlist = "kmasker_seq_$PID.ids";
     
     if(defined $list){
     #SUBSET
@@ -146,7 +146,9 @@ sub plot_histogram_raw{
         my $occ_subset = $occ.".selection";
     
         #vis
-        system($path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>$log 2>&1");
+        my $call = $path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>$log 2>&1";
+        #print "CALL: " .$call;
+        system($call);
         #The script will generate one plot per contig in the current working directory
         #The script will skip large contigs to avoid long running times
         #You can force it to do it anyway with -f
@@ -158,7 +160,9 @@ sub plot_histogram_raw{
     #FULL DATASET
         $list = $outlist;
         system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
-        system($path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>$log 2>&1");
+        my $call = $path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>$log 2>&1";
+        #print "CALL: " .$call;
+        system($call);
         #The script will generate one plot per contig in the current working directory
         #If you do not want to provide a contig list (instead running on all entries
         #in the occ file) use the following
@@ -178,13 +182,13 @@ sub plot_histogram_raw{
         my $line = $_;
         $line =~ s/\n//;
         if(-e $line.".png"){
-            system("mv ".$line.".png Kmasker_raw_plots" . "/".$line."_hist.png");
+            system("mv ".$line.".png Kmasker_raw_plots_$PID" . "/".$line."_hist.png");
         }
     }
     
     #clean    
-    if(-e "kmasker_seq.ids"){
-        system("rm kmasker_seq.ids");
+    if(-e "kmasker_seq_$PID.ids"){
+        system("rm kmasker_seq_$PID.ids");
     }
 }
 

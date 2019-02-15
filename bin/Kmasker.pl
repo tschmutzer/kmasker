@@ -436,7 +436,7 @@ if(defined $run){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
 	
-	print "\n starting run module ... \n";
+	print "\n starting run module ... session id: $PID\n";
 	
 	#CRISPR design modul
 	if(defined $krispr){
@@ -489,24 +489,30 @@ if(defined $run){
 				&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
 				
 				#CHECK FISH results
-				my $call = "grep \">\" -c KMASKER_filtered_regions_*".$fasta;
+				my $call = "grep \">\" -c KMASKER_filtered_regions_KDX_${kindex}_${PID}.fasta";
 				my $this = `$call`;
 
 				
 				#CALL PLOT routines
 				
-				my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_$PID.occ";
-				system("Kmasker --explore --hist --occ ".$occ_kmer_counts);
-				system("Kmasker --explore --histm --occ ".$occ_kmer_counts);		
+				my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_${PID}.occ";
+				if($verbose) {
+					system("Kmasker --explore --verbose --hist --occ ".$occ_kmer_counts);
+					system("Kmasker --explore --verbose --histm --occ ".$occ_kmer_counts);	
+				}
+				else{
+					system("Kmasker --explore --hist --occ ".$occ_kmer_counts);
+					system("Kmasker --explore --histm --occ ".$occ_kmer_counts);	
+				}	
 				
 				$this =~ s/\n//;
 				if($this > 0){
 					print "\n .. Kmasker detected ".$this." candidates for FISH !!\n\n";
-					system("mv KMASKER_filtered_regions_*".$fasta." KMASKER_filtered_fish_KDX_".$kindex."_".$HASH_info{"PID"}.".fasta");	
+					move("mv KMASKER_filtered_regions_KDX_${kindex}_${PID}.fasta", "KMASKER_filtered_fish_KDX_".$kindex."_".$PID.".fasta");	
 					
 				}else{
 					print "\n .. no candidates for FISH detected!!\n\n";
-					system("rm KMASKER_filtered_regions_*".$fasta);
+					#system("rm KMASKER_filtered_regions_*".$fasta);
 				}
 				
 				
@@ -611,7 +617,13 @@ if(defined $explore){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";	
 	
-	print "\n starting explore module ... \n";
+	print "\n starting explore module ... session id: $PID\n";
+	if($verbose){
+		if(defined $force) {
+			print "\n --force is active!\n";
+			#$force = "true";
+		}
+	}
 	
 	#ANNOTATION
 	if(defined $custom_annotate){
@@ -738,7 +750,7 @@ if(defined $explore){
 					}				
 				}else{
 					#check
-					my $systemcall_grep 		= "grep -cP \">\" ".$occ;
+					my $systemcall_grep 		= "grep -c \">\" ".$occ;
 					my $number 	= `$systemcall_grep`;
 					$number		=~ s/\n//;
 					if($number >= 10000){	
@@ -753,8 +765,8 @@ if(defined $explore){
 							exit();
 						}
 					}else{
-							&plot_histogram_raw($occ, undef, undef) if(defined $hist);
-							&plot_histogram_mean($occ, undef, $dynamic, undef, $sws) if(defined $histm);
+							&plot_histogram_raw($occ, undef, $force) if(defined $hist);
+							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws) if(defined $histm);
 					}
 					#clean logs
 					#if((! defined $verbose) && -e "log.txt") {
