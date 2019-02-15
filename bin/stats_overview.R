@@ -17,7 +17,8 @@ library("stringr")
 spec=matrix(c(
   'sequence_stats', 's', 1, "character",
   'help', 'h', 0, "logical",
-  'KRC_stats', 'k', 1, "character"
+  'KRC_stats', 'k', 1, "character",
+  'pid', 'p', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
@@ -42,7 +43,7 @@ avgkkrc<-mean(stats_krc[,"Avg"])
 ################
 
 
-fileConn<-file("report_overview_statistics.txt")
+fileConn<-file(paste("KMASKER_report_overview_statistics_", opt$pid, ".txt", sep=""))
 writeLines(c(
 paste("Input file SEQ :", "\t", opt$sequence_stats ),
 paste("Input file KRC :", "\t", opt$KRC_stats),

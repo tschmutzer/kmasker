@@ -6,9 +6,10 @@ use Exporter qw(import);
 use strict;
 use warnings;
 use Data::Uniqid qw ( suniqid luniqid );
+our $PID=suniqid;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime getsID getlID);
-our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime getsID getlID);
+our @EXPORT = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime $PID set_long_PID);
+our @EXPORT_OK = qw(fasta_to_uppercase Xtract add_annotation getLoggingTime $PID set_long_PID);
 
 
 ## VERSION
@@ -33,11 +34,9 @@ my $version_PM_functions 	= "0.0.3 rc190212";
 	
 #}
 
-sub getsID {
-	return(suniqid);
-}
-sub getlID {
-	return(luniqid);
+
+sub set_long_PID {
+	$PID=luniqid;
 }
 
 sub getLoggingTime {
@@ -52,19 +51,21 @@ sub fasta_to_uppercase {
 	my $fasta 		= $_[0];
 	open( my $inFASTA, "<", "$fasta");
 	(my $name,my $path,my $suffix) = fileparse($fasta, qr/\.[^.]*/);
-	open( my $newFASTA, ">", $path . "/UC_" . $name . $suffix);
-	my %seqdata; 	
-	while(read_sequence($inFASTA, \%seqdata)) {
-		
-		my $id 			= $seqdata{header};
-		my $seq			= $seqdata{seq};
-		print $newFASTA ">$id\n" . uc($seq) ."\n";
+	if(! (-e $path . "/UC_" . $name . $suffix)) {
+		open( my $newFASTA, ">", $path . "/UC_" . $name . $suffix);
+		my %seqdata; 	
+		while(read_sequence($inFASTA, \%seqdata)) {
+			
+			my $id 			= $seqdata{header};
+			my $seq			= $seqdata{seq};
+			print $newFASTA ">$id\n" . uc($seq) ."\n";
 
-   				
-	}	
-		   
-   	close($inFASTA);
-	close($newFASTA);
+	   				
+		}	
+			   
+	   	close($inFASTA);
+		close($newFASTA);
+	}
 	return( $path . "/UC_" . $name . $suffix);
 
 }
@@ -137,3 +138,9 @@ sub Xtract{
 	close($newFAST);  	
 	
 }
+
+
+
+
+
+1;

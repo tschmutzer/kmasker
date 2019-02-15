@@ -75,13 +75,13 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     if(occfile == true){
         string occnormoutname = dir + "/KMASKER_kmer_counts_KDX_" + prefix + ".occ";
         cout << "Out normalized OCC is: " << occnormoutname << "\n";
-        string occoutname = dir + "KMASKER_kmer_counts_raw_KDX_" + prefix + ".occ";
+        string occoutname = dir + "/KMASKER_kmer_counts_raw_KDX_" + prefix + ".occ";
         cout << "Out OCC is: " << occoutname << "\n";
         occfilestream.open(occoutname);
         occnormfilestream.open(occnormoutname);
     }
     if(fastaflag == true) {
-        string fastaoutname = dir + "/KMASKER_masked_KDX_" + prefix + "_" + ".fasta";
+        string fastaoutname = dir + "/KMASKER_masked_KDX_" + prefix + ".fasta";
         cout << "Out FASTA is: " << fastaoutname << "\n";
         fastaout.open(fastaoutname);
     }

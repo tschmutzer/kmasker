@@ -19,7 +19,8 @@ spec=matrix(c(
   'help', 'h', 0, "logical",
   'gff', 'g', 1, "character",
   'class', 'c', 1, "character",
-  'out', 'o', 1, "character"
+  'out', 'o', 1, "character",
+  'pid', 'p', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
@@ -28,7 +29,7 @@ if ( !is.null(opt$help) ) {
 }
 
 feature<-opt$class
-outname=paste("KMASKER_report_statistics_", feature, "_", ".tab", sep="" );
+outname=paste("KMASKER_report_statistics_", feature, "_", opt$pid ,".tab", sep="" );
 if ( !is.null(opt$out) ) {
   outname=opt$out;
 }

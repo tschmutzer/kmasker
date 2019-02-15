@@ -1,6 +1,7 @@
 package kmasker::kmasker_explore;
 use Exporter qw(import);
 use File::Basename;
+use File::Copy;
 use strict;
 use warnings;
 use kmasker::filehandler;
@@ -11,8 +12,8 @@ use Cwd  qw(abs_path);
 use POSIX; 
 
 my $timestamp = getLoggingTime();
-our $log = "log_" . $timestamp . "_explore.txt";
-
+our $log = "log_explore_" . $kmasker::functions::PID . ".txt";
+my $PID = $kmasker::functions::PID;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
 plot_histogram
@@ -93,8 +94,8 @@ sub plot_histogram_mean{
     }
     
     #STORE results
-    if(!( -d "./Kmasker_plots")){
-    	system("mkdir Kmasker_plots");
+    if(!( -d "./kmasker_plots_$PID")){
+    	system("mkdir kmasker_plots_$PID");
     }   
    	my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";	
    	while(<$LIST>){
@@ -103,7 +104,7 @@ sub plot_histogram_mean{
 		my $line = $_;
 		$line =~ s/\n//;
 		if(-e $line.".png"){
-			system("mv ".$line.".png Kmasker_plots". "/".$line."_hist.png");
+			system("mv ".$line.".png kmasker_plots_$PID". "/".$line."_hist.png");
 		}
    	}
    	
@@ -167,8 +168,8 @@ sub plot_histogram_raw{
     #STORE results
     #my @ARRAY_info = split("_", $occ);
     #my $kindex = $ARRAY_info[1];
-    if(!( -d "./Kmasker_raw_plots")){
-        system("mkdir Kmasker_raw_plots");
+    if(!( -d "./kmasker_raw_plots_$PID")){
+        system("mkdir kmasker_raw_plots_$PID");
     }   
     my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";    
     while(<$LIST>){

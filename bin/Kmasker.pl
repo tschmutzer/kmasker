@@ -16,12 +16,12 @@ use lib dirname(dirname abs_path $0) . '/lib';
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
-use kmasker::functions qw(fasta_to_uppercase getsID getlID);
+use kmasker::functions;
 
 my $version 	= "0.0.35 rc190212";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
-my $PID = getsID;
+my $PID = $kmasker::functions::PID;
 my $LONG_PID;
 
 #MODULES
@@ -128,7 +128,7 @@ my $expert_config_jelly;
 my $expert_config_blast;
 my $gconf = dirname($path)."/config/kmasker.config";
 my $uconf = $ENV{"HOME"}."/.kmasker_user.config";
-
+my @ARGV_B = @ARGV;
 
 
 #HASH
@@ -248,7 +248,10 @@ if(defined $seq_type_usr){
 	$seq_type = "assembly";
 }
 if(defined $LONG_PID){
-	$PID = getlID;
+	kmasker::functions::set_long_PID();
+	$PID = $kmasker::functions::PID;
+	$kmasker::kmasker_run::log="log_run_" . $kmasker::functions::PID . ".txt";
+	$kmasker::kmasker_explore::log="log_explore_" . $kmasker::functions::PID . ".txt";
 }
 
 #############
@@ -587,6 +590,7 @@ if(defined $run){
     else{
         	unlink($kmasker::kmasker_run::log);
         }
+    &createREADME();
 	exit();
 }
 
@@ -852,12 +856,13 @@ if(defined $explore){
 	
 	#QUIT
 	print "\n\n - Thanks for using Kmasker! -\n\n";
-		if($verbose) {
+	if($verbose) {
         	print "Output of external commands was written to " . $kmasker::kmasker_explore::log ."\n";
         }
     else{
         	unlink($kmasker::kmasker_explore::log);
         }
+    &createREADME();
 	exit();
 }
 	
@@ -1812,6 +1817,98 @@ sub help(){
 	print "\n\n";
 	exit();
 }
+
+sub createREADME {
+   open(my $readme, ">", "KMASKER_00_README_$PID.txt") or die "Can not open KMASKER_00_README_$PID.txt\n";
+   print $readme "PID: $PID\n";
+   print $readme "Kmasker version: $version\n";
+   print $readme "Input command line: ";
+   print $readme join(" ", @ARGV_B);
+   print $readme "\n";
+   print $readme "Mode: ";
+   if(defined $run){
+   		print $readme "RUN ";
+   		if(defined $krispr) {
+   			print $readme "KRISPR ";
+   		}
+   		if(defined $fish){
+   			print $readme "FISH ";
+   		}
+   		if(scalar(@multi_kindex)==1){
+   			print $readme "REPEAT_MASKING ";
+   		}
+   		if(scalar(@multi_kindex)>1){
+   			print $readme "COMPARE";
+   		}
+   }
+   if(defined $explore) {
+   		print $readme "EXPLORE ";
+   		if(defined $custom_annotate){
+   			print $readme "ANNOTATE ";
+   		}
+   		if(defined $cstats){
+   			print $readme "COMPARE_STATS ";
+   		}
+   		if(defined $stats){
+   			print $readme "STATS ";
+   		}
+   		if(defined $xtract){
+   			print $readme "EXTRACT "
+   		}
+   		if((defined $barplot) || (defined $hist) || (defined $histm) || (defined $violin)){
+   			print $readme "VISUALISATION ";
+   		}
+   		if(defined $hist){
+   			print $readme "HISTOGRAM_RAW ";
+   		}
+   		if(defined $histm){
+   			print $readme "HISTOGRAM_MEAN "; 
+   		}
+   }
+
+   print $readme "\nInput files: ";
+   foreach(($fasta, $krispr, $gff, $dbfasta ,$occ, $list)) {
+   	if(defined $_) {
+   		print $readme "\n\t\t" . $_;
+   	}
+   }
+   print $readme "\n";
+   print $readme "Output files ";
+   
+    my $dir = '.';
+
+    opendir(DIR, $dir) or die $!;
+
+    my @files 
+        = grep { 
+            /$PID/             
+	} readdir(DIR);
+
+    # Loop through the array printing out the filenames
+    foreach my $file (@files) {
+        print $readme "\n\t\t$file";
+    }
+
+    closedir(DIR);
+    
+    foreach(("kmasker_plots_$PID", "kmasker_raw_plots_$PID", "$temp_path")) {
+	    if(-e $_) {  
+		    my $dir = $_;
+
+		    opendir(DIR, $dir);
+
+		    my @temp = readdir(DIR);
+
+		    # Loop through the array printing out the filenames
+		    foreach my $file (@files) {
+		        print $readme "\n\t\t$dir/$file";
+		    }
+		    closedir(DIR);
+		}
+	}
+    print $readme "\n";	
+}
+
 
 
 1;
