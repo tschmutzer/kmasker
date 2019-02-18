@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.9 rc180803";
+my $version_PM_build 	= "0.0.10 rc181023";
 
 
 sub build_kindex_jelly{	
@@ -32,6 +32,7 @@ sub build_kindex_jelly{
 	my %HASH_repo		= %{$href_repos};
 	my %HASH_path		= %{$href_path};
 	my $path_fastqstats	= $HASH_path{"fastq-stats"};
+	my $path_jellyfish  = $HASH_path{"jellyfish"};
 		
 	#LOAD info
 	if(defined $build_config){
@@ -52,9 +53,7 @@ sub build_kindex_jelly{
 		%HASH_info = %{$href_info_update};
 		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
-	
-	#
-	if(!-e "repository_".$HASH_info{"kindex name"}.".info"){
+	else{
 		&make_minimal_info_config(\%HASH_info);
 		$build_config = "repository_".$HASH_info{"kindex name"}.".info";
 	}
@@ -67,6 +66,7 @@ sub build_kindex_jelly{
 	my $path			= $HASH_info{"path_bin"};
 	my $threads			= $HASH_info{"threads"};
 	my $size			= $HASH_info{"size"};
+	my $seq_type		= $HASH_info{"sequence type"};
 	
 	#LOAD expert setting for build
 	my $setting = "-s ".$size."G -t ".$threads;	#server setting
@@ -94,26 +94,31 @@ sub build_kindex_jelly{
 	}
 	
 	#BUILD JELLY index	
+	if($seq_type eq "reads"){
+		$setting .= " -C"
+	}
 	print "\n ... start construction of kindex with the following parameters ".$setting." \n";
 	my $FILE_jelly = "KINDEX_".$HASH_info{"kindex name"}.".jf";
 	
 	#CHECK suffix 
 	my ($ext) = $seq =~ /(\.[^.]+)$/;
 	if($ext =~ /gz$/){
-		push(@ARRAY_shell, "zcat ".$seq." | jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly);
+		push(@ARRAY_shell, "zcat ".$seq." | $path_jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly);
 	}else{
-		push(@ARRAY_shell, "jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq);
+		push(@ARRAY_shell, "$path_jellyfish count -m ".$k." ".$setting." -o ".$FILE_jelly." ".$seq);
 	}
 		
 	#CREATE BUILD script
-	system("cp ".$path."/.kmasker_background_process .");
-	my $BASH 	= new IO::File(".kmasker_background_process", '>>') or die "could not write shell script: $!\n";
-	#print $BASH "#!/bin/sh\n";
+	#system("cp ".$path."/.kmasker_background_process .");
+	
+	my $BASH 	= new IO::File(".kmasker_background_process", '>') or die "could not write shell script: $!\n";
+	print $BASH "#!/bin/sh\n";
 	foreach my $call (@ARRAY_shell){
 		print $BASH "{ ".$call." ;} &\n";
 	}
 	print $BASH "wait\n";
 	$BASH->close();
+	chmod(0775, ".kmasker_background_process");
 	system("./.kmasker_background_process");	
 		
 	system("cp ./.kmasker_background_process build_command.sh") if(defined $HASH_info{"verbose"});
@@ -406,6 +411,10 @@ sub read_config(){
 				print "\n\n WARNING: Kmasker (build) was stopped!!!\
 					     \n Missing information in configuration!\n\n";
 				exit(0);
+			}
+			
+			if($HASH_info_this{"sequence type"} ne "assembly"){
+				$HASH_info_this{"sequence type"} = "reads";
 			}
 			
 			#CEHCK for extisting entry

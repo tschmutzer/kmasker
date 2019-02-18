@@ -1,12 +1,24 @@
 #!/usr/bin/env Rscript
-if (!require("pacman")){install.packages("pacman"); library("pacman")}
-pacman::p_load(getopt, zoo, scales, stringr)
-#library('getopt')
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+setRepositories(graphics = F, ind=c(1,2,5,7))
+if (!require("getopt")){install.packages("getopt")}
+library("getopt")
+if (!require("zoo")){install.packages("zoo")}
+library("zoo")
+if (!require("scales")){install.packages("scales")}
+library("scales")
+if (!require("stringr")){install.packages("stringr")}
+library("stringr")
+
 #use getopt for input file and help description
 spec=matrix(c(
   'sequence_stats', 's', 1, "character",
   'help', 'h', 0, "logical",
-  'KRC_stats', 'k', 1, "character"
+  'KRC_stats', 'k', 1, "character",
+  'pid', 'p', 2, "character"
 ), byrow=TRUE, ncol=4)
 opt=getopt(spec)
 if ( !is.null(opt$help) ) {
@@ -31,10 +43,10 @@ avgkkrc<-mean(stats_krc[,"Avg"])
 ################
 
 
-fileConn<-file("report_overview_statistics.txt")
+fileConn<-file(paste("KMASKER_report_overview_statistics_", opt$pid, ".txt", sep=""))
 writeLines(c(
-paste("Input file SEQ :", "\t", $sequence_stats ),
-paste("Input file KRC :", "\t", $KRC_stats),
+paste("Input file SEQ :", "\t", opt$sequence_stats ),
+paste("Input file KRC :", "\t", opt$KRC_stats),
 paste("Number of sequences:", "\t", ncontigs),
 paste("Number of Kmer Repeat Clusters:", "\t", nkrc),
 paste("Number of sequences with average Kmer density > 10:", "\t", avgk10),

@@ -10,7 +10,7 @@ our @ISA = qw(Exporter);
 our @EXPORT = qw(normalize_occ apply_occ merge_occ);
 our @EXPORT_OK = qw(make_occ normalize_occ apply_occ merge_occ);
 
-my $version_PM_occ 	= "0.0.2 rc170309";
+my $version_PM_occ 	= "0.0.3 rc190212";
 
 sub normalize_occ{
 	my $file = $_[0];

@@ -3,20 +3,27 @@ use strict;
 use warnings;
 use IO::File;
 use Getopt::Long;
-use Digest::MD5 qw(md5 md5_hex md5_base64);
+#use Digest::MD5 qw(md5 md5_hex md5_base64);
+use File::stat;
+use File::Copy qw(move);
 #setup package directory
-use File::Basename qw(dirname);
-use Cwd  qw(abs_path);
+use File::Basename;
+use POSIX qw(strftime);
+use Cwd  qw(abs_path getcwd);
 use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
-use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_gRNA show_version_PM_run);
+use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
+use kmasker::functions;
 
-my $version 	= "0.0.33 rc180828";
+my $version 	= "0.0.35 rc190218";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
+my $PID = $kmasker::functions::PID;
+my $uPID; 
+my $LONG_PID;
 
 #MODULES
 #BUILD
@@ -26,8 +33,12 @@ my $explore;
 my $repositories;
 my $build_config;
 my $make_config;
+my $seq_type 			= "reads";
+my $seq_type_usr;
 my $genome_size;
 my $genome_size_usr;
+my $scientific_name 	= "";
+my $scientific_name_usr;
 my $common_name 		= "";
 my $common_name_usr ;
 my $index_name;
@@ -43,7 +54,7 @@ my $PATH_kindex_external= "";
 
 #RUN
 my $fasta;
-my $grna;
+my $krispr;
 my $fish;
 my $compare;
 my $bed;
@@ -90,7 +101,7 @@ my $barplot;
 my $sws;
 my $max;
 my $bin;
-my $log;
+#my $log;
 #GENERAL parameter
 my $help;
 my $out;
@@ -104,7 +115,7 @@ my $set_external_path;
 my $check_install;
 my $remove_kindex;
 my $set_global;
-my $user_name;
+my $user_name = $ENV{LOGNAME} || $ENV{USER} || getpwuid($<);
 my $verbose;
 my $temp_path			= "./temp/";
 my $feature 			= "KRC";
@@ -116,6 +127,10 @@ my $expert_setting_blast	= "";
 my $expert_config_kmasker;
 my $expert_config_jelly;
 my $expert_config_blast;
+my $gconf = dirname($path)."/config/kmasker.config";
+my $uconf = $ENV{"HOME"}."/.kmasker_user.config";
+my @ARGV_B = @ARGV;
+
 
 #HASH
 my %HASH_repository_kindex;
@@ -134,14 +149,16 @@ my $result = GetOptions (	#MAIN
 							"seq=s{1,}"   		=> \@seq_usr,  			# provide the fasta or fastqfile
 							"k=i"				=> \$k_usr,
 							"gs=i"				=> \$genome_size_usr,
+							"sn=s"				=> \$scientific_name_usr,
 							"cn=s"				=> \$common_name_usr,
 							"in=s"				=> \$index_name_usr,
 							"config=s"			=> \$build_config,
+							"as"				=> \$seq_type_usr,
 							"make_config"		=> \$make_config,							
 							
 							#RUN
 							"fasta=s"			=> \$fasta,	
-							"grna"				=> \$grna,
+							"krispr"			=> \$krispr,
 							"fish"				=> \$fish,
 							"compare"			=> \$compare,
 							"kindex=s{1,}"		=> \@multi_kindex,
@@ -171,7 +188,7 @@ my $result = GetOptions (	#MAIN
 							"window"			=> \$sws,	
 							"max=i"				=> \$max,	
 							"bin=i"				=> \$bin,
-							"log"				=> \$log,	
+#							"log"				=> \$log,	
 							"xtract"			=> \$xtract,				
 							
 							#GLOBAL
@@ -194,31 +211,23 @@ my $result = GetOptions (	#MAIN
 							"config_blast=s"			=> \$expert_config_blast,
 							"force"						=> \$force,
 							"bed"						=> \$bed,
-							
+							"global_conf"				=> \$gconf,
+							"user_conf"					=> \$uconf,
 							#Houskeeping
 							"keep_tmp"					=> \$keep_temporary_files,
 							"verbose"					=> \$verbose,
 							"show_version"				=> \$show_version,
+							"long_pid"					=> \$LONG_PID,
+							"pid=s"						=> \$uPID,
 							"help"						=> \$help										
 						);
 						
 #READ global settings
 &read_user_config;
 &read_repository;
+#&create_PID;
 
 
-#############
-# CALLING general commands and tasks
-&intro_call();					
-			
-			
-#############
-# CALLING HELP if requested						
-$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
-
-if(defined $help){
-	&help();	
-}
 
 #######
 ## MAIN
@@ -234,6 +243,38 @@ if(defined $threads_usr){
 #index name
 if(defined $index_name_usr){
 	$index_name = $index_name_usr;
+}
+
+#sequence type 
+if(defined $seq_type_usr){
+	$seq_type = "assembly";
+}
+if(defined $LONG_PID){
+	kmasker::functions::set_long_PID();
+	$PID = $kmasker::functions::PID;
+	$kmasker::kmasker_run::log="log_run_" . $kmasker::functions::PID . ".txt";
+	$kmasker::kmasker_explore::log="log_explore_" . $kmasker::functions::PID . ".txt";
+	$kmasker::kmasker_explore::PID=$kmasker::functions::PID;
+}
+if(defined $uPID) {
+	$PID = $uPID;
+	$kmasker::functions::PID = $uPID;
+	$kmasker::kmasker_run::log="log_run_" . $uPID . ".txt";
+	$kmasker::kmasker_explore::log="log_explore_" . $uPID . ".txt";
+	$kmasker::kmasker_explore::PID=$uPID;
+}
+
+#############
+# CALLING general commands and tasks
+&intro_call();					
+			
+			
+#############
+# CALLING HELP if requested						
+$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
+
+if(defined $help){
+	&help();	
 }
 
 ########
@@ -257,6 +298,8 @@ $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
 $HASH_info{"expert setting blast"}	= $expert_setting_blast;
 $HASH_info{"size"}					= $size;
 $HASH_info{"krisp mismatch"}		= $mismatch;
+$HASH_info{"PID"}					= $PID;
+$HASH_info{"LONG_PID"}				= $LONG_PID;
 
 
 ########
@@ -296,6 +339,11 @@ if(defined $genome_size_usr){
 #common_name
 if(defined $common_name_usr){
 	$common_name = $common_name_usr;
+}
+
+#scientific name
+if(defined $scientific_name_usr){
+	$scientific_name = $scientific_name_usr;
 }
 
 #k-mer size
@@ -359,8 +407,8 @@ if(defined $build){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
 	$HASH_info{"status"}				= "";
-	$HASH_info{"scientific name"}		= "";
-	$HASH_info{"sequence type"}			= "";
+	$HASH_info{"scientific name"}		= $scientific_name;
+	$HASH_info{"sequence type"}			= $seq_type;
 	$HASH_info{"general notes"}			= "";
 	$HASH_info{"type"}					= "";
 	$HASH_info{"sequencing depth"}		= "";
@@ -398,12 +446,12 @@ if(defined $run){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";
 	
-	print "\n starting run module ... \n";
+	print "\n starting run module ... session id: $PID\n";
 	
 	#CRISPR design modul
-	if(defined $grna){
+	if(defined $krispr){
 		if(exists $HASH_repository_kindex{$kindex}){
-			&run_gRNA($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
+			&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
 		}
 		exit();	
 	}
@@ -424,12 +472,14 @@ if(defined $run){
 					if($length_threshold < 2500){
 						print "\n WARNING: Provided length is too small for proper FISH candidate sequence. Setting '--minl' to 2500 bp!\n\n";
 						$length_threshold = 2500;
-					}else{
-						$length_threshold = 2500;
 					}
+				}else{
+						$length_threshold = 2500;
 				}
 				
 				my $this_setting = "--rept=".$repeat_threshold.";--minl=".$length_threshold;
+				$HASH_info{"rept"} = $repeat_threshold;
+				$HASH_info{"minl"} = $length_threshold;
 				&use_expert_settings("kmasker", $this_setting);
 				
 				#READ repository.info
@@ -449,16 +499,34 @@ if(defined $run){
 				&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
 				
 				#CHECK FISH results
-				my $call = "grep \">\" -cP KMASKER_extracted_regions_*".$fasta;
+				my $call = "grep \">\" -c KMASKER_filtered_regions_KDX_${kindex}_${PID}.fasta";
 				my $this = `$call`;
+
+				
+				#CALL PLOT routines
+				
+				my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_${PID}.occ";
+				if($verbose) {
+					system("Kmasker --explore --verbose --hist --occ ".$occ_kmer_counts);
+					system("Kmasker --explore --verbose --histm --occ ".$occ_kmer_counts);	
+				}
+				else{
+					system("Kmasker --explore --hist --occ ".$occ_kmer_counts);
+					system("Kmasker --explore --histm --occ ".$occ_kmer_counts);	
+				}	
+				
 				$this =~ s/\n//;
 				if($this > 0){
-					print "\n .. ".$this." candidates for FISH detected!!\n\n";
-					system("mv KMASKER_extracted_regions_*".$fasta." KMASKER_FISH_candidates_KINDEX_".$kindex."_".$fasta);
+					print "\n .. Kmasker detected ".$this." candidates for FISH !!\n\n";
+					move("mv KMASKER_filtered_regions_KDX_${kindex}_${PID}.fasta", "KMASKER_filtered_fish_KDX_".$kindex."_".$PID.".fasta");	
+					
 				}else{
 					print "\n .. no candidates for FISH detected!!\n\n";
-					system("rm KMASKER_extracted_regions_*".$fasta);
-				}							
+					#system("rm KMASKER_filtered_regions_*".$fasta);
+				}
+				
+				
+											
 			}
 		}else{
 			print "\n WARNING: Calling '--fish' settings is only permitted with single KINDEX.";
@@ -532,6 +600,13 @@ if(defined $run){
 	
 	#QUIT
 	print "\n - Thanks for using Kmasker! -\n\n";
+		if($verbose) {
+        	print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";
+        }
+    else{
+        	unlink($kmasker::kmasker_run::log);
+        }
+    &createREADME();
 	exit();
 }
 
@@ -552,7 +627,13 @@ if(defined $explore){
 	$HASH_info{"version KMASKER"}		= $version;
 	$HASH_info{"version BUILD"} 		= "";	
 	
-	print "\n starting explore module ... \n";
+	print "\n starting explore module ... session id: $PID\n";
+	if($verbose){
+		if(defined $force) {
+			print "\n --force is active!\n";
+			#$force = "true";
+		}
+	}
 	
 	#ANNOTATION
 	if(defined $custom_annotate){
@@ -568,7 +649,7 @@ if(defined $explore){
 		if($check_settings eq ""){
     		$HASH_db{"db_fasta"} 	= $dbfasta if(defined $dbfasta);
     		$HASH_db{"db"} 			= $blastableDB if(defined $blastableDB);
-			&custom_annotation($fasta, $gff, $feature ,\%HASH_db, \%HASH_info);
+			&custom_annotation($fasta, $gff, $feature ,\%HASH_db, \%HASH_info, \%HASH_path);
 		}else{
 			print "\n WARNING: Required parameter are missing.";
 			print "\n WARNINGS are ".$check_settings;
@@ -607,7 +688,7 @@ if(defined $explore){
 		
 		#exit
 		if(scalar(@OCClist)>1){
-			print "\n Too many file provided in '--occ'. Statistics only can be calculated for a single OCC file.\n\n";
+			print "\n Too many files provided in '--occ'. Statistics only can be calculated for a single OCC file.\n\n";
 			exit();
 		}
 				
@@ -673,20 +754,20 @@ if(defined $explore){
 				if(defined $list){				
 					if (-e $list) {
    						&plot_histogram_raw($occ, $list, $force) if(defined $hist);
-   						&plot_histogram_mean($occ, $list, $dynamic, $force, $sws, $log) if(defined $histm);
+   						&plot_histogram_mean($occ, $list, $dynamic, $force, $sws) if(defined $histm);
 					}else{
 						$missing_parameter .= " --list (file ".$list." not found)";
 					}				
 				}else{
 					#check
-					my $systemcall_grep 		= "grep -cP \">\" ".$occ;
+					my $systemcall_grep 		= "grep -c \">\" ".$occ;
 					my $number 	= `$systemcall_grep`;
 					$number		=~ s/\n//;
 					if($number >= 10000){	
 						
 						if(defined $force){
 							&plot_histogram_raw($occ, undef, $force) if(defined $hist);
-							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws, $log) if(defined $histm);
+							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws) if(defined $histm);
 						}else{						
 							print "\n\n WARNING: Your input contains ".$number." sequences. We do not recommend to build more than 10.000 in one step.\n";
 							print     " This might take very long. You can force this by using '--force'. Kmasker has been stopped \n\n";	
@@ -694,13 +775,13 @@ if(defined $explore){
 							exit();
 						}
 					}else{
-							&plot_histogram_raw($occ, undef, undef) if(defined $hist);
-							&plot_histogram_mean($occ, undef, $dynamic, undef, $sws, $log) if(defined $histm);
+							&plot_histogram_raw($occ, undef, $force) if(defined $hist);
+							&plot_histogram_mean($occ, undef, $dynamic, $force, $sws) if(defined $histm);
 					}
 					#clean logs
-					if((! defined $verbose) && -e "log.txt") {
-						unlink("log.txt");
-					}
+					#if((! defined $verbose) && -e "log.txt") {
+					#	unlink("log.txt");
+					#}
 				}
 			}
 			
@@ -797,6 +878,13 @@ if(defined $explore){
 	
 	#QUIT
 	print "\n\n - Thanks for using Kmasker! -\n\n";
+	if($verbose) {
+        	print "Output of external commands was written to " . $kmasker::kmasker_explore::log ."\n";
+        }
+    else{
+        	unlink($kmasker::kmasker_explore::log);
+        }
+    &createREADME();
 	exit();
 }
 	
@@ -855,12 +943,13 @@ sub show_details_for_kindex(){
 #
 sub initiate_user(){
 	
-	$user_name 			= `whoami`;
-	$user_name			=~ s/\n//g;
-	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
+	#$user_name 			= `whoami`;
+	#$user_name			=~ s/\n//g;
+	#my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
 
 	if(-e $uconf){
 		#USER already exists, do nothing
+		print "\n Using $uconf as user configuration. \n" if(defined $verbose);
 	}else{
 		#SETUP user conf
 		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
@@ -913,7 +1002,7 @@ sub check_settings(){
 			exit(0);
 		}
 		
-		if(((!defined $fasta)&&(!defined $grna))){
+		if(((!defined $fasta)&&(!defined $krispr))){
 			print "\n .. kmasker was stopped: no sequence provided (either '--fasta' or '--grna') !";
 			print "\n\n";
 			exit(0);
@@ -935,24 +1024,30 @@ sub check_settings(){
 #
 sub check_install(){
 
-	$user_name 			= `whoami`;
-	$user_name			=~ s/\n//g;
-	my $gconf 			= $path."/kmasker.config";
+	#$user_name 			= `whoami`;
+	#$user_name			=~ s/\n//g;
+	#my $gconf 			= $path."/kmasker.config";
 	
 	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
-	my $fp			 =  $path."/kmasker.config";
-	my $installed_by = `stat -c "%U" $fp`;
-	$installed_by =~ s/\n//;
-	if($installed_by ne $user_name){
-		print "\n Your user rights are not sufficient to call that procedure. Call is permitted.\n";
-		print "I=(".$installed_by.") U=(".$user_name.")\n";
-		exit();	
+	#my $fp			 =  $path."/kmasker.config";
+	print "\n Global configuration: $gconf\n" if(defined $verbose);
+	if (-e $gconf) {
+		my ($installed_by) = getpwuid(stat($gconf)->uid);
+		#$installed_by =~ s/\n//;
+		if($installed_by ne $user_name){
+			print "\n Your user rights are not sufficient to create or modify this global configuration file.\n";
+			print "I=(".$installed_by.") U=(".$user_name.")\n";
+			exit();	
+		}
 	}
 	
 	#REQUIREMENTs
 	my %HASH_requirments	= (	"jellyfish" => "",
 								"fastq-stats" => "",
-								"gffread" => "");
+								"gffread" => "",
+								"blastn"  => "",
+								"makeblastdb" => "",
+								"R" => "");
 			
 	#SET default path if tool is detected
 	foreach my $tool (keys %HASH_requirments){
@@ -966,8 +1061,8 @@ sub check_install(){
 	#GLOBAL
 	if(-e $gconf){
 		#LOAD global info
-		my $gCFG_old 	= new IO::File($gconf, "r") or die "\n unable to read user config $!";	
-		my $gCFG 		= new IO::File($gconf.".tmp", "w") or die "\n unable to update user config $!";
+		my $gCFG_old 	= new IO::File($gconf, "r") or die "\n unable to read global config $!";	
+		my $gCFG 		= new IO::File($gconf.".tmp", "w") or die "\n unable to update global config $!";
 		
 		my %HASH_provided = ();
 		while(<$gCFG_old>){
@@ -979,7 +1074,10 @@ sub check_install(){
 			
 			$HASH_provided{"jellyfish"} 	= $line if($line =~ /^jellyfish=/);
 			$HASH_provided{"fastq-stats"} 	= $line if($line =~ /^fastq-stats=/);
-			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);			
+			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);
+			$HASH_provided{"blastn"} 	= $line if($line =~ /^blastn=/);
+			$HASH_provided{"makeblastdb"} 	= $line if($line =~ /^makeblastdb=/);
+			$HASH_provided{"R"}		= $line if($line =~ /^R=/);				
 		}
 		
 		
@@ -992,6 +1090,15 @@ sub check_install(){
 		
 		#GFFREAD
 		$HASH_requirments{"gffread"} = &check_routine_for_requirement("gffread", $HASH_provided{"gffread"}, $HASH_requirments{"gffread"});
+
+		#blastn
+		$HASH_requirments{"blastn"} = &check_routine_for_requirement("blastn", $HASH_provided{"blastn"}, $HASH_requirments{"blastn"});
+		
+		#makeblastdb
+		$HASH_requirments{"makeblastdb"} = &check_routine_for_requirement("makeblastdb", $HASH_provided{"makeblastdb"}, $HASH_requirments{"makeblastdb"});
+		
+		#R
+		$HASH_requirments{"R"} = &check_routine_for_requirement("R", $HASH_provided{"R"}, $HASH_requirments{"R"});
 				
 		#WRITE
 		print $gCFG "#external tool requirements\n";
@@ -1006,8 +1113,42 @@ sub check_install(){
 		print "\n\n";
 		$gCFG_old->close();
 		$gCFG->close();
-		system("mv ".$gconf.".tmp ".$gconf)	
+		#system("mv ".$gconf.".tmp ".$gconf)	
+		move "$gconf.tmp", $gconf;
 
+	} else { #global config is missing
+		my $gCFG 		= new IO::File($gconf, "w") or die "\n unable to create global config $!";
+		#CHECK tool requirments
+		#JELLYFISH
+		$HASH_requirments{"jellyfish"} = &check_routine_for_requirement("jellyfish", "", $HASH_requirments{"jellyfish"});
+		
+		#FASTQ-STATs
+		$HASH_requirments{"fastq-stats"} = &check_routine_for_requirement("fastq-stats", "", $HASH_requirments{"fastq-stats"});
+		
+		#GFFREAD
+		$HASH_requirments{"gffread"} = &check_routine_for_requirement("gffread", "", $HASH_requirments{"gffread"});
+
+		#blastn
+		$HASH_requirments{"blastn"} = &check_routine_for_requirement("blastn", "", $HASH_requirments{"blastn"});
+		
+		#makeblastdb
+		$HASH_requirments{"makeblastdb"} = &check_routine_for_requirement("makeblastdb", "", $HASH_requirments{"makeblastdb"});
+		
+		#R
+		$HASH_requirments{"R"} = &check_routine_for_requirement("R", "", $HASH_requirments{"R"});
+				
+		#WRITE
+		print $gCFG "#external tool requirements\n";
+		foreach my $required (keys %HASH_requirments){
+			if($required !~ /^PATH_kindex/){
+				system("which $HASH_requirments{$required} >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $required but it's not installed or path is missing! Kmasker process stopped.\"; exit 1; \}");
+				print $gCFG $required."=".$HASH_requirments{$required}."\n";
+				print "\n info ".$required." --> ".$HASH_requirments{$required};
+			}			
+		}
+		
+		print "\n\n";
+		$gCFG->close();
 	}
 }
 
@@ -1211,18 +1352,34 @@ sub reading_file(){
 	return $readline;
 }
 
+sub check_tool () {
+my $line = $_[0];
+my $tool = $_[1]; 
+if($line =~ /^$tool=/){
+	my @ARRAY_tmp = split("=", $line);
+	if(!defined $ARRAY_tmp[1]){
+		system("which $tool >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed! Kmasker process stopped.\"; exit 1; \}");
+		$HASH_path{"$tool"} = `which $tool`;
+		$HASH_path{"$tool"} =~ s/\n//;
+		}else{
+			$HASH_path{"$tool"} = $ARRAY_tmp[1];
+			system("which ".$HASH_path{"$tool"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
+		}
+		print "\n $tool=".$HASH_path{"$tool"}."\n" if(defined $verbose);
+	}
+}
 
 ## subroutine
 #
 sub read_user_config(){
-	$user_name 			= `whoami`;
-	$user_name			=~ s/\n//g;
-	my $gconf 			= $path."/kmasker.config";
-	my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
+	#$user_name 			= `whoami`;
+	#$user_name			=~ s/\n//g;
+	#my $gconf 			= $path."/kmasker.config";
+	#my $uconf 			= $ENV{"HOME"}."/.kmasker_user.config";
 	
 	if(-e $gconf){
 		#LOAD info for external tools
-		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read user config $!";	
+		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read global config $!";	
 		
 		while(<$gCFG>){
 			next if($_ =~ /^$/);
@@ -1246,47 +1403,13 @@ sub read_user_config(){
 			}		
 			
 			#READ external tool path
-			#JELLYFISH
-			if($line =~ /^jellyfish=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which jellyfish >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"jellyfish"} = `which jellyfish`;
-					$HASH_path{"jellyfish"} =~ s/\n//;
-				}else{
-					$HASH_path{"jellyfish"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"jellyfish"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires jellyfish but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n jellyfish=".$HASH_path{"jellyfish"}."\n" if(defined $verbose);
-			}
-			
-			#FASTQ-STATs
-			if($line =~ /^fastq-stats=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which fastq-stats >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"fastq-stats"} = `which fastq-stats`;
-					$HASH_path{"fastq-stats"} =~ s/\n//;
-				}else{
-					$HASH_path{"fastq-stats"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"fastq-stats"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires fastq-stats but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n fastq-stats=".$HASH_path{"fastq-stats"}."\n" if(defined $verbose);
-			}
-			
-			#GFFREAD
-			if($line =~ /^gffread=/){
-				my @ARRAY_tmp = split("=", $line);
-				if(!defined $ARRAY_tmp[1]){
-					system("which gffread >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-					$HASH_path{"gffread"} = `which gffread`;
-					$HASH_path{"gffread"} =~ s/\n//;
-				}else{
-					$HASH_path{"gffread"} = $ARRAY_tmp[1];
-					system("which ".$HASH_path{"gffread"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires gffread but it's not installed! Kmasker process stopped.\"; exit 1; \}");
-				}
-				print "\n gffread=".$HASH_path{"gffread"}."\n" if(defined $verbose);
-			}
+			&check_tool($line, "jellyfish");
+			&check_tool($line, "fastq-stats");
+			&check_tool($line, "gffread");
+			&check_tool($line, "blastn");
+			&check_tool($line, "makeblastdb");
+			&check_tool($line, "R");
+
 		}
 	}
 	
@@ -1299,6 +1422,14 @@ sub read_user_config(){
 			my $line = $_;
 			$line =~ s/\n//;
 			my @ARRAY_tmp = split("=", $line);
+
+			&check_tool($line, "jellyfish");
+			&check_tool($line, "fastq-stats");
+			&check_tool($line, "gffread");
+			&check_tool($line, "blastn");
+			&check_tool($line, "makeblastdb");
+			&check_tool($line, "R");
+			
 			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
 			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
 			
@@ -1379,7 +1510,7 @@ sub read_repository(){
 	close $DIR_P;
 	
 	#EXTERNAL
-	if($PATH_kindex_external !~ /^\/$/){
+	if($PATH_kindex_external !~ /^(\/)$|^(\s)$|^()$/){
 	# EXTERNAL PATH is set
 		
 		opendir( my $DIR_E, $PATH_kindex_external ) or die "Can not open \'$PATH_kindex_external\' (external path)\n";
@@ -1415,7 +1546,9 @@ sub read_repository(){
 	
 }
 
-
+#################
+#
+#
 sub check_routine_for_requirement(){
 	my $requirement = $_[0];
 	my $line 		= $_[1];
@@ -1429,7 +1562,17 @@ sub check_routine_for_requirement(){
 			my $path_check 	= `which $path_given`;
 			$path_check		=~ s/\n$//;
 			if($path_check eq ""){
-				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";			
+				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";
+				my $path_which = `which $requirement`;
+				$path_which =~ s/\n$//;
+				if($path_which eq "") {
+					print "\n No success! Your configuration for $requirement is might be wrong!\n";
+					print "\n Current path is $default!\n";
+				} else {
+					print "\n Success! Set path for $requirement to $path_which!\n";
+					$default = $path_which;
+			    }
+
 			}else{
 				$default = $path_check;
 			}					
@@ -1437,6 +1580,22 @@ sub check_routine_for_requirement(){
 	}	
 	return $default;
 }
+
+
+#################
+#
+#
+#ub create_PID(){
+	#FIXME
+	# @Chris: please continue to create PID and LONG_PID
+	
+#	my $loctime = localtime;
+#	$loctime = strftime('%Y%m%d%H%M%S',localtime); ## outputs 120817100834	
+	
+#	$PID		= $loctime;	#PLACE HOLDER
+#	$LONG_PID	= $loctime;	
+#}
+
 
 #################
 #
@@ -1469,6 +1628,15 @@ sub intro_call(){
 			print "\n .. process stopped! \n\n";		
 			exit();	
 		}
+		my $cwd = getcwd();
+		my $filename = fileparse($fasta);
+		if(!(-e $cwd . "/" . $filename)) {
+			symlink($fasta, $cwd . "/" . $filename);
+			$fasta = $filename;
+		}
+		$fasta=fileparse(fasta_to_uppercase($fasta));
+
+
 	}
 	
 	#CHECK existence of SEQ
@@ -1567,8 +1735,8 @@ sub intro_call(){
 #
 sub help(){
 
-	print "\n Usage of program Kmasker: ";
-    print "\n (version:  ".$version.")";
+	print "\n Usage of program Kmasker:";
+    print "\n (version:  ".$version.")\t\t\t\t(session id: $PID)";
     print "\n";
 	
 	if(defined $build){
@@ -1582,6 +1750,8 @@ sub help(){
 		print "\n --gs\t\t genome size of species (in Mbp)";
 		print "\n --in \t\t provide k-mer index name (e.g. HvMRX for hordeum vulgare cultivare morex) [date]";
 		print "\n --cn \t\t provide common name of species (e.g. barley)";
+		print "\n --as \t\t input is of sequence type 'assembly'. Set this option if your input is based on ";
+		print "\n      \t\t assembled sequences (e.g. genome reference). Default sequence type is 'reads'.";
 		
 		print "\n\n";
 		exit();
@@ -1594,11 +1764,11 @@ sub help(){
 		
 		print "\n\n Options:";
 		print "\n --kindex\t single or multiple k-mer indices (use space delimited list)";
-		print "\n --fasta\t sequences for k-mer analysis and masking in FASTA format";
-		print "\n --grna\t\t set of gRNA sequences in FASTA format";
+		print "\n --fasta\t sequences in FASTA format for k-mer analysis and masking";
+		print "\n --krispr\t provide gRNA sequences in FASTA format for specificity analysis";
 		print "\n --compare\t perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
-		print "\n --minl\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
+		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
 	
 		print "\n\n";
 		exit();
@@ -1659,11 +1829,110 @@ sub help(){
 	print "\n\t\t\t\t for index construction)";
 	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
 	print "\n --threads\t\t\t set number of threads [4]";
-	print "\n --bed\t\t\t force additional BED output [off]";
+	print "\n --bed\t\t\t\t force additional BED output [off]";
+	print "\n --user_conf\t\t set specific user configuration file [$uconf]";
+	print "\n --global_conf\t\t set specific global configuration file [$gconf]";
+	print "\n --long_pid\t\t create a process id that is unique for this host (e.g. for use in cluster environments)";
+
+
 	
 	print "\n\n";
 	exit();
 }
+
+sub createREADME {
+   open(my $readme, ">", "KMASKER_00_README_$PID.txt") or die "Can not open KMASKER_00_README_$PID.txt\n";
+   print $readme "PID: $PID\n";
+   print $readme "Kmasker version: $version\n";
+   print $readme "Input command line: ";
+   print $readme join(" ", @ARGV_B);
+   print $readme "\n";
+   print $readme "Mode: ";
+   if(defined $run){
+   		print $readme "RUN ";
+   		if(defined $krispr) {
+   			print $readme "KRISPR ";
+   		}
+   		if(defined $fish){
+   			print $readme "FISH ";
+   		}
+   		if(scalar(@multi_kindex)==1){
+   			print $readme "REPEAT_MASKING ";
+   		}
+   		if(scalar(@multi_kindex)>1){
+   			print $readme "COMPARE";
+   		}
+   }
+   if(defined $explore) {
+   		print $readme "EXPLORE ";
+   		if(defined $custom_annotate){
+   			print $readme "ANNOTATE ";
+   		}
+   		if(defined $cstats){
+   			print $readme "COMPARE_STATS ";
+   		}
+   		if(defined $stats){
+   			print $readme "STATS ";
+   		}
+   		if(defined $xtract){
+   			print $readme "EXTRACT "
+   		}
+   		if((defined $barplot) || (defined $hist) || (defined $histm) || (defined $violin)){
+   			print $readme "VISUALISATION ";
+   		}
+   		if(defined $hist){
+   			print $readme "HISTOGRAM_RAW ";
+   		}
+   		if(defined $histm){
+   			print $readme "HISTOGRAM_MEAN "; 
+   		}
+   }
+
+   print $readme "\nInput files: ";
+   foreach(($fasta, $krispr, $gff, $dbfasta ,$occ, $list)) {
+   	if(defined $_) {
+   		print $readme "\n\t\t" . $_;
+   	}
+   }
+   print $readme "\n";
+   print $readme "Output files ";
+   
+    my $dir = '.';
+
+    opendir(DIR, $dir) or die $!;
+
+    my @files 
+        = grep { 
+            /$PID/             
+	} readdir(DIR);
+
+    # Loop through the array printing out the filenames
+    foreach my $file (@files) {
+        print $readme "\n\t\t$file";
+    }
+
+    closedir(DIR);
+    
+    foreach(("kmasker_plots_$PID", "kmasker_raw_plots_$PID", "$temp_path")) {
+	    if(-e $_) {  
+		    my $dir = $_;
+
+		    opendir(DIR, $dir);
+
+		    my @temp = grep { 
+            /($PID)|(png$)/             
+			} readdir(DIR);
+
+		    # Loop through the array printing out the filenames
+		    foreach my $file (@temp) {
+		        print $readme "\n\t\t$dir/$file";
+		    }
+		    closedir(DIR);
+		}
+	}
+    print $readme "\n";	
+}
+
 
 
 1;

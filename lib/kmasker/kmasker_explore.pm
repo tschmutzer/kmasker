@@ -1,6 +1,7 @@
 package kmasker::kmasker_explore;
 use Exporter qw(import);
 use File::Basename;
+use File::Copy;
 use strict;
 use warnings;
 use kmasker::filehandler;
@@ -10,11 +11,16 @@ use File::Basename qw(dirname);
 use Cwd  qw(abs_path);
 use POSIX; 
 
+my $timestamp = getLoggingTime();
+our $log = "log_explore_" . $kmasker::functions::PID . ".txt";
+our $PID = $kmasker::functions::PID;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-plot_histogram
-repeat_annotation
-gff_construction
+    plot_histogram
+    repeat_annotation
+    gff_construction
+    $log
+    $PID
 );
 our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics plot_maker plot_maker_direct plot_barplot);
 
@@ -23,7 +29,8 @@ my $version_PM_explore 	= "0.0.2 rc180815";
 
 ## DATE
 my $loctime = localtime;
-$loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
+#$loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
+$loctime = $PID;
 
 my $path        = dirname abs_path $0;      
 
@@ -35,7 +42,6 @@ sub plot_histogram_mean{
     my $dynamic =   $_[2];
     my $force   =   $_[3];
     my $sws     =   $_[4];
-    my $log     =   $_[5];
     #VAR
     my $arguments = "";
     if(defined $dynamic) {
@@ -50,7 +56,7 @@ sub plot_histogram_mean{
     if(defined $log) {
         $arguments = $arguments . " -g";
     }
-    my $outlist = "kmasker_seq.ids";
+    my $outlist = "kmasker_seq_$PID.ids";
     
     if(defined $list){
     #SUBSET
@@ -65,11 +71,11 @@ sub plot_histogram_mean{
 		}   
 	
 		#subset
-		system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>log.txt 2>&1");
+		system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>$log 2>&1");
 		my $occ_subset = $occ.".selection";
     
 	    #vis
-	    system($path . "/" ."occVisualizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>log.txt 2>&1");
+	    system($path . "/" ."occVisualizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>$log 2>&1");
 	    #The script will generate one plot per contig in the current working directory
 	    #The script will skip large contigs to avoid long running times
 	    #You can force it to do it anyway with -f
@@ -81,7 +87,7 @@ sub plot_histogram_mean{
     #FULL DATASET
     	$list = $outlist;
     	system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
-    	system($path . "/" ."occVisualizer.R -i ".$occ . "$arguments". " >>log.txt 2>&1");
+    	system($path . "/" ."occVisualizer.R -i ".$occ . "$arguments". " >>$log 2>&1");
     	#The script will generate one plot per contig in the current working directory
 	    #If you do not want to provide a contig list (instead running on all entries
 	    #in the occ file) use the following
@@ -89,8 +95,8 @@ sub plot_histogram_mean{
     }
     
     #STORE results
-    if(!( -d "./Kmasker_plots")){
-    	system("mkdir Kmasker_plots");
+    if(!( -d "./kmasker_plots_$PID")){
+    	system("mkdir kmasker_plots_$PID");
     }   
    	my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";	
    	while(<$LIST>){
@@ -99,13 +105,13 @@ sub plot_histogram_mean{
 		my $line = $_;
 		$line =~ s/\n//;
 		if(-e $line.".png"){
-			system("mv ".$line.".png Kmasker_plots". "/".$line."_hist.png");
+			system("mv ".$line.".png kmasker_plots_$PID". "/".$line."_hist.png");
 		}
    	}
    	
    	#clean    
-   	if(-e "kmasker_seq.ids"){
- 		system("rm kmasker_seq.ids");
+   	if(-e "kmasker_seq_$PID.ids"){
+ 		system("rm kmasker_seq_$PID.ids");
    	}
 }
 
@@ -115,14 +121,14 @@ sub plot_histogram_mean{
 sub plot_histogram_raw{
     my $occ		=	$_[0];
     my $list	=	$_[1];    
-    my $force   =   $_[3];
+    my $force   =   $_[2];
     #VAR
     my $arguments = "";
     if(defined $force) {
-        $arguments = $arguments . " -f";
+        $arguments = $arguments . " --force";
     }
     
-    my $outlist = "kmasker_seq.ids";
+    my $outlist = "kmasker_seq_$PID.ids";
     
     if(defined $list){
     #SUBSET
@@ -137,11 +143,13 @@ sub plot_histogram_raw{
         }   
     
         #subset
-        system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>log.txt 2>&1");
+        system($path . "/" ."FASTA_getseq.pl -o ".$occ." --list ".$list. " >>$log 2>&1");
         my $occ_subset = $occ.".selection";
     
         #vis
-        system($path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>log.txt 2>&1");
+        my $call = $path . "/" ."occHistolizer.R -i ".$occ_subset." -l ".$list . "$arguments". " >>$log 2>&1";
+        #print "CALL: " .$call;
+        system($call);
         #The script will generate one plot per contig in the current working directory
         #The script will skip large contigs to avoid long running times
         #You can force it to do it anyway with -f
@@ -153,7 +161,9 @@ sub plot_histogram_raw{
     #FULL DATASET
         $list = $outlist;
         system("grep \">\" ".$occ."| sed \'s/^>//\' | awk -F\" \" '{print \$1}' >".$outlist);
-        system($path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>log.txt 2>&1");
+        my $call = $path . "/" ."occHistolizer.R -i ".$occ . "$arguments". " >>$log 2>&1";
+        #print "CALL: " .$call;
+        system($call);
         #The script will generate one plot per contig in the current working directory
         #If you do not want to provide a contig list (instead running on all entries
         #in the occ file) use the following
@@ -163,8 +173,8 @@ sub plot_histogram_raw{
     #STORE results
     #my @ARRAY_info = split("_", $occ);
     #my $kindex = $ARRAY_info[1];
-    if(!( -d "./Kmasker_raw_plots")){
-        system("mkdir Kmasker_raw_plots");
+    if(!( -d "./kmasker_raw_plots_$PID")){
+        system("mkdir kmasker_raw_plots_$PID");
     }   
     my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";    
     while(<$LIST>){
@@ -173,13 +183,13 @@ sub plot_histogram_raw{
         my $line = $_;
         $line =~ s/\n//;
         if(-e $line.".png"){
-            system("mv ".$line.".png Kmasker_raw_plots" . "/".$line."_hist.png");
+            system("mv ".$line.".png Kmasker_raw_plots_$PID" . "/".$line."_hist.png");
         }
     }
     
     #clean    
-    if(-e "kmasker_seq.ids"){
-        system("rm kmasker_seq.ids");
+    if(-e "kmasker_seq_$PID.ids"){
+        system("rm kmasker_seq_$PID.ids");
     }
 }
 
@@ -352,8 +362,6 @@ sub plot_barplot{
     	system("make_barplot.R -c avg -i ".$file);   
     } 
 }
-
-
 ## subroutine
 #
 sub report_statistics{
@@ -363,26 +371,24 @@ sub report_statistics{
 	
 	my $outtag = "";
 	if(defined $out){
-		$outtag = "_".$out;
+		$outtag = "_${PID}_".$out;
 	}
 
 	#Statistics
     print "\n .. call statistic calculation\n"; #if(!defined $silent);
 	my $path 		= dirname abs_path $0;
  	
- 	system("$path/stats.R " . "-i " .$occ . " -g " . $gff . " -c sequence" . " -o report_statistics_sequences". $outtag .".txt " . " >>log.txt 2>&1");
+ 	system("$path/stats.R " . "-i " .$occ . " -g " . $gff . " -c sequence" . " -o report_statistics_sequences". $outtag .".txt " . " >>$log 2>&1");
 	print "\n finished calculating statistics for sequences \n";
-	system("$path/stats.R "  . "-i " . $occ . " -g " . $gff . " -c KRC" .    " -o report_statistics_KRC".$outtag.".txt " . " >>log.txt 2>&1");
+	system("$path/stats.R "  . "-i " . $occ . " -g " . $gff . " -c KRC" .    " -o report_statistics_KRC".$outtag.".txt " . " >>$log 2>&1");
     print "\n finished calculating statistics for KRCs \n";
          
     if((!(-e "report_statistics_sequences".$outtag.".txt")) || (!(-e  "report_statistics_KRC".$outtag.".txt" ))) {
     	print "\nSome statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
     }
     else {
-		system("$path/stats_overview.R " . " -s report_statistics_sequences".$outtag.".txt " . " -k report_statistics_KRC".$outtag.".txt >>log.txt 2>&1");
+		system("$path/stats_overview.R " . " -s report_statistics_sequences".$outtag.".txt " . " -k report_statistics_KRC".$outtag.".txt >>$log 2>&1");
     }
-     
-   	unlink("log.txt");
 }
 
 
@@ -394,9 +400,17 @@ sub custom_annotation{
     my $feature     =   $_[2];
     my $href_DB 	=   $_[3]; 
     my $href_info	=	$_[4];
-    
+    my $href_path	=	$_[5];
+
+
+   	my %HASH_path		= %{$href_path};
     my %HASH_info 	= %{$href_info};
     my %HASH_DB		= %{$href_DB};
+    my $threads = $HASH_info{"threads"};
+    my $temp_dir = $HASH_info{"temp_path"};
+   	my $path_blast  = $HASH_path{"blastn"};
+   	my $path_makeblastdb = $HASH_path{"makeblastdb"};
+
     my $db_fasta;
     my $db;
     mkdir($HASH_info{"temp_path"}, 0755);
@@ -415,7 +429,7 @@ sub custom_annotation{
         $db=$dirs."/".$db_prefix.$suffix;
         if((! -e $db . ".nhr"  ) || (! -e $db .".nin") || (! -e $db . ".nsq")) {
             print("BLASTdb is missing. It will be built now!\n");
-            system("makeblastdb -in \"".$db."\" -dbtype nucl ");
+            system("$path_makeblastdb -in \"".$db."\" -dbtype nucl ");
             print("BLASTdb was built. You can use the path to your fasta just with -db in the future.\n");   
         }
     }
@@ -424,23 +438,31 @@ sub custom_annotation{
     	print   "\n Kmasker was stopped.\n\n";
     	exit();
     }
-    
-    kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
+     kmasker::filehandler::extract_feature_gff($fasta, $gff, $feature, $HASH_info{"temp_path"});
+     if(exists $HASH_info{"user setting blast"}) {
+        my $parameterstring = $HASH_info{"user setting blast"};
+        system("$path_blast -db \"" . $db . "\" -query " . "${temp_dir}/selected_" . $fasta . " -num_threads ".$threads." -outfmt 6 " . $parameterstring . " -ungapped" . "  -out ${temp_dir}/kmasker_blast.txt");
+     }
+     else{
+      	system("$path_blast -db \"" . $db . "\" -query " . "${temp_dir}/selected_" . $fasta . " -perc_identity 80 -evalue 0.1 -num_threads ".$threads." -outfmt 6 -ungapped" . " -out ${temp_dir}/kmasker_blast.txt");
+     }
+    kmasker::filehandler::add_annotation_to_gff($gff, "${temp_dir}/kmasker_blast.txt");
+    #kmasker::functions::add_annotation($fasta, $db, $gff, $feature ,$href_info);
     (my $name,my $path,my $suffix) = fileparse($gff, qr/\.[^.]*/);
-    if(-x "$path/${name}_annotated${suffix}") {
+    if(-e "$path${name}_with_annotation${suffix}") {
     	print("\nIntegration of annotation information in GFF finished!\n");
       	unlink($gff);
-      	system("mv" . " " . "$path/${name}_annotated${suffix}" . " " . $gff);
+      	system("mv" . " " . "$path/${name}_with_annotation${suffix}" . " " . $gff);
       	
-      	my $substring = "_annotated_annotated";
+      	my $substring = "_with_annotation_with_annotation";
       	if($gff =~ /$substring/){
       		my $gff_new = $gff;
-      		$gff_new =~ s/_annotated_annotated/_annotated/;
+      		$gff_new =~ s/_with_annotation_with_annotationd/_with_annotation/;
       		system("mv ".$gff." ".$gff_new);
       	}
     }
     else{
-        print("An annotated GFF was not created. Something went wrong!");
+        print("An annotated GFF was not created ($path${name}_with_annotation${suffix}). Something went wrong!");
     }
 	
 }

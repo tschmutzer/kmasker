@@ -1,3 +1,5 @@
+#!/usr/bin/env Rscript
+
 # ==========================================================
 #
 #
@@ -15,7 +17,12 @@
 ## system($command);
 ## ####################
 
-#!/usr/bin/env Rscript
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+setRepositories(graphics = F, ind=c(1,2,5,7))
+
 if (!require("ggplot2")) install.packages("ggplot2")
 library(ggplot2) 
 if (!require("data.table")) install.packages("data.table")
@@ -26,8 +33,6 @@ args = commandArgs(trailingOnly=TRUE)
 if (length(args)<1) {
   stop("No input data provided!", call.=FALSE)
 } 
-
-#setwd("D:/Clouds/ownCloud_MLU/Manuscripts/Manuscript_Kmasker_plants/Visualisation");
 
 date<-format(Sys.Date(),"%y%m%d")
 input<-args[1]
