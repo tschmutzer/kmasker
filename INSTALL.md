@@ -45,7 +45,7 @@ Your are done! Kmasker can be used now.
 - libgsl(-devel)
 - [gffread](https://github.com/gpertea/gffread) 
 - GCLIB as part of gffreads install instructions
-- perl5
+- perl5 (with dependency data::Uniqid)
 - scons
 - tools for compiling c++ programs 
 - R (tested with 3.5.0), but older/newer versions will work most likely
@@ -99,6 +99,11 @@ export PATH=$PATH:/$HOME/src/kmasker/bin
 cd setup
 ./install_packages.R
 ```
+#### Install Perl dependencies
+```bash
+cpan Data::Uniqid
+#maybe necessary as root user (use sudo/su)
+```
 
 ### MacOS
 
@@ -149,5 +154,11 @@ cd..
 ```bash
 cd setup
 ./install_packages.R
+```
+
+#### Install Perl dependencies
+```bash
+cpan Data::Uniqid
+#maybe necessary as root user (use sudo/su)
 ```
 You are done. You can use Kmasker with ~/src/kmasker/bin/Kmasker
