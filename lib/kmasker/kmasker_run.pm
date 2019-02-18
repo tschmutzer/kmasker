@@ -314,8 +314,8 @@ sub run_kmasker_MK{
 	print "\n .. start to generate GFF" ;#if(!defined $silent);
 	
 	#PRODUCE GFF
-	my $feature 	= "KRC";
-	my $subfeature 	= "KRR";
+	my $feature 	= "KDC";
+	my $subfeature 	= "KDR";
 	my $gffname_D1 	= "KMASKER_diverse_regions_KDX_" .$ARRAY_kindex[0].  "_$PID" . ".gff";
 	my $gffname_D2 	= "KMASKER_diverse_regions_KDX_" .$ARRAY_kindex[1].  "_$PID" . ".gff";
 	kmasker::filehandler::tab_to_gff("$temp_path/KMASKER_comparative_FC".$fold_change."_${PID}_$tab1" . "_regions_merged.tab", "$temp_path/$fasta.length", $min_gff, $feature, "$temp_path/KMASKER_comparative_FC".$fold_change."_${PID}_".$tab1.".tab", $subfeature);
@@ -327,8 +327,8 @@ sub run_kmasker_MK{
     	#Feedback
 		print "\n .. start to generate BED" ;#if(!defined $silent);
    		#BED format output is activated
-    	kmasker::filehandler::write_gff2bed($gffname_D1); 
-    	kmasker::filehandler::write_gff2bed($gffname_D2); 		
+    	kmasker::filehandler::write_gff2bed($gffname_D1, $feature); 
+    	kmasker::filehandler::write_gff2bed($gffname_D2, $feature); 		
     }
     
     #Statistics
@@ -391,7 +391,10 @@ sub run_krispr(){
 	print "\n\n ... start Kmasker krispr module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
 	if(-e $absolut_path.$full_kindex_name){
-		system("ln -s \"".$absolut_path.$full_kindex_name."\"");
+			my $sl_result = eval {symlink("${absolut_path}${full_kindex_name}", getcwd()."/".$full_kindex_name); 1};
+					if (($sl_result == 0) ||! (-e $full_kindex_name)) {
+						die "Symbolic link of ${absolut_path}${full_kindex_name} could not be created!\n";
+					}	
 	}else{
 		print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 		exit();

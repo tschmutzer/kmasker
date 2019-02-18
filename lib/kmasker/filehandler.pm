@@ -513,6 +513,7 @@ sub add_annotation_to_gff{
 
 sub write_gff2bed{
    my $gffname = $_[0];
+   my $featurename = $_[1];
    
    my $bedname = $gffname;
     $bedname =~ s/\.gff$/.bed/;
@@ -524,7 +525,7 @@ sub write_gff2bed{
       next if($_ =~ /^$/);
       next if($_ =~ /^#/);
       my @ARRAY_gff = split("\t", $_);
-      my $substring = "KRC";
+      my $substring = $featurename;
       if($ARRAY_gff[2] =~ m/$substring/){
          print $BEDFILE $ARRAY_gff[0]."\t".$ARRAY_gff[3]."\t".$ARRAY_gff[4]."\n";
       }
