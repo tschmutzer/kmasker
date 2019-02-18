@@ -72,7 +72,7 @@ sub run_kmasker_SK{
 		#create symbolic link to kindex from private or global
 		my $full_kindex_name = "KINDEX_".$kindex.".jf";		
 		if(-e $absolut_path.$full_kindex_name){
-			system("ln -s \"".$absolut_path.$full_kindex_name."\"");
+			symlink("\"$absolut_path.$full_kindex_name\"", ".");
 		}else{
 			print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
 			exit();
@@ -87,7 +87,7 @@ sub run_kmasker_SK{
        #clean
 		unlink($full_kindex_name);
         if(!(-e "KMASKER_masked_KDX_".$kindex."_".$PID.".fasta")) {
-            print "\n .. KMASKER_masked_KDX_".$kindex."_".$PID."fasta" . " was not generated!\n";
+            print "\n .. KMASKER_masked_KDX_".$kindex."_".$PID.".fasta" . " was not generated!\n";
             print "\n .. please provide a bug report!\n\n";
             exit();
         }
@@ -247,7 +247,10 @@ sub run_kmasker_MK{
 			push(@ARRAY_full_kindex_names, $full_kindex_name);
 			push(@ARRAY_seq_depth, $seq_depth);
 			if(-e $absolut_path.$full_kindex_name){
-				system("ln -s ".$absolut_path.$full_kindex_name);
+				my $sl_result = symlink("\"${absolut_path}${full_kindex_name}\"", ".");
+				if ($sl_result == 0) {
+					die "Symbolic link of ${absolut_path}${full_kindex_name} could not be created!\n";
+				}
 				
 				#PRODUCE OCC
 				system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . " >>$log 2>&1");
