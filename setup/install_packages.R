@@ -12,4 +12,6 @@ if (!require("ggplot2")){install.packages("ggplot2")}
 if (!require("scales")){install.packages("scales")}
 if (!require("stringr")){install.packages("stringr")}
 if (!require("reshape2")){install.packages("reshape2")}
+if (!require("data.table")){install.packages("data.table")}
+if (!require("dyplr")){install.packages("dyplr")}
 
