@@ -18,10 +18,11 @@ use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_versio
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions;
 
-my $version 	= "0.0.35 rc190212";
+my $version 	= "0.0.35 rc190218";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 my $PID = $kmasker::functions::PID;
+my $uPID; 
 my $LONG_PID;
 
 #MODULES
@@ -217,6 +218,7 @@ my $result = GetOptions (	#MAIN
 							"verbose"					=> \$verbose,
 							"show_version"				=> \$show_version,
 							"long_pid"					=> \$LONG_PID,
+							"pid=s"						=> \$uPID,
 							"help"						=> \$help										
 						);
 						
@@ -252,6 +254,14 @@ if(defined $LONG_PID){
 	$PID = $kmasker::functions::PID;
 	$kmasker::kmasker_run::log="log_run_" . $kmasker::functions::PID . ".txt";
 	$kmasker::kmasker_explore::log="log_explore_" . $kmasker::functions::PID . ".txt";
+	$kmasker::kmasker_explore::PID=$kmasker::functions::PID;
+}
+if(defined $uPID) {
+	$PID = $uPID;
+	$kmasker::functions::PID = $uPID;
+	$kmasker::kmasker_run::log="log_run_" . $uPID . ".txt";
+	$kmasker::kmasker_explore::log="log_explore_" . $uPID . ".txt";
+	$kmasker::kmasker_explore::PID=$uPID;
 }
 
 #############
@@ -1909,10 +1919,12 @@ sub createREADME {
 
 		    opendir(DIR, $dir);
 
-		    my @temp = readdir(DIR);
+		    my @temp = grep { 
+            /($PID)|(png$)/             
+			} readdir(DIR);
 
 		    # Loop through the array printing out the filenames
-		    foreach my $file (@files) {
+		    foreach my $file (@temp) {
 		        print $readme "\n\t\t$dir/$file";
 		    }
 		    closedir(DIR);

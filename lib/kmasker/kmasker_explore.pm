@@ -13,13 +13,14 @@ use POSIX;
 
 my $timestamp = getLoggingTime();
 our $log = "log_explore_" . $kmasker::functions::PID . ".txt";
-my $PID = $kmasker::functions::PID;
+our $PID = $kmasker::functions::PID;
 our @ISA = qw(Exporter);
 our @EXPORT = qw(
-plot_histogram
-repeat_annotation
-gff_construction
-$log
+    plot_histogram
+    repeat_annotation
+    gff_construction
+    $log
+    $PID
 );
 our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics plot_maker plot_maker_direct plot_barplot);
 
@@ -28,8 +29,8 @@ my $version_PM_explore 	= "0.0.2 rc180815";
 
 ## DATE
 my $loctime = localtime;
-$loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
-
+#$loctime = strftime('%Y%m%d_%H%M',localtime); ## outputs 1208171008
+$loctime = $PID;
 
 my $path        = dirname abs_path $0;      
 
@@ -370,7 +371,7 @@ sub report_statistics{
 	
 	my $outtag = "";
 	if(defined $out){
-		$outtag = "_".$out;
+		$outtag = "_${PID}_".$out;
 	}
 
 	#Statistics
