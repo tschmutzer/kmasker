@@ -4,6 +4,9 @@
 [submodule "external_src/gclib"]
 	path = external_src/gclib
 	url = https://github.com/gpertea/gclib
-[submodule "external_src/gffreadi"]
+[submodule "external_src/gffread"]
 	path = external_src/gffread
 	url = https://github.com/gpertea/gffread
+[submodule "external_src/jellyfish"]
+	path = external_src/jellyfish
+	url = https://github.com/gmarcais/Jellyfish.git
