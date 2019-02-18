@@ -1,9 +1,10 @@
-# How to make a Kmasker Release Zip
+# How to make a Kmasker Release Zip for Linux 
 
 
 ## Dependencies
 
-- Computer with internet access
+- Computer with internet access and POSIX compatible OS (tested with MacOS Darwin 17.7.0)
+- wget
 - Docker Installation
 - Git
 
@@ -20,6 +21,7 @@ git submodule update
 ### What will happen?
 Git downloads the repository and the submodules (e.g. gffread). 
 The scripts downloads HolyBuildBox and starts to compile all components in src and external_src.
+The compiled applications will be portable across different Linux distributions. 
 Afterwards the whole kmasker folder will be zipped. 
 In the end the intermediate docker containers and images are removed.
 
