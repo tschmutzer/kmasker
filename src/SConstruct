@@ -1,6 +1,9 @@
 import os
 env = Environment(ENV = os.environ)
-cxxflags=env['ENV']['CXXFLAGS']
+if "CXXFLAGS" in env['ENV']:
+	cxxflags=env['ENV']['CXXFLAGS']
+else:
+	cxxflags=""
 cxxflags=cxxflags+' -std=c++0x -Wall'
 env.Append(CXXFLAGS = cxxflags)
 env.Program(target = 'cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'])

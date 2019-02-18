@@ -4,11 +4,11 @@ use strict;
 use warnings;
 use File::Basename;
 our @ISA = qw(Exporter);
-our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
-our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff);
+our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff write_gff2bed);
+our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff write_gff2bed);
 
 ## VERSION
-my $version_PM_filehandler 	= "0.0.1 rc170324";
+my $version_PM_filehandler 	= "0.0.3 rc190212";
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 
@@ -310,7 +310,7 @@ sub tab_to_gff {
             my $score = "."; #evalue
             my $strand = ".";
             my $phase = ".";
-            my $attributes =  "ID=${type}_$c;Name=${type}_$c";
+            my $attributes =  "ID=${type}_$c;Name=${type}_$c;Parent=$ident";
             if($lengthcheck==1){
                print $outGFF $ident . "\t" . $source . "\t" . $type . "\t" . $start . "\t" . $end . "\t"  . $score  . "\t" . $strand . "\t" . $phase . "\t" . $attributes. "\n";
             }
@@ -393,7 +393,7 @@ sub merge_tab_seeds{ #check chomping !
    my $min = $_[2];
    open(my $seed_f, "<", "$seeds") or die "Can not open $seeds\n";
    my ($name1, $path1, $suffix1) = fileparse("$seeds", qr/\.[^.]*/);
-   open(my $out , ">", $path1 . "/" . $name1 . "_Regions_merged.tab");
+   open(my $out , ">", $path1 . "/" . $name1 . "_regions_merged.tab");
    my @ident;
    my @start;
    my @end;
@@ -463,7 +463,18 @@ sub add_annotation_to_gff{
          $blastresults{$line[0]} = \@line;
       }
       else{
-         print "Please run blast with -max_targer_seqs=1. I will skip all entries except the first one\n";
+         my $old_eval = @{$blastresults{$line[0]}}[10];
+         my $old_bit = @{$blastresults{$line[0]}}[11];
+         my $new_eval = $line[10];
+         my $new_bit = $line[11];
+         if($new_eval < $old_eval) {
+            $blastresults{$line[0]} = \@line;
+         }
+         elsif($new_eval == $old_eval) {
+            if($new_bit > $old_bit) {
+                $blastresults{$line[0]} = \@line;
+            }
+         }
       }
    }
    print $gff_out "##gff-version 3\n";
@@ -499,5 +510,31 @@ sub add_annotation_to_gff{
       }
    }
 }
+
+sub write_gff2bed{
+   my $gffname = $_[0];
+   my $featurename = $_[1];
+   
+   my $bedname = $gffname;
+    $bedname =~ s/\.gff$/.bed/;
+    my $GFFFILE = new IO::File($gffname, "r") or die "\n unable to read gff ".$gffname." $!";   
+    my $BEDFILE = new IO::File($bedname, "w") or die "\n unable to write bed ".$bedname." $!";
+         
+    #WRITE
+    while(<$GFFFILE>){
+      next if($_ =~ /^$/);
+      next if($_ =~ /^#/);
+      my @ARRAY_gff = split("\t", $_);
+      my $substring = $featurename;
+      if($ARRAY_gff[2] =~ m/$substring/){
+         print $BEDFILE $ARRAY_gff[0]."\t".$ARRAY_gff[3]."\t".$ARRAY_gff[4]."\n";
+      }
+   }
+            
+   #CLOSE
+   $GFFFILE->close();
+   $BEDFILE->close();   
+}
+
 
 1;

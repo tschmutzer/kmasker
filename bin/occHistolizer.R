@@ -1,7 +1,22 @@
 #!/usr/bin/env Rscript
-if (!require("pacman")){install.packages("pacman"); library("pacman")}
-pacman::p_load(getopt, zoo, pillar, ggplot2, scales, stringr)
-#library('getopt')
+local({r <- getOption("repos")
+       r["CRAN"] <- "http://cran.r-project.org" 
+       options(repos=r)
+})
+setRepositories(graphics = F, ind=c(1,2,5,7))
+if (!require("getopt")){install.packages("getopt")}
+library("getopt")
+if (!require("zoo")){install.packages("zoo")}
+library("zoo")
+if (!require("pillar")){install.packages("pillar")}
+library("pillar")
+if (!require("ggplot2")){install.packages("ggplot2")}
+library("ggplot2")
+if (!require("scales")){install.packages("scales")}
+library("scales")
+if (!require("stringr")){install.packages("stringr")}
+library("stringr")
+
 #use getopt for input file and help description
 spec=matrix(c(
   'input', 'i', 1, "character",
@@ -101,13 +116,29 @@ for (pos in opentags){
       #geom_line( aes( x = pos, y = mean10), size=1.2)  +
       labs(title = paste("k-mer distribution of", id, sep=" "), x="position (bp)", y="k-mer frequency") +
       theme_gray(base_size = 19) + 
-      theme(legend.text=element_text(size=15)) +
-      geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2) + 
-      geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2) + 
-      geom_line(aes(y=q50, colour="q50"), linetype=4, size=1.2) + 
-      geom_line(aes(y=q75, colour="q75"), linetype=5, size=1.2) + 
-      geom_line(aes(y=q90, colour="q90"), linetype=6, size=1.2) + 
-      scale_color_manual(values = c("avg" = "blue", "q25" = "red", "q50" = "brown", "q75" = "darkgreen", "q90" = "violet")) +labs(color="")
+      theme(legend.text=element_text(size=15))
+      values<-c()
+      if(m > 0) { 
+        plot <- plot + geom_line(aes(y=m, colour="avg"), linetype=3, size=1.2)
+        values<-c(values, "avg" = "blue")
+      }
+      if(q25 > 0) { 
+        plot <- plot + geom_line(aes(y=q25, colour="q25"), linetype=3, size=1.2)
+        values<-c(values, "q25" = "red")
+      }
+      if(q50 > 0) { 
+        plot <- plot + geom_line(aes(y=q50, colour="q50"), linetype=3, size=1.2)
+        values<-c(values, "q50" = "brown")
+      }
+      if(q75 > 0) { 
+        plot <- plot + geom_line(aes(y=q75, colour="q75"), linetype=3, size=1.2)
+        values<-c(values, "q75" = "darkgreen")
+      }      
+      if(q90 > 0) { 
+        plot <- plot + geom_line(aes(y=q90, colour="q90"), linetype=3, size=1.2)
+        values<-c(values, "q90" = "violet")
+      }
+      plot <- plot + scale_color_manual(values = values) +labs(color="")
     #guides(fill = guide_legend(keywidth = 3, keyheight = 2))
     #scale_y_log10(breaks=trans_breaks("log10",function(x) 10^x), labels=trans_format("log10", math_format(10^.x)))
     png(paste(id, ".png", sep=""), width=2048, height=1024)
