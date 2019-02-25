@@ -110,7 +110,7 @@ Kmasker --explore --hist --occ species_A.occ --list selection.ids
 
 Kmasker --explore --histm --occ species_A.occ --list selection.ids
 
-The first type ('hist') will construct histograms showing raw k-mer frequencies and calculated means etc. per sequence. The second type ('histm') will construct histograms using mean values calculated in a sliding window approach. Furthermore, these plots use log scales for improved visability. If large dataset with millions of contigs are analyzed its recommended to use both methods with the '--list' parameter that is providing as subset of selected sequence identifiers. This will avoid long computing times. 
+The first histogram type ('hist') will construct a graphic that shows raw k-mer frequencies per sequence. The second histogram type ('histm') will construct a graphic with mean values calculated in a sliding window approach. Furthermore, the 'histm' plots use log scales for improved visability. If large dataset with millions of contigs are analyzed its recommended to use both methods with the '--list' parameter that is providing as subset of selected sequence identifiers. This will avoid long computing times. 
 
 
 HEXPLOT
