@@ -1,6 +1,6 @@
 # Installation
 This instructions will help you to install kmasker including all prerequisites.
-# Installtion from release with binaries (linux only)
+# Installation from release with binaries (linux only)
 We are working on an all-in-one linux package for you taking account the licences of the different tools. 
 At the moment almost all tools are covered, except R (we are working on that in the moment). 
 The binaries are located in the bin folder, their sources are located in the "external_src" folder.
