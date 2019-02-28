@@ -215,10 +215,11 @@ my $result = GetOptions (	#MAIN
 							"user_conf"					=> \$uconf,
 							#Houskeeping
 							"keep_tmp"					=> \$keep_temporary_files,
+							"temp=s"						=> \$temp_path,
 							"verbose"					=> \$verbose,
 							"show_version"				=> \$show_version,
-							"long_pid"					=> \$LONG_PID,
-							"pid=s"						=> \$uPID,
+							"long_id"					=> \$LONG_PID,
+							"setid=s"						=> \$uPID,
 							"help"						=> \$help										
 						);
 						
@@ -507,12 +508,12 @@ if(defined $run){
 				
 				my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_${PID}.occ";
 				if($verbose) {
-					system("Kmasker --explore --verbose --hist --occ ".$occ_kmer_counts);
-					system("Kmasker --explore --verbose --histm --occ ".$occ_kmer_counts);	
+					system("Kmasker --explore --verbose --hist --occ ".$occ_kmer_counts . " --setid ${PID}_1");
+					system("Kmasker --explore --verbose --histm --occ ".$occ_kmer_counts . " --setid ${PID}_2");	
 				}
 				else{
-					system("Kmasker --explore --hist --occ ".$occ_kmer_counts);
-					system("Kmasker --explore --histm --occ ".$occ_kmer_counts);	
+					system("Kmasker --explore --hist --occ ".$occ_kmer_counts . " --setid ${PID}_1");
+					system("Kmasker --explore --histm --occ ".$occ_kmer_counts . " --setid ${PID}_1");	
 				}	
 				
 				$this =~ s/\n//;
@@ -528,6 +529,14 @@ if(defined $run){
 				
 											
 			}
+			print "\n - Thanks for using Kmasker! -\n\n";
+			if($verbose) {
+        		print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";
+       	 	}
+    		else{
+        		unlink($kmasker::kmasker_run::log);
+        	}
+   			 &createREADME();
 		}else{
 			print "\n WARNING: Calling '--fish' settings is only permitted with single KINDEX.";
 			print "\n          Kmasker was stopped!\n\n"; 
@@ -817,7 +826,7 @@ if(defined $explore){
 		$plottype = "violin"  if(defined $violin);
 		$plottype = "hexplot" if(defined $hexplot);
 		
-		if(scalar(@OCClist)>1){
+		if(scalar(@OCClist)>1 && !(defined $cfile) ){
 			#CALL comparative methods			
 			#system("$path/OCC_compare.pl --fc ".$foldchange." --occ1 ".$OCClist[0]." --occ2 ".$OCClist[1]." --out KMASKER_comparative_descriptives_FC".$foldchange.".stats");
 			#$cfile = "KMASKER_comparative_descriptives_FC".$foldchange.".stats";
@@ -875,7 +884,10 @@ if(defined $explore){
 		}
 		
 	}
-	
+	mkdir("kmasker_plots_$PID");
+	for my $pic (glob "*$PID.png") {
+		move($pic, "kmasker_plots_$PID/");
+	}
 	#QUIT
 	print "\n\n - Thanks for using Kmasker! -\n\n";
 	if($verbose) {
@@ -1582,20 +1594,6 @@ sub check_routine_for_requirement(){
 }
 
 
-#################
-#
-#
-#ub create_PID(){
-	#FIXME
-	# @Chris: please continue to create PID and LONG_PID
-	
-#	my $loctime = localtime;
-#	$loctime = strftime('%Y%m%d%H%M%S',localtime); ## outputs 120817100834	
-	
-#	$PID		= $loctime;	#PLACE HOLDER
-#	$LONG_PID	= $loctime;	
-#}
-
 
 #################
 #
@@ -1769,6 +1767,7 @@ sub help(){
 		print "\n --compare\t perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
+		print "\n --fish\t\t Extracts long sequence strechtes with low repetitiveness as FISH candidates";
 	
 		print "\n\n";
 		exit();
@@ -1830,9 +1829,13 @@ sub help(){
 	print "\n --expert_setting_blast\t\t submit individual parameter to blast (e.g. '-evalue')";
 	print "\n --threads\t\t\t set number of threads [4]";
 	print "\n --bed\t\t\t\t force additional BED output [off]";
-	print "\n --user_conf\t\t set specific user configuration file [$uconf]";
-	print "\n --global_conf\t\t set specific global configuration file [$gconf]";
-	print "\n --long_pid\t\t create a process id that is unique for this host (e.g. for use in cluster environments)";
+	print "\n --user_conf\t\t\t set specific user configuration file [$uconf]";
+	print "\n --global_conf\t\t\t set specific global configuration file [$gconf]";
+	print "\n --check_install\t\t shows the detected/configured path for all used applications";
+	print "\n --setid\t\t\t set a user specified process id";
+	print "\n --long_id\t\t\t create a process id that is unique for this host (e.g. for use in cluster environments)";
+	print "\n --temp\t\t\t\t sets the location of temporary files [${temp_path}]";
+	print "\n --verbose\t\t\t enables verbose output and keeps log files";
 
 
 	

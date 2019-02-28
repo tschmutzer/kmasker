@@ -145,8 +145,8 @@ sub run_kmasker_SK{
         #Statistics
         #Feedback
         print "\n .. start to generate statistics\n" ;#if(!defined $silent);
-        system("$path/stats.R " . "-i " . $occ_kmer_counts . " -g " . $gffname . " -c sequence" . " -p $PID" . " >>$log 2>&1");
-        system("$path/stats.R " . "-i " . $occ_kmer_counts . " -g " . $gffname . " -c " . $feature . " -p $PID" . " >>$log 2>&1");
+        system("$path/stats.R " . "--input " . $occ_kmer_counts . " --gff " . $gffname . " --class sequence" . " --pid $PID" . " >>$log 2>&1");
+        system("$path/stats.R " . "--input " . $occ_kmer_counts . " --gff " . $gffname . " --class " . $feature . " --pid $PID" . " >>$log 2>&1");
         if((!(-e "KMASKER_report_statistics_". $feature . "_$PID.tab")) || (!(-e  "KMASKER_report_statistics_sequence" . "_$PID.tab"))) {
         	print "\n Some statistics could not be calculated. The main reason for this is that there are no significant features in the gff file.\n";
         }
@@ -334,8 +334,8 @@ sub run_kmasker_MK{
     #Statistics
     print "\n .. start to generate statistics\n" ;#if(!defined $silent);
 
-    system("$path/stats.R " . "-i " . $occ1 . " -g "  .$gffname_D1. " -c sequence" . " -p $PID" . " >>$log 2>&1");
-    system("$path/stats.R " . "-i " . $occ1 . " -g "  .$gffname_D1. " -c " . $feature . " -p $PID" ." >>$log 2>&1");
+    system("$path/stats.R " . "--input " . $occ1 . " --gff "  .$gffname_D1. " --class sequence" . " --pid $PID" . " >>$log 2>&1");
+    system("$path/stats.R " . "--input " . $occ1 . " --gff "  .$gffname_D1. " --class " . $feature . " --pid $PID" ." >>$log 2>&1");
 
     if((!(-e "KMASKER_report_statistics_sequence_$PID.tab")) || (!(-e "KMASKER_report_statistics_${feature}_$PID.tab"))) {  	
       	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[0] ."). The main reason for this is that there are no significant features in the gff file.\n";
@@ -346,8 +346,8 @@ sub run_kmasker_MK{
  		move("report_overview_statistics_$PID.txt" , "KINDEX_report_overview_statistics_KDX_" . $ARRAY_kindex[0] . "_$PID.txt");
  	}
 
- 	system("$path/stats.R " . "-i " . $occ2 . " -g "  .$gffname_D2. " -c sequence" . " -p $PID" . " >>$log 2>&1");
-    system("$path/stats.R " . "-i " . $occ2 . " -g "  .$gffname_D2. " -c " . $feature . " -p $PID" ." >>$log 2>&1");
+ 	system("$path/stats.R " . "--input " . $occ2 . " --gff "  .$gffname_D2. " --class sequence" . " --pid $PID" . " >>$log 2>&1");
+    system("$path/stats.R " . "--input " . $occ2 . " --gff "  .$gffname_D2. " --class " . $feature . " --pid $PID" ." >>$log 2>&1");
 
     if((!(-e "KMASKER_report_statistics_sequence_$PID.tab")) || (!(-e "KMASKER_report_statistics_${feature}_$PID.tab"))) {  	
       	print "\nSome statistics could not be calculated (" .  $ARRAY_kindex[1] ."). The main reason for this is that there are no significant features in the gff file.\n";
