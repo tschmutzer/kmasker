@@ -10,6 +10,7 @@ The version with binaries has just a few requirements. Please consinder the "Ins
 - Linux distribution not older than approx. 10 years 
 - perl5
 - R (tested with 3.5.0), but older/newer versions will work most likely
+- Python (3.5) incl. pandas, numpy (if you want to use KRISPR module)
 
 #### Ubuntu/Debian
  Installation of necessary tools and libs with apt
@@ -49,7 +50,8 @@ Your are done! Kmasker can be used now.
 - scons
 - tools for compiling c++ programs 
 - R (tested with 3.5.0), but older/newer versions will work most likely
-(we will try to offer binaries for different OS to you)
+- Python (3.5) incl. pandas, numpy (if you want to use KRISPR module)
+
 ## Installation Instructions
 ### Distribution specific parts
 #### Ubuntu/Debian
