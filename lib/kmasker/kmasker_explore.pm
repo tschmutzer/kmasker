@@ -378,9 +378,9 @@ sub report_statistics{
     print "\n .. call statistic calculation\n"; #if(!defined $silent);
 	my $path 		= dirname abs_path $0;
  	
- 	system("$path/stats.R " . "-i " .$occ . " -g " . $gff . " -c sequence" . " -o report_statistics_sequences". $outtag .".txt " . " >>$log 2>&1");
+ 	system("$path/stats.R " . "--input " .$occ . " --gff " . $gff . " --class sequence" . " --out report_statistics_sequences". $outtag .".txt " . " >>$log 2>&1");
 	print "\n finished calculating statistics for sequences \n";
-	system("$path/stats.R "  . "-i " . $occ . " -g " . $gff . " -c KRC" .    " -o report_statistics_KRC".$outtag.".txt " . " >>$log 2>&1");
+	system("$path/stats.R "  . "--input " . $occ . " --gff " . $gff . " --class KRC" .    " --out report_statistics_KRC".$outtag.".txt " . " >>$log 2>&1");
     print "\n finished calculating statistics for KRCs \n";
          
     if((!(-e "report_statistics_sequences".$outtag.".txt")) || (!(-e  "report_statistics_KRC".$outtag.".txt" ))) {
