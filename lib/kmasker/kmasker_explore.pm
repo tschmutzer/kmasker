@@ -96,7 +96,7 @@ sub plot_histogram_mean{
     
     #STORE results
     if(!( -d "./kmasker_plots_$PID")){
-    	system("mkdir kmasker_plots_$PID");
+    	mkdir("kmasker_plots_$PID");
     }   
    	my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";	
    	while(<$LIST>){
@@ -105,7 +105,7 @@ sub plot_histogram_mean{
 		my $line = $_;
 		$line =~ s/\n//;
 		if(-e $line.".png"){
-			system("mv ".$line.".png kmasker_plots_$PID". "/".$line."_hist.png");
+			system("mv ".$line.".png kmasker_plots_$PID". "/".$line."_histm.png");
 		}
    	}
    	
@@ -174,7 +174,7 @@ sub plot_histogram_raw{
     #my @ARRAY_info = split("_", $occ);
     #my $kindex = $ARRAY_info[1];
     if(!( -d "./kmasker_raw_plots_$PID")){
-        system("mkdir kmasker_raw_plots_$PID");
+        mkdir("kmasker_raw_plots_$PID");
     }   
     my $LIST = new IO::File($list, "r") or die "\n unable to read $list $!";    
     while(<$LIST>){
@@ -183,7 +183,7 @@ sub plot_histogram_raw{
         my $line = $_;
         $line =~ s/\n//;
         if(-e $line.".png"){
-            system("mv ".$line.".png Kmasker_raw_plots_$PID" . "/".$line."_hist.png");
+            system("mv ".$line.".png kmasker_raw_plots_$PID" . "/".$line."_hist.png");
         }
     }
     
