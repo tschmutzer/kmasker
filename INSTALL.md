@@ -1,6 +1,6 @@
 # Installation
 This instructions will help you to install kmasker including all prerequisites.
-# Installtion from release with binaries (linux only)
+# Installation from release with binaries (linux only)
 We are working on an all-in-one linux package for you taking account the licences of the different tools. 
 At the moment almost all tools are covered, except R (we are working on that in the moment). 
 The binaries are located in the bin folder, their sources are located in the "external_src" folder.
@@ -10,6 +10,7 @@ The version with binaries has just a few requirements. Please consinder the "Ins
 - Linux distribution not older than approx. 10 years 
 - perl5
 - R (tested with 3.5.0), but older/newer versions will work most likely
+- Python (3.5) incl. pandas, numpy (if you want to use KRISPR module)
 
 #### Ubuntu/Debian
  Installation of necessary tools and libs with apt
@@ -49,7 +50,8 @@ Your are done! Kmasker can be used now.
 - scons
 - tools for compiling c++ programs 
 - R (tested with 3.5.0), but older/newer versions will work most likely
-(we will try to offer binaries for different OS to you)
+- Python (3.5) incl. pandas, numpy (if you want to use KRISPR module)
+
 ## Installation Instructions
 ### Distribution specific parts
 #### Ubuntu/Debian
