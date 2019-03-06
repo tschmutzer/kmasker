@@ -405,7 +405,7 @@ sub run_krispr(){
 	# system("python3.5 ".$path."/krispr.py single -q ".$krispr_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
 	
 	#MULTI FASTA
-	system("python3.5 ".$path."/krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >&".$OUT_krispr);
+	system("python3.5 ".$path."/krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >".$OUT_krispr . " 2>&1");
 	print "\n\n ... Kmasker krispr module finished \n";
 	
 	#CLEAN
