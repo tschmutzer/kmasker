@@ -4,6 +4,9 @@ This instructions will help you to install kmasker including all prerequisites.
 We are working on an all-in-one linux package for you taking account the licences of the different tools. 
 At the moment almost all tools are covered, except R (we are working on that in the moment). 
 The binaries are located in the bin folder, their sources are located in the "external_src" folder.
+You can find the releases at: 
+[https://github.com/tschmutzer/kmasker/releases
+]()
 ## Prerequisites
 The version with binaries has just a few requirements. Please consinder the "Installation without prebuild binaries / newest version from git" if something is not working for you.
 
@@ -13,16 +16,32 @@ The version with binaries has just a few requirements. Please consinder the "Ins
 - Python (3.5) incl. pandas, numpy (if you want to use KRISPR module)
 
 #### Ubuntu/Debian
- Installation of necessary tools and libs with apt
+Installation of necessary tools and libs with apt 
+
 ```bash
 sudo apt-get install r-base r-recommended 
 ```
+If you want to use the KRISPR module you need the following python dependencies:
+
+```bash
+apt-get install python3.5 python3-pandas python3-numpy python3-pip
+pip install kPAL
+```
 #### Redhat/CentOS
+Installation of necessary tools and libs with yum 
+
 ```bash
 sudo yum install epel-release
 sudo yum install R
 ```
+If you want to use the KRISPR module please follow the RedHat developer instructions:
+[https://developers.redhat.com/blog/2018/08/13/install-python3-rhel/
+]()
+and afterwards run
 
+```bash
+pip install kPAL
+```
 ### General instructions (executed after the distrubution dependencies)
 Unzip the kmasker release.
 ```bash
@@ -37,6 +56,7 @@ Your are done! Kmasker can be used now.
 # Installation without prebuild binaries / newest version from git / Macintosh
 ## Prerequisites
   To install and use kmasker you will need to following tools and libraries on your system:
+
 - git
 - blast
 - jellyfish >= 2.2.6
@@ -56,13 +76,41 @@ Your are done! Kmasker can be used now.
 ### Distribution specific parts
 #### Ubuntu/Debian
  Installation of necessary tools and libs with apt
+
 ```bash
 apt-get install jellyfish libjellyfish-2.0-dev gsl libgsl-dev scons blast2 build-essential r-base r-recommended 
 ```
+If you want to use the KRISPR module you need the following python dependencies:
+
+```bash
+apt-get install python3.5 python3-pandas python3-numpy python3-pip
+pip install kPAL
+```
 
 #### Redhat/CentOS
-Installation of necessary tools and libs with yum
-To be done. 
+##### Installation of necessary tools and libs with yum
+Install development tools:
+```bash
+sudo yum group install "Development Tools"
+```
+
+Afterwards please compile Jellyfish from source: [https://github.com/gmarcais/Jellyfish]()
+or download a binary release: [https://github.com/gmarcais/Jellyfish/releases]()
+
+##### Install runtime dependencies:
+
+```bash
+sudo yum install epel-release
+sudo yum install R
+```
+If you want to use the KRISPR module please follow the RedHat developer instructions:
+[https://developers.redhat.com/blog/2018/08/13/install-python3-rhel/
+]()
+and afterwards run
+
+```bash
+pip install kPAL
+```
 
 ### General instructions (executed after the distrubution dependencies)
 Create a directory for the source code of the different tools. 
@@ -107,18 +155,23 @@ cpan Data::Uniqid
 #maybe necessary as root user (use sudo/su)
 ```
 
-### MacOS
+## MacOS
 
 **Information: You should be able to use the terminal in OSX. Please note that whether kmasker nor its depedencies has a graphical user interface.** 
 
-Install brew from https://brew.sh/ (you can also use macports or fink, but this unsupported) and its depenedencies (like OSX command line tools). Brew will guide you through its installation. 
-#### Install prerequisites
+Install brew from [https://brew.sh/]() (you can also use macports or fink, but this unsupported) and its depenedencies (like OSX command line tools). Brew will guide you through its installation. 
+### Install prerequisites
 Add the bioinformatics repository to brew.
+
 ```bash
 brew tap brewsci/bio
 brew install jellyfish blast scons
 ```
-Download and install R from https://cloud.r-project.org/bin/macosx/
+Download and install R from [https://cloud.r-project.org/bin/macosx/]() or use brew cask:
+
+```bash
+brew install r-app
+```
 
 ### General instructions (executed after the distrubution dependencies)
 Create a directory for the source code of the different tools. 
@@ -163,4 +216,13 @@ cd setup
 cpan Data::Uniqid
 #maybe necessary as root user (use sudo/su)
 ```
+#### Install python3 dependencies (KRISPR)
+```bash
+brew install python3
+pip3 install numpy
+pip3 install pandas
+pip3 install kPAL
+
+```
+
 You are done. You can use Kmasker with ~/src/kmasker/bin/Kmasker
