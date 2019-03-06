@@ -507,26 +507,27 @@ if(defined $run){
 				#CALL PLOT routines
 				
 				my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_${PID}.occ";
+				my $plot_hist = "Kmasker --explore --hist --occ ".$occ_kmer_counts . " --setid ${PID}_1";
+				my $plot_hitm = "Kmasker --explore --histm --occ ".$occ_kmer_counts . " --setid ${PID}_2";
 				if($verbose) {
-					system("Kmasker --explore --verbose --hist --occ ".$occ_kmer_counts . " --setid ${PID}_1");
-					system("Kmasker --explore --verbose --histm --occ ".$occ_kmer_counts . " --setid ${PID}_2");	
+					$plot_hist = $plot_hist . " --verbose";
+					$plot_hitm = $plot_hitm . " --verbose";
 				}
-				else{
-					system("Kmasker --explore --hist --occ ".$occ_kmer_counts . " --setid ${PID}_1");
-					system("Kmasker --explore --histm --occ ".$occ_kmer_counts . " --setid ${PID}_1");	
-				}	
+				if(defined $list) {
+					$plot_hist = $plot_hist . " --list $list";
+					$plot_hitm = $plot_hitm . " --list $list";
+				}
+				system($plot_hist);
+				system($plot_hitm);
 				
 				$this =~ s/\n//;
 				if($this > 0){
 					print "\n .. Kmasker detected ".$this." candidates for FISH !!\n\n";
-					move("mv KMASKER_filtered_regions_KDX_${kindex}_${PID}.fasta", "KMASKER_filtered_fish_KDX_".$kindex."_".$PID.".fasta");	
+					move ("KMASKER_filtered_regions_KDX_${kindex}_${PID}.fasta", "KMASKER_filtered_fish_KDX_".$kindex."_".$PID.".fasta");	
 					
 				}else{
 					print "\n .. no candidates for FISH detected!!\n\n";
-					#system("rm KMASKER_filtered_regions_*".$fasta);
 				}
-				
-				
 											
 			}
 			print "\n - Thanks for using Kmasker! -\n\n";
@@ -564,7 +565,19 @@ if(defined $run){
 		
 		#START RUN			
 		&run_kmasker_SK($fasta, $kindex, \%HASH_info, \%HASH_repository_kindex);
-
+		if (defined $list) {
+			my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_${kindex}_${PID}.occ";
+			my $plot_hist = "Kmasker --explore --hist --occ ".$occ_kmer_counts . " --setid ${PID}_1";
+			my $plot_hitm = "Kmasker --explore --histm --occ ".$occ_kmer_counts . " --setid ${PID}_2";
+			$plot_hist = $plot_hist . " --list $list";
+			$plot_hitm = $plot_hitm . " --list $list";
+			if($verbose) {
+				$plot_hist = $plot_hist . " --verbose";
+				$plot_hitm = $plot_hitm . " --verbose";
+			}
+			system($plot_hist);
+			system($plot_hitm);
+		}
 	}else{
 	#multiple kindex
 	
@@ -882,11 +895,11 @@ if(defined $explore){
 			#START	
 			&plot_maker($cfile, $plottype, \%HASH_list);
 		}
-		
-	}
-	mkdir("kmasker_plots_$PID");
-	for my $pic (glob "*$PID.png") {
-		move($pic, "kmasker_plots_$PID/");
+
+		mkdir("kmasker_plots_$PID");
+		for my $pic (glob "*$PID.png") {
+			move($pic, "kmasker_plots_$PID/");
+		}
 	}
 	#QUIT
 	print "\n\n - Thanks for using Kmasker! -\n\n";
