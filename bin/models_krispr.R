@@ -1,4 +1,4 @@
-load("data_krispr.RData")
+load("../config/data_krispr.RData")
 options(warn=-1)
 
 
