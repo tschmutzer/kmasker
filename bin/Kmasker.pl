@@ -454,6 +454,14 @@ if(defined $run){
 		if(exists $HASH_repository_kindex{$kindex}){
 			&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
 		}
+		print "\n - Thanks for using Kmasker! -\n\n";
+		if($verbose) {
+        	print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";
+       	}
+    	else{
+        	unlink($kmasker::kmasker_run::log);
+        }
+   		&createREADME();
 		exit();	
 	}
 	
