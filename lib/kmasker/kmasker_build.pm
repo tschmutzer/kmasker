@@ -94,9 +94,10 @@ sub build_kindex_jelly{
 	}
 	
 	#BUILD JELLY index	
-	if($seq_type eq "reads"){
-		$setting .= " -C"
-	}
+	#if($seq_type eq "reads"){
+	#	$setting .= " -C"
+	#}
+	
 	print "\n ... start construction of kindex with the following parameters ".$setting." \n";
 	my $FILE_jelly = "KINDEX_".$HASH_info{"kindex name"}.".jf";
 	
