@@ -1,7 +1,7 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.35 rc190108)
+ (version:  0.0.36 rc190805)
 
 ## Description:
 
@@ -134,5 +134,17 @@ Link: http://pgsb.helmholtz-muenchen.de/plant/recat/
 
 TREP:
 http://botserv2.uzh.ch/kelldata/trep-db/
+
+
+## INPUT/OUTPUT:
+
+INPUT: 	FASTA/FASTQ are accepted as input formats to construct KINDEX structures (Build Module). To perform k-mer analysis the user query sequence is required to be in FASTA format (Run Module). 
+
+OUTPUT: Various output formats are generated. Sequence output is provided in FASTA format. Detected repeats are provided in BED and GFF format. In addition, we provide statistical reports that are tab-separated files. 
+
+GFF: The GFF files consist of 9 columns following standard GFF specification. Two kinds of GFF files are generated depending on the type of method that is applied. If Kmasker plants is applied for repeat detection it contains lines with KRR and KRC as feature type. If a k-mer frequency ratio analysis is performed it con-tains lines with KDC as feature type. KRR (‘k-mer repeat region’): Short continues nucleotide sequences with k-mer counts above threshold. KRC (‘k-mer repeat cluster’): KRR segments that are in close distance which have been merged into clusters. Merging can be adjusted with the parameter ‘--expert_setting_kmasker pcgap=value’. Here,  ‘pctgap’ is the length permitted between adjacent KRR segments. It is dynamic using the length of the longer KRR, which refers to 100% (default: pctgap=10). KDC (‘k-mer diverse cluster’): De-tected segments of the input sequence which show diverging k-mer patters in the comparative study of the k-mer ratio analysis. Here, the two applied sequence data sets (KINDEX A and KINDEX B) have significantly different k-mer counts.
+
+OCC: The file holds the base-specific k-mer counts for one or more biological sequences stored in a corre-sponding FASTA file. It is most similar to FASTA QUAL formats. Lines starting with “>” contain the sequence identifier followed by lines with numeric values. Each values corresponds to a nucleotide position of the input sequence. K-mer counts are represented as non-negative integers separated by whitespace (typically a single space or newline), and can span multiple lines.
+
 
 
