@@ -1,11 +1,11 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.36 rc190805)
+ (version:  0.0.36 rc190807)
 
 ## Description:
 
-Kmasker is a tool for the automatic detection of repetitive sequence regions.
+Kmasker plants is a tool for the automatic detection of sequence regions with meaningful k-mer characteristics. This can be sequences with highly abundant k-mer patterns (repeats), regions with diverging k-mer patterns between two studied WGS samples or segments with high target specificity.
 
 ### Modules:
 
