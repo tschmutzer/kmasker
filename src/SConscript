@@ -1,3 +1,4 @@
+#!python
 import os
 env = Environment(ENV = os.environ)
 if "CXXFLAGS" in env['ENV']:
@@ -6,4 +7,6 @@ else:
 	cxxflags=""
 cxxflags=cxxflags+' -std=c++0x -Wall'
 env.Append(CXXFLAGS = cxxflags)
-env.Program(target = 'cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'])
+cmasker = env.Program(target = '../bin/cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'])
+#env.Install('../bin', cmasker)
+env.Alias('build',cmasker)

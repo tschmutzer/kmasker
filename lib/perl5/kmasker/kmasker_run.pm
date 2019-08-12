@@ -385,7 +385,7 @@ sub run_krispr(){
 	
 		
 	#SETUP
-	system("cp ".$path."/../config/data_krispr.RData .");
+	system("cp ".$path."/../data_krispr.RData .");
 	system("cp ".$path."/models_krispr.R .");
 			
 	print "\n\n ... start Kmasker krispr module\n";	
