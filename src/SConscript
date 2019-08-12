@@ -5,8 +5,12 @@ if "CXXFLAGS" in env['ENV']:
 	cxxflags=env['ENV']['CXXFLAGS']
 else:
 	cxxflags=""
+if "LD_LIBRARY_PATH" in env['ENV']:
+	ld_lib_path=env['ENV']['LD_LIBRARY_PATH']
+else:
+	ld_lib_path=""
 cxxflags=cxxflags+' -std=c++0x -Wall'
 env.Append(CXXFLAGS = cxxflags)
-cmasker = env.Program(target = '../bin/cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'], LIBPATH = env['ENV']['LD_LIBRARY_PATH'])
+cmasker = env.Program(target = '../bin/cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'], LIBPATH = ld_lib_path)
 #env.Install('../bin', cmasker)
 env.Alias('build',cmasker)

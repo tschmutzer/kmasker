@@ -16,9 +16,9 @@ idir_prefix = '$PREFIX'
 Export('env idir_prefix')
 
 SConscript('src/SConscript', exports=['env', 'opts'])
-env.Install(idir_prefix, 'bin')
-env.Install(idir_prefix, 'lib')
-env.Install(idir_prefix, 'etc')
-env.Install(idir_prefix, 'share')
+bin = env.Install(idir_prefix, 'bin')
+lib = env.Install(idir_prefix, 'lib')
+etc = env.Install(idir_prefix, 'etc')
+share = env.Install(idir_prefix, 'share')
 
-env.Alias('install', ['build', idir_prefix])
+env.Alias('install', ['build', bin, lib, etc, share])
