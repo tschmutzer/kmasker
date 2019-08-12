@@ -15,7 +15,7 @@ idir_prefix = '$PREFIX'
 #idir_data   = '$PREFIX/share'
 Export('env idir_prefix')
 
-SConscript('src/Sconscript', exports=['env', 'opts'])
+SConscript('src/SConscript', exports=['env', 'opts'])
 env.Install(idir_prefix, 'bin')
 env.Install(idir_prefix, 'lib')
 env.Install(idir_prefix, 'etc')
