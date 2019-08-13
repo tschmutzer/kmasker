@@ -223,6 +223,13 @@ my $result = GetOptions (	#MAIN
 							"help"						=> \$help										
 						);
 						
+#SHOW version
+#At least this should work regardless of any errors 
+if(defined $show_version){
+	print "\n Kmasker version: ".$version."\n\n";
+	exit();
+}
+
 #READ global settings
 &read_user_config;
 &read_repository;
@@ -1620,12 +1627,6 @@ sub check_routine_for_requirement(){
 #
 #
 sub intro_call(){
-
-	#SHOW version
-	if(defined $show_version){
-		print "\n Kmasker version: ".$version."\n\n";
-		exit();
-	}
 
 	#CHECK settings
 	if(defined $check_install){
