@@ -5,8 +5,6 @@ opts.Add(PathVariable('PREFIX', 'Directory to install under', '/usr', PathVariab
 opts.Update(env)
 Help(opts.GenerateHelpText(env))
 
-env.Default('install')
-
 # Here are our installation paths:
 idir_prefix = '$PREFIX'
 #idir_lib    = '$PREFIX/lib'
@@ -21,4 +19,10 @@ lib = env.Install(idir_prefix, 'lib')
 etc = env.Install(idir_prefix, 'etc')
 share = env.Install(idir_prefix, 'share')
 
-env.Alias('install', ['build', bin, lib, etc, share])
+env.Alias('install', 'build')
+env.Alias('install', lib)
+env.Alias('install', etc)
+env.Alias('install', share)
+env.Alias('install', bin)
+
+env.Default('build')
