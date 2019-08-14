@@ -315,8 +315,8 @@ int main(int argc, char *argv[])
                 rt = atoi(optarg);
                 break;
             case 'h':
-                cout << "Usage: " << argv[0] << "\n\t-h\tShows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n";
-                return 1;
+                cout << "Usage: " << argv[0] << "\n\t-h\tShows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n\n";
+                return 0;
                 break;
             case '?':
                 if (optopt == 'f' || optopt == 'j' || optopt == 'n' || optopt == 'r' ||optopt == 'p')
