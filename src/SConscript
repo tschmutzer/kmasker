@@ -11,7 +11,7 @@ if "LD_LIBRARY_PATH" in env['ENV']:
 else:
 	ld_lib_path=""
 cxxflags=cxxflags+' -std=c++0x -Wall'
-env.Append(CXXFLAGS = cxxflags)i
+env.Append(CXXFLAGS = cxxflags)
 env.Append(LD_LIBRARY_PATH = ld_lib_path)
 cmasker = env.Program(target = '../bin/cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'], LIBPATH = [ld_lib_path, idir_lib])
 #env.Install('../bin', cmasker)
