@@ -1,7 +1,7 @@
 #!python
 import os
 #env = Environment(ENV = os.environ)
-import ('env idir_lib')
+import('env idir_lib')
 if "CXXFLAGS" in env['ENV']:
 	cxxflags=env['ENV']['CXXFLAGS']
 else:
