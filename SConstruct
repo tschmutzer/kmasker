@@ -1,7 +1,7 @@
 #!python
 import install
 
-env = Environment()
+env = Environment(ENV = os.environ)
 install.TOOL_INSTALL(env)
 opts = Variables()
 opts.Add(PathVariable('PREFIX', 'Directory to install under', '/usr', PathVariable.PathIsDir))
