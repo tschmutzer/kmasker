@@ -1,5 +1,6 @@
 #!python
 import install
+import os
 
 env = Environment(ENV = os.environ)
 install.TOOL_INSTALL(env)
