@@ -1,17 +1,17 @@
 # Kmasker
 
 Usage of program Kmasker:
- (version:  0.0.27 rc180828)
+ (version:  0.0.36 rc190807)
 
 ## Description:
 
-Kmasker is a tool for the automatic detection of repetitive sequence regions.
+Kmasker plants is a tool for the automatic detection of sequence regions with meaningful k-mer characteristics. This can be sequences with highly abundant k-mer patterns (repeats), regions with diverging k-mer patterns between two studied WGS samples or segments with high target specificity.
 
 ### Modules:
 
  --build                 construction of new index
  
- --run                   run k-mer repeat detection, masking, abundance and comparative analysis
+ --run                   perform k-mer repeat detection, masking, abundance and comparative analysis
  
  --explore               perform downstream analysis with constructed index and detected repeats
  
@@ -82,9 +82,9 @@ Kmasker --run --fish --fasta query.fasta --kindex At1
 
 Check input sequence for long sequence stretches with low repetitiveness. As a results candidate sequences with good target specificity and functionality are selected.
 
-#### gRNA
+#### KRISPR
 
-Kmasker --run --grna --fasta candidate_gRNA.fasta --kindex Hv1
+Kmasker --run --krispr --fasta candidate_grna.fasta --kindex Hv1
 
 Check a set of gRNAs for their specificity in CRISPR/cas application. As a result for each given gRNA a score is calculated reflecting its target specififity. 
 
@@ -110,7 +110,7 @@ Kmasker --explore --hist --occ species_A.occ --list selection.ids
 
 Kmasker --explore --histm --occ species_A.occ --list selection.ids
 
-The first type ('hist') will construct histograms showing raw k-mer frequencies and calculated means etc. per sequence. The second type ('histm') will construct histograms using mean values calculated in a sliding window approach. Furthermore, these plots use log scales for improved visability. If large dataset with millions of contigs are analyzed its recommended to use both methods with the '--list' parameter that is providing as subset of selected sequence identifiers. This will avoid long computing times. 
+The first histogram type ('hist') will construct a graphic that shows raw k-mer frequencies per sequence. The second histogram type ('histm') will construct a graphic with mean values calculated in a sliding window approach. Furthermore, the 'histm' plots use log scales for improved visability. If large dataset with millions of contigs are analyzed its recommended to use both methods with the '--list' parameter that is providing as subset of selected sequence identifiers. This will avoid long computing times. 
 
 
 HEXPLOT
@@ -134,5 +134,17 @@ Link: http://pgsb.helmholtz-muenchen.de/plant/recat/
 
 TREP:
 http://botserv2.uzh.ch/kelldata/trep-db/
+
+
+## INPUT/OUTPUT:
+
+INPUT: 	FASTA/FASTQ are accepted as input formats to construct KINDEX structures (Build Module). To perform k-mer analysis the user query sequence is required to be in FASTA format (Run Module). 
+
+OUTPUT: Various output formats are generated. Sequence output is provided in FASTA format. Detected repeats are provided in BED and GFF format. In addition, we provide statistical reports that are tab-separated files. 
+
+GFF: The GFF files consist of 9 columns following standard GFF specification. Two kinds of GFF files are generated depending on the type of method that is applied. If Kmasker plants is applied for repeat detection it contains lines with KRR and KRC as feature type. If a k-mer frequency ratio analysis is performed it con-tains lines with KDC as feature type. KRR (‘k-mer repeat region’): Short continues nucleotide sequences with k-mer counts above threshold. KRC (‘k-mer repeat cluster’): KRR segments that are in close distance which have been merged into clusters. Merging can be adjusted with the parameter ‘--expert_setting_kmasker pcgap=value’. Here,  ‘pctgap’ is the length permitted between adjacent KRR segments. It is dynamic using the length of the longer KRR, which refers to 100% (default: pctgap=10). KDC (‘k-mer diverse cluster’): De-tected segments of the input sequence which show diverging k-mer patters in the comparative study of the k-mer ratio analysis. Here, the two applied sequence data sets (KINDEX A and KINDEX B) have significantly different k-mer counts.
+
+OCC: The file holds the base-specific k-mer counts for one or more biological sequences stored in a corre-sponding FASTA file. It is most similar to FASTA QUAL formats. Lines starting with “>” contain the sequence identifier followed by lines with numeric values. Each values corresponds to a nucleotide position of the input sequence. K-mer counts are represented as non-negative integers separated by whitespace (typically a single space or newline), and can span multiple lines.
+
 
 

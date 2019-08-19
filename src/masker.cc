@@ -52,7 +52,8 @@ using jellyfish::mer_dna_bloom_counter;
     else {
         return n/d;
     }
-}*/ //http://stackoverflow.com/questions/17005364/dividing-two-integers-and-rounding-up-the-result-without-using-floating-pont
+}*/
+//http://stackoverflow.com/questions/17005364/dividing-two-integers-and-rounding-up-the-result-without-using-floating-pont
 
 
 typedef jellyfish::whole_sequence_parser<jellyfish::stream_manager<char**> > sequence_parser;
@@ -72,15 +73,15 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
     string filename = file.substr(0, lastindex);
     //cout << dir << "/" << file << "\n";
     if(occfile == true){
-        string occnormoutname = dir + "/KMASKER_" + prefix + "_NORM" + "_" + filename + ".occ";
+        string occnormoutname = dir + "/KMASKER_kmer_counts_KDX_" + prefix + ".occ";
         cout << "Out normalized OCC is: " << occnormoutname << "\n";
-        string occoutname = dir + "/KMASKER_" + prefix + "_" + filename + ".occ";
+        string occoutname = dir + "/KMASKER_kmer_counts_raw_KDX_" + prefix + ".occ";
         cout << "Out OCC is: " << occoutname << "\n";
         occfilestream.open(occoutname);
         occnormfilestream.open(occnormoutname);
     }
     if(fastaflag == true) {
-        string fastaoutname = dir + "/KMASKER_" + prefix + "_RT" + to_string(rt) + "_NORM" + "_" + file;
+        string fastaoutname = dir + "/KMASKER_masked_KDX_" + prefix + ".fasta";
         cout << "Out FASTA is: " << fastaoutname << "\n";
         fastaout.open(fastaoutname);
     }
@@ -314,8 +315,8 @@ int main(int argc, char *argv[])
                 rt = atoi(optarg);
                 break;
             case 'h':
-                cout << "Usage: " << argv[0] << "\n\t-h\t Shows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n";
-                return 1;
+                cout << "Usage: " << argv[0] << "\n\t-h\tShows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n\n";
+                return 0;
                 break;
             case '?':
                 if (optopt == 'f' || optopt == 'j' || optopt == 'n' || optopt == 'r' ||optopt == 'p')
