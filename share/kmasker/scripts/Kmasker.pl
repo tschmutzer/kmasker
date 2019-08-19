@@ -127,7 +127,7 @@ my $expert_setting_blast	= "";
 my $expert_config_kmasker;
 my $expert_config_jelly;
 my $expert_config_blast;
-my $gconf = dirname($path)."/etc/kmasker.config";
+my $gconf = dirname(dirname(dirname($path)))."/etc/kmasker.config";
 my $uconf = $ENV{"HOME"}."/.kmasker_user.config";
 my @ARGV_B = @ARGV;
 
@@ -1401,11 +1401,11 @@ if($line =~ /^$tool=/){
 		system("which $tool >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed! Kmasker process stopped.\"; exit 1; \}");
 		$HASH_path{"$tool"} = `which $tool`;
 		$HASH_path{"$tool"} =~ s/\n//;
-		}else{
-			$HASH_path{"$tool"} = $ARRAY_tmp[1];
-			system("which ".$HASH_path{"$tool"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed!  Kmasker process stopped.\"; exit 1; \}");
-		}
-		print "\n $tool=".$HASH_path{"$tool"}."\n" if(defined $verbose);
+	}else{
+		$HASH_path{"$tool"} = $ARRAY_tmp[1];
+		system("which ".$HASH_path{"$tool"}." >/dev/null 2>&1 || { echo >&2 \"Kmasker requires $tool but it's not installed in ". $HASH_path{"$tool"} ."!  Kmasker process stopped.\"; exit 1; \}");
+	}
+	print "\n $tool=".$HASH_path{"$tool"}."\n" if(defined $verbose);
 	}
 }
 
@@ -1420,7 +1420,9 @@ sub read_user_config(){
 	if(-e $gconf){
 		#LOAD info for external tools
 		my $gCFG = new IO::File($gconf, "r") or die "\n unable to read global config $!";	
-		
+		if($verbose){
+			print "Processing global config $gconf\n"
+		}
 		while(<$gCFG>){
 			next if($_ =~ /^$/);
 			next if($_ =~ /^#/);
@@ -1455,7 +1457,10 @@ sub read_user_config(){
 	
 	if(-e $uconf){
 		#LOAD private info
-		my $uCFG = new IO::File($uconf, "r") or die "\n unable to read user config $!";	
+		my $uCFG = new IO::File($uconf, "r") or die "\n unable to read user config $!";
+		if($verbose){
+			print "\nProcessing user config $uconf\n"
+		}	
 		while(<$uCFG>){
 			next if($_ =~ /^$/);
 			next if($_ =~ /^#/);
@@ -1593,31 +1598,32 @@ sub check_routine_for_requirement(){
 	my $requirement = $_[0];
 	my $line 		= $_[1];
 	my $default		= $_[2];
-	
-	if($line =~ /^$requirement=/){
-		my @ARRAY_tmp = split("=", $line);
-		if(defined $ARRAY_tmp[1]){
-			#CHECK if path is correct
-			my $path_given 	= $ARRAY_tmp[1];
-			my $path_check 	= `which $path_given`;
-			$path_check		=~ s/\n$//;
-			if($path_check eq ""){
-				print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";
-				my $path_which = `which $requirement`;
-				$path_which =~ s/\n$//;
-				if($path_which eq "") {
-					print "\n No success! Your configuration for $requirement is might be wrong!\n";
-					print "\n Current path is $default!\n";
-				} else {
-					print "\n Success! Set path for $requirement to $path_which!\n";
-					$default = $path_which;
-			    }
+	if(defined $line) {
+		if($line =~ /^$requirement=/){
+			my @ARRAY_tmp = split("=", $line);
+			if(defined $ARRAY_tmp[1]){
+				#CHECK if path is correct
+				my $path_given 	= $ARRAY_tmp[1];
+				my $path_check 	= `which $path_given`;
+				$path_check		=~ s/\n$//;
+				if($path_check eq ""){
+					print "\n ... provided path for ".$requirement." seems to be wrong! Trying to detect path automatically\n";
+					my $path_which = `which $requirement`;
+					$path_which =~ s/\n$//;
+					if($path_which eq "") {
+						print "\n No success! Your configuration for $requirement is might be wrong!\n";
+						print "\n Current path is $default!\n";
+					} else {
+						print "\n Success! Set path for $requirement to $path_which!\n";
+						$default = $path_which;
+				    }
 
-			}else{
-				$default = $path_check;
-			}					
-		}
-	}	
+				}else{
+					$default = $path_check;
+				}					
+			}
+		}	
+	}
 	return $default;
 }
 
