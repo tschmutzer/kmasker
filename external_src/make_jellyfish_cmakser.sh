@@ -10,6 +10,6 @@ make install
 ln -s /hbb_exe/include/jellyfish-2.2.10/jellyfish /hbb_exe/include/jellyfish
 
 cd /io/src
-scons
+scons -Q build
 
 exit
