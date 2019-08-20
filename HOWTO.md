@@ -6,7 +6,7 @@
 - Computer with internet access and POSIX compatible OS (tested with MacOS Darwin 17.7.0)
 - wget
 - Docker Installation
-- Git
+- git
 
 ### How to make it?
 
@@ -14,15 +14,13 @@
 git clone git@github.com:tschmutzer/kmasker.git kmasker
 cd kmasker
 git checkout make_release_master
-git submodule init
-git submodule update
 ./make_release.sh
 ```
 ### What will happen?
 Git downloads the repository and the submodules (e.g. gffread). 
-The scripts downloads HolyBuildBox and starts to compile all components in src and external_src.
+The scripts download HolyBuildBox and start to compile all components in src and external_src.
 The compiled applications will be portable across different Linux distributions. 
-Afterwards the whole kmasker folder will be zipped. 
+Afterwards the necessary components of kmasker will be zipped. 
 In the end the intermediate docker containers and images are removed.
 
 ### How to update this branch before building a version?
