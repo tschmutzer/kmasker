@@ -1385,7 +1385,6 @@ sub reading_file(){
 	$CONFIG->close();	
 	$readline 			= join(" ", @ARRAY_collect);
 	my $readline_func 	= join(";", @ARRAY_collect);
-	$readline_func 		= join("=", @ARRAY_collect) if($type eq "blast");
 	&use_expert_settings($type, $readline_func);
 		
 	#RETURN	
