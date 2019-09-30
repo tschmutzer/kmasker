@@ -1,12 +1,12 @@
 # Installation
-This instructions will help you to install kmasker including all prerequisites.
+These instructions will help you to install kmasker including all prerequisites.
 You can install kmasker in the following ways:
 
-- with bioconda in linux or macOS (the easiest way)
-- with precompiled binaries in linux (easy)
-- with compilation of the source code in
-	- linux
-	- macOS with the help of brew
+- with bioconda in Linux or macOS (the easiest way)
+- with precompiled binaries in Linux (easy)
+- with the compilation of the source code in
+    - Linux
+    - macOS with the help of brew
 
 # Installation with bioconda
 *At the moment kmasker is not yet available at bioconda. This text will be removed when it is available.*
@@ -18,15 +18,15 @@ conda install kmasker
 ```
 
 You can start kmasker with `Kmasker --help`
-# Installation with precompiled binaries (linux only)
-We are working on an all-in-one linux package for you taking in account the licences of the different tools. 
+# Installation with precompiled binaries (Linux only)
+We are working on an all-in-one Linux package for you,  with respect to the licences of the different tools. 
 At the moment almost all tools are covered, except R. 
 The binaries are located in the bin folder, their sources are located in the "external_src" folder.
 You can find the releases at: 
 [https://github.com/tschmutzer/kmasker/releases
 ](https://github.com/tschmutzer/kmasker/releases)
-## 1. Distribution depended instructions
-The version with binaries has just a few requirements. Please consinder the "Installation without prebuild binaries / newest version from git" if something is not working for you.
+## 1. Distribution-depended instructions
+The version with binaries has just a few requirements. Please consider the "Installation without prebuild binaries / newest version from git" if something is not working for you.
 
 - Linux distribution not older than approx. 10 years 
 - perl5
@@ -55,12 +55,12 @@ sudo yum install R
 If you want to use the KRISPR module please follow the RedHat developer instructions:
 [https://developers.redhat.com/blog/2018/08/13/install-python3-rhel/
 ](https://developers.redhat.com/blog/2018/08/13/install-python3-rhel/)
-and afterwards run
+and afterwards, run
 
 ```bash
 pip install kPAL
 ```
-## 2. General instructions (executed after the distrubution dependencies)
+## 2. General instructions (executed after the distribution dependencies)
 Unzip the kmasker release.
 
 ```bash
@@ -75,9 +75,9 @@ cd ..
 #(of course you need to install scons before)
 ```
 
-Your are done! Kmasker can be used now.
+You are done! Kmasker can be used now.
 
-# Installation without prebuild binaries / newest version from git
+# Installation from source / newest version from git
 ## Prerequisites
   To install and use kmasker you will need to following tools and libraries on your system:
 
@@ -94,7 +94,7 @@ Your are done! Kmasker can be used now.
 - scons
 - tools for compiling c++ programs 
 - R (tested with 3.5.0), but older/newer versions will work most likely
-- Python (3.5) incl. pandas, numpy (if you want to use KRISPR module)
+- Python (3.5) incl. pandas, numpy, kPAL (if you want to use KRISPR module)
 
 ## Installation Instructions
 ### 1. Distribution specific parts
@@ -131,87 +131,15 @@ sudo yum install R
 If you want to use the KRISPR module please follow the RedHat developer instructions:
 [https://developers.redhat.com/blog/2018/08/13/install-python3-rhel/
 ]()
-and afterwards run
+and afterwards, run
 
 ```bash
 pip install kPAL
 ```
 
-### 2. General instructions (executed after the distrubution dependencies)
+### 2. General instructions (executed after the distribution dependencies)
 Create a directory for the source code of the different tools. 
-For example in our home directory. 
-`mkdir ~/src`
-#### Check the tools out
-```bash
-cd ~/src
-git clone https://github.com/ExpressionAnalysis/ea-utils
-git clone https://github.com/gpertea/gclib
-git clone https://github.com/gpertea/gffread
-git clone https://github.com/tschmutzer/kmasker #or unzip downloaded source code release!
-```
-#### Compile the tools
-```bash
-cd ea-utils/clipper
-make fastq-stats
-#Copy the binary file to a location which is in your path
-#or to KMASKERs bin directory
-cp fastq-stats ../../kmasker/bin/
-cd ../..
-cd gffread
-make
-cp gffread ../kmasker/bin/
-cd ..
-cd kmasker/src
-```
-You can install just compile cmasker and copy it to bin OR you can install Kmasker to a selected prefix.
-If you have your jellyfish installation in a non-standard path, you can set JLIB and JINCLUDE.
-For example `scons JLIB=/opt/jellyfish/lib/ JINCLUDE=/opt/jellyfish/includes/jellyfish-2.1.0/ -Q build`.
-scons will also search in the selected prefix for jellyfish.
-##### Just compile
-```bash
-scons -Q build
-cp cmasker ../bin
-cd ..
-#if you want you, can add KMASKERs bin directory
-#to your path
-export PATH=$PATH:/$HOME/src/kmasker/bin
-```
-##### OR Install with a prefix
-We can also compile and install Kmasker for you in a selected prefix, e.g. /usr/local.
-
-```bash
-scons PREFIX=/usr/local -Q install
-#of course, you can also use JLIB and JINCLUDE here
-#make sure that the PREFIX is in our PATH variable
-```
-#### Install R packages
-```bash
-cd setup
-./install_packages.R
-```
-
-
-# macOS
-
-**Information: You should be able to use the terminal in OSX. Please note that whether kmasker nor its depedencies has a graphical user interface.** 
-
-Install brew from [https://brew.sh/](https://brew.sh/) (you can also use macports or fink, but this unsupported) and its depenedencies (like OSX command line tools). Brew will guide you through its installation. We are working on a ready-to-use formular for brew at the moment. You can also use bioconda (instructions at the end of this document).
-### Install Homebrew
-Add the bioinformatics repository to brew.
-
-```bash
-brew tap brewsci/bio
-brew install jellyfish blast scons
-```
-Download and install R from [https://cloud.r-project.org/bin/macosx/](https://cloud.r-project.org/bin/macosx/) or use brew cask:
-
-```bash
-brew install r-app
-```
-
-### Command line instructions
-Create a directory for the source code of the different tools. 
-For example in our home directory. 
+For example in your home directory. 
 `mkdir ~/src`
 #### Check out the tools
 ```bash
@@ -233,13 +161,91 @@ cd gffread
 make
 cp gffread ../kmasker/bin/
 cd ..
-cd kmasker/src
+#Download the submodule krispr
+cd kmasker
+git submodule init 
+git submodule update
+#Make cmasker
+```
+You can just compile cmasker and copy it to bin OR you can install Kmasker to a selected prefix.
+If you have your jellyfish installation in a non-standard path, you can set JLIB and JINCLUDE.
+For example `scons JLIB=/opt/jellyfish/lib/ JINCLUDE=/opt/jellyfish/includes/jellyfish-2.1.0/ -Q build`.
+scons will also search in the selected prefix for jellyfish.
+##### Just compile
+```bash
+scons -Q build
+cp src/cmasker bin/cmasker
+#if you want you, can add KMASKERs bin directory
+#to your path
+export PATH=$PATH:/$HOME/src/kmasker/bin
+```
+##### OR Install with a prefix
+We can also compile and install Kmasker for you in a selected prefix, e.g. /usr/local.
+
+```bash
+scons PREFIX=/usr/local -Q install
+#of course, you can also use JLIB and JINCLUDE here
+#make sure that the PREFIX is in your PATH variable
+```
+#### Install R packages
+```bash
+cd setup
+./install_packages.R
+```
+
+
+# macOS
+
+**Information: You should be able to use the terminal in OSX. Please note that whether kmasker nor its dependencies has a graphical user interface.** 
+
+Install brew from [https://brew.sh/](https://brew.sh/) (you can also use macports or fink, but this unsupported) and its dependencies (like OSX command line tools). Brew will guide you through its installation. We are working on a ready-to-use formula for brew at the moment. You can also use bioconda (instructions at the end of this document).
+### Install Homebrew
+Add the bioinformatics repository to brew.
+
+```bash
+brew tap brewsci/bio
+brew install jellyfish blast scons
+```
+Download and install R from [https://cloud.r-project.org/bin/macosx/](https://cloud.r-project.org/bin/macosx/) or use brew cask:
+
+```bash
+brew install r-app
+```
+
+### Command line instructions
+Create a directory for the source code of the different tools. 
+For example in your home directory. 
+`mkdir ~/src`
+#### Check out the tools
+```bash
+cd ~/src
+git clone https://github.com/ExpressionAnalysis/ea-utils
+git clone https://github.com/gpertea/gclib
+git clone https://github.com/gpertea/gffread
+git clone https://github.com/tschmutzer/kmasker #or unzip downloaded source code release!
+```
+#### Compile the tools
+```bash
+cd ea-utils/clipper
+make fastq-stats
+#Copy the binary file to a location which is in your path
+#or to KMASKERs bin directory
+cp fastq-stats ../../kmasker/bin/
+cd ../..
+cd gffread
+make
+cp gffread ../kmasker/bin/
+cd ..
+#Download the submodule krispr
+cd kmasker
+git submodule init 
+git submodule update
+#Make cmasker
 #You can get the current version with brew info jellyfish
 scons JINCLUDE=/usr/local/include/jellyfish-2.2.10 JLIB=/usr/local/lib -Q build
+cp src/cmasker bin/cmasker
 #or install with 
 #scons PREFIX=/your/prefix JINCLUDE=/usr/local/include/jellyfish-2.2.10 JLIB=/usr/local/lib  -Q install
-cp cmasker ../bin
-cd..
 ```
 #### Install R packages
 ```bash
