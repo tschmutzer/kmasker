@@ -385,8 +385,8 @@ sub run_krispr(){
 	
 		
 	#SETUP
-	system("cp ".$path."/../data_krispr.RData .");
-	system("cp ".$path."/models_krispr.R .");
+	system("cp ".$path."/../krispr/data_krispr.RData .");
+	system("cp ".$path."/../krispr/models_krispr.R .");
 			
 	print "\n\n ... start Kmasker krispr module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
@@ -405,7 +405,7 @@ sub run_krispr(){
 	# system("python3.5 ".$path."/krispr.py single -q ".$krispr_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
 	
 	#MULTI FASTA
-	system("python3.5 ".$path."/krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >".$OUT_krispr . " 2>&1");
+	system("python3.5 ".$path."/../krispr/krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >".$OUT_krispr . " 2>&1");
 	print "\n\n ... Kmasker krispr module finished \n";
 	
 	#CLEAN

@@ -5,5 +5,6 @@ if [ -f ~/.kmasker_user.config ]; then
  	source <(grep "^export " ~/.kmasker_user.config)
 fi
 export PATH=$LOCATION:$PREFIX/share/kmasker/scripts:$PATH
+export PATH=$PREFIX/share/kmasker/krispr:$PATH
 export PERL5LIB=$PREFIX/lib/perl5:$PERL5LIB
 $PREFIX/share/kmasker/scripts/Kmasker.pl $@

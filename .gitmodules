@@ -1,0 +1,3 @@
+[submodule "share/kmasker/krispr"]
+	path = share/kmasker/krispr
+	url = https://github.com/m4rku5-5/krispr
