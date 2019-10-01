@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+#!/usr/bin/env perl -w
 use strict;
 use IO::File;
 use File::Basename;
