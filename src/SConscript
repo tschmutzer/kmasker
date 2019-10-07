@@ -1,5 +1,5 @@
 #!python
-Import('env idir_lib idir_prefix jinclude')
+Import('env idir_lib idir_prefix jinclude jlib')
 if "CXXFLAGS" in env['ENV']:
 	cxxflags=env['ENV']['CXXFLAGS']
 else:
@@ -10,9 +10,11 @@ else:
 	ld_lib_path=""
 cxxflags=cxxflags+' -std=c++0x -Wall'
 env.Append(CXXFLAGS = cxxflags)
-env.Append(LD_LIBRARY_PATH = ld_lib_path)
+env.Append(LD_LIBRARY_PATH = [ld_lib_path, jlib])
 env.Append(CPPPATH = [idir_prefix+'/include/jellyfish-2.2.10/'])
 env.Append(CPPPATH = [jinclude])
-cmasker = env.Program(target = '../bin/cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'], LIBPATH = [ld_lib_path, idir_lib])
-#env.Install('../bin', cmasker)
-env.Alias('build',cmasker)
+cmasker = env.Program(target = 'cmasker', source = ["masker.cc"], LIBS=['jellyfish-2.0', 'pthread'], LIBPATH = [ld_lib_path, idir_lib, jlib])
+env.Precious('cmasker')
+install_cmasker=env.Install(idir_prefix+'/bin', cmasker)
+build=env.Alias("build", [cmasker])
+env.Alias("install", [install_cmasker, build])

@@ -2,11 +2,14 @@
 import install
 import os
 
-env = Environment(ENV = os.environ)
+release=False
+AddOption('--release', dest='release', action="store_true", default=False)
+env = Environment(ENV = os.environ, RELEASE=GetOption('release'))
 install.TOOL_INSTALL(env)
 opts = Variables()
-opts.Add(PathVariable('PREFIX', 'Directory to install under', '/usr', PathVariable.PathIsDir))
+opts.Add(PathVariable('PREFIX', 'Directory to install under', '/usr/local/', PathVariable.PathIsDir))
 opts.Add(PathVariable('JINCLUDE', 'Directory which contains jellyfish includes', None, PathVariable.PathIsDir))
+opts.Add(PathVariable('JLIB', 'Directory which contains jellyfish libs', None, PathVariable.PathIsDir))
 opts.Update(env)
 Help(opts.GenerateHelpText(env))
 
@@ -17,18 +20,20 @@ idir_bin    = '$PREFIX/bin'
 idir_etc    = '$PREFIX/etc'
 idir_data   = '$PREFIX/share'
 jinclude 	= '$JINCLUDE'
-Export('env idir_prefix idir_data idir_lib idir_bin idir_etc jinclude')
+jlib		= '$JLIB'
+Export('env idir_prefix idir_data idir_lib idir_bin idir_etc jinclude jlib')
+if(env['RELEASE']==False):
+	SConscript('src/SConscript', exports=['env', 'opts'])
 
-SConscript('src/SConscript', exports=['env', 'opts'])
-bin = env.InstallFiles(target=idir_bin, source='bin')
+
+ibin = env.InstallFiles(target=idir_bin, source='bin')
 lib = env.InstallFiles(target=idir_lib, source='lib')
 etc = env.InstallFiles(target=idir_etc, source='etc')
 share = env.InstallFiles(target=idir_data, source='share')
 
-env.Alias('install', 'build')
-env.Alias('install', lib)
-env.Alias('install', etc)
-env.Alias('install', share)
-env.Alias('install', bin)
+#env.Alias('install', 'build') #Just installation for release with binaries
+env.Alias('install', [lib, etc, share, ibin])
+
+
 
 env.Default('build')
