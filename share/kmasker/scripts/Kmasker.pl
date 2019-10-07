@@ -14,7 +14,7 @@ use lib dirname(dirname abs_path $0) . '/lib';
 
 #include packages
 use kmasker::kmasker_build qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
-use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run);
+use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run create_krispr_model);
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions;
 
@@ -51,6 +51,7 @@ my $foldchange		= 10;
 my $foldchange_usr;
 my $PATH_kindex_private = "";
 my $PATH_kindex_external= "";
+my $krispr_model;
 
 #RUN
 my $fasta;
@@ -70,6 +71,7 @@ my $repeat_threshold	= 10;
 my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
+my make_model;
 
 # set the following parameter using '--expert_setting_kmasker' or provide them in file using '--config_kmasker'
 my $MK_percent_gapsize	= 10;	#Default	MK_percent_gapsize (N) is the paramater allowing N percent of a region to be not repetitive when merging regions. Used in SK and MK.
@@ -164,7 +166,9 @@ my $result = GetOptions (	#MAIN
 							"kindex=s{1,}"		=> \@multi_kindex,
 							"rept=i"			=> \$repeat_threshod_usr,
 							"minl=i"			=> \$length_threshold_usr,
-							"m=i"				=> \$mismatch,							
+							"m=i"				=> \$mismatch,	
+							"model=s"			=> \$krispr_model,
+							"make_model=s"		=> \$make_model				
 											
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
@@ -306,6 +310,7 @@ $HASH_info{"expert setting jelly"}	= $expert_setting_jelly;
 $HASH_info{"expert setting blast"}	= $expert_setting_blast;
 $HASH_info{"size"}					= $size;
 $HASH_info{"krisp mismatch"}		= $mismatch;
+$HASH_info{"krisp model"}			= $krispr_model;
 $HASH_info{"PID"}					= $PID;
 $HASH_info{"LONG_PID"}				= $LONG_PID;
 
@@ -458,10 +463,15 @@ if(defined $run){
 	
 	#CRISPR design modul
 	if(defined $krispr){
-		if(exists $HASH_repository_kindex{$kindex}){
-			&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
+		if(defined $make_model) {
+
+		} 
+		else {
+			if(exists $HASH_repository_kindex{$kindex}){
+				&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
+			}
+			print "\n - Thanks for using Kmasker! -\n\n";
 		}
-		print "\n - Thanks for using Kmasker! -\n\n";
 		if($verbose) {
         	print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";
        	}
@@ -471,7 +481,6 @@ if(defined $run){
    		&createREADME();
 		exit();	
 	}
-	
 	
 	#FISH design modul
 	if(defined $fish){
@@ -1795,6 +1804,8 @@ sub help(){
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
 		print "\n --fish\t\t Extracts long sequence strechtes with low repetitiveness as FISH candidates";
+		print "\n --model\t\t Use with --kripsr: You can specifiy an alternative krispr model here. It can be built with --make_model.";
+		print "\n --make_model\t\t Use with --krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI." 
 	
 		print "\n\n";
 		exit();

@@ -175,21 +175,35 @@ The run module starts the core process of Kmasker. There are four general option
 
 #### SINGLE or MULTIPLE
 
-Kmasker --run --fasta query.fasta --kindex At1
+`Kmasker --run --fasta query.fasta --kindex At1`
 
-Kmasker --run --fasta query.fasta --kindex At1 Hv1
+`Kmasker --run --fasta query.fasta --kindex At1 Hv1`
 
 #### FISH
 
-Kmasker --run --fish --fasta query.fasta --kindex At1
+`Kmasker --run --fish --fasta query.fasta --kindex At1`
 
 Check input sequence for long sequence stretches with low repetitiveness. As a results candidate sequences with good target specificity and functionality are selected.
 
 #### KRISPR
 
-Kmasker --run --krispr --fasta candidate_grna.fasta --kindex Hv1
+##### Use krispr with default model
+
+`Kmasker --run --krispr --fasta candidate_grna.fasta --kindex Hv1`
 
 Check a set of gRNAs for their specificity in CRISPR/cas application. As a result for each given gRNA a score is calculated reflecting its target specififity. 
+
+##### Use krispr with custom model
+
+`Kmasker --run --krispr --fasta candidate_grna.fasta --kindex Hv1 --model your_model.RData`
+
+##### Make a new model
+
+You can create a new model for the krispr analysis. See details at [https://git.io/JecYI](https://git.io/JecYI). 
+
+`Kmasker --run --krispr --make_model your_targets.csv`
+
+The model will be created in the current directory. 
 
 #### COMPARATIVE
 
