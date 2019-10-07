@@ -380,7 +380,7 @@ sub run_krispr(){
 	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
 	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
 	my $PID						= $HASH_info_this{"PID"};
-	my $model 					= $HASH_info_this{"krisp model"}
+	my $model 					= $HASH_info_this{"krisp model"};
 	#my $OUT_krispr				= "KMASKER_krispr_results.txt";
 	my $OUT_krispr				= "KMASKER_krispr_KDX_".$kindex_this."_".$PID.".txt";
 	
