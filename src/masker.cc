@@ -143,7 +143,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                 if(fastaflag == true) {
                     fastaout << "X";
                     if(strict == true) {
-                        strict_shift = mer.k() - 1
+                        strict_shift = mer.k() - 1;
                     }
                 }
             }
@@ -280,7 +280,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         //now print the bases in the fasta
         if(fastaflag == true) {
             if(strict == true && strict_shift > 0) {
-                for (s=0; s < strict_shift; s++) {
+                for (int s=0; s < strict_shift; s++) {
                     fastaout << "X";
                 }
                 fastaout << j->data[i].seq.substr(j->data[i].seq.length() - (mer.k() - 1) + strict_shift);
