@@ -10,3 +10,6 @@
 #[submodule "external_src/jellyfish"]
 #	path = external_src/jellyfish
 #	url = https://github.com/gmarcais/Jellyfish.git
+[submodule "share/kmasker/krispr"]
+	path = share/kmasker/krispr
+	url = https://github.com/m4rku5-5/krispr

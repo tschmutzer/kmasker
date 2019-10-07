@@ -60,7 +60,7 @@ typedef jellyfish::whole_sequence_parser<jellyfish::stream_manager<char**> > seq
 
 template<typename PathIterator, typename Database>
 void query_from_sequence(PathIterator file_begin, PathIterator file_end, const Database& db,
-                         bool canonical, bool occfile, int rt, double norm, char* prefix, bool fastaflag) {
+                         bool canonical, bool occfile, int rt, double norm, char* prefix, bool fastaflag, bool strict) {
     jellyfish::stream_manager<PathIterator> streams(file_begin, file_end);
     sequence_parser                         parser(4, 100, 1, streams);
     ofstream occfilestream;
@@ -102,6 +102,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         //mers = j->data[i].seq;
         //lets start with the first kmer
         int mershift = 0; //how often we have to shift to get rid of the++
+        int strict_shift = 0; //Shifting for masking of whole kmers
         jellyfish::mer_dna mer;
         if(j->data[i].seq.length() < mer.k()){
             cout << "Sequence is too short, skipping...\n";
@@ -118,6 +119,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
         std::replace (firstmer.begin(), firstmer.end(), 'N', 'A'); //replace all N with A for jellyfish::mer_dna
         mer = firstmer; //use the string to initalize the mer object
         //put the position of the right-most N into mershift and check if there is an N at all
+        //****FIRST NUCLEOTIDE****
         if((mershift = j->data[i].seq.substr(0,mer.k()).find_last_of('N')) != std::string::npos) {
             /*std::cout << "-1" << " : " << mer.to_str()<< " : " << mershift;
             std::cout << "\n";*/
@@ -140,6 +142,9 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             if((int) ceil( (double) db.check(mer)/norm) > rt) {
                 if(fastaflag == true) {
                     fastaout << "X";
+                    if(strict == true) {
+                        strict_shift = mer.k() - 1
+                    }
                 }
             }
             else{
@@ -149,6 +154,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
             }
         }
         //now calculate how many times the mer must be shifted
+        //****NEXT ITERATIONS UNTIL END****
         int k = 2;
         bool whitespace = true;
         string* seq = &j->data[i].seq;
@@ -175,7 +181,13 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                     occnormfilestream << "0";
                 }
                 if(fastaflag == true) {
-                    fastaout << s;
+                    if(strict == true && strict_shift > 0) {
+                        fastaout << "X";
+                        strict_shift--;
+                    }
+                    else {
+                        fastaout << s;
+                    }
                 }
 
             }
@@ -191,7 +203,13 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                         occnormfilestream << "0";
                     }
                     if(fastaflag == true) {
-                        fastaout << s;
+                        if(strict == true && strict_shift > 0) {
+                            fastaout << "X";
+                            strict_shift--;
+                        }
+                        else {
+                            fastaout << s;
+                        }
                     }
                 }
                 else { //allright, no Ns in the kmer
@@ -205,16 +223,24 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                     if ((int) ceil( (double) db.check(mer)/norm) > rt) {
                         if(fastaflag == true) {
                             fastaout << "X";
+                            if (strict == true) {
+                                strict_shift = mer.k() - 1;
+                            }
                         }
                     }
                     else {
                         if(fastaflag == true) {
-                            fastaout << s;
+                            if(strict == true && strict_shift > 0) {
+                                fastaout << "X";
+                                strict_shift--;
+                            }
+                            else {
+                                fastaout << s;
+                            }
                         }
                     }
 
                 }
-                
             }
             k++;
             whitespace = true; //we need a whitespace in the next beginning of the loop
@@ -227,6 +253,7 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                 k=1;
             }
         }
+        //****LAST ITERATION: END - k Nucleotides*****
         for (int a = 1; a < mer.k(); a++, k++) { //print last bases which have no kmer
             if(whitespace == false) {
                 if (occfile) {
@@ -250,9 +277,17 @@ void query_from_sequence(PathIterator file_begin, PathIterator file_end, const D
                 k=1;
             }
         }
-        //now print the bases in fasta
+        //now print the bases in the fasta
         if(fastaflag == true) {
-            fastaout << j->data[i].seq.substr(j->data[i].seq.length() - (mer.k() - 1));
+            if(strict == true && strict_shift > 0) {
+                for (s=0; s < strict_shift; s++) {
+                    fastaout << "X";
+                }
+                fastaout << j->data[i].seq.substr(j->data[i].seq.length() - (mer.k() - 1) + strict_shift);
+            }
+            else {
+                fastaout << j->data[i].seq.substr(j->data[i].seq.length() - (mer.k() - 1));
+            }
         }
         
         if (occfile) {
@@ -284,6 +319,7 @@ int main(int argc, char *argv[])
     char* prefix = (char*)"masked";
     int index;
     bool fastaout = true;
+    bool strict = false;
     
     
     opterr = 0;
@@ -308,6 +344,9 @@ int main(int argc, char *argv[])
                 jellydb = optarg;
                 cout << "Jellyfishdb is: " << jellydb << "\n";
                 break;
+            case 't':
+                strict = true;
+                break;
             case 'n':
                 norm = atof(optarg);
                 break;
@@ -315,7 +354,7 @@ int main(int argc, char *argv[])
                 rt = atoi(optarg);
                 break;
             case 'h':
-                cout << "Usage: " << argv[0] << "\n\t-h\tShows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n\n";
+                cout << "Usage: " << argv[0] << "\n\t-h\tShows this help\n\t-f\tFASTA Input\n\t-j\tJellfish Database\n\t-o\tCreate OCC output\n\t-n\tNormalize Value\n\t-r\tRT Value for masking threshold\n\t-tStrict mode: Mask the whole k-mer in the query sequence instead of the single nucleotide\n\t-p\tPrefix for the outfiles\n\t-s\tSuppress FASTA output\n\n";
                 return 0;
                 break;
             case '?':
@@ -355,12 +394,12 @@ int main(int argc, char *argv[])
     if(!in.good())
       err::die("Bloom filter file is truncated");
     in.close();
-    query_from_sequence(file, file+1, filter, header.canonical(),occflag, rt, norm, prefix, fastaout);
+    query_from_sequence(file, file+1, filter, header.canonical(),occflag, rt, norm, prefix, fastaout, strict);
   } else if(header.format() == binary_dumper::format) {
     jellyfish::mapped_file binary_map(jellydb);
     binary_query bq(binary_map.base() + header.offset(), header.key_len(), header.counter_len(), header.matrix(),
                     header.size() - 1, binary_map.length() - header.offset());
-    query_from_sequence(file, file+1 , bq, header.canonical(), occflag ,rt, norm, prefix, fastaout);
+    query_from_sequence(file, file+1 , bq, header.canonical(), occflag ,rt, norm, prefix, fastaout, strict);
   } else {
     err::die(err::msg() << "Unsupported format '" << header.format() << "'. Must be a bloom counter or binary list.");
   }

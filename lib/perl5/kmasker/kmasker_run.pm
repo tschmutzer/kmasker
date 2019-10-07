@@ -21,7 +21,7 @@ our @EXPORT = qw(
 	show_version_PM_run
 	$log
 );
-our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run $log);
+our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run create_krispr_model $log);
 
 
 ## VERSION
@@ -380,14 +380,20 @@ sub run_krispr(){
 	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
 	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
 	my $PID						= $HASH_info_this{"PID"};
+	my $model 					= $HASH_info_this{"krisp model"};
 	#my $OUT_krispr				= "KMASKER_krispr_results.txt";
 	my $OUT_krispr				= "KMASKER_krispr_KDX_".$kindex_this."_".$PID.".txt";
 	
 		
 	#SETUP
-	system("cp ".$path."/../data_krispr.RData .");
-	system("cp ".$path."/models_krispr.R .");
-			
+	if(defined $model) {
+		copy($model, ".") or die "Copy failed: $!";
+	}
+	else {
+		copy($path."/../krispr/data_krispr.RData", "data_krispr.RData") or die "Copy failed: $!";
+	}
+	copy($path."/../krispr/models_krispr.R", ".") or die "Copy failed: $!";
+	copy($path."/../krispr/krispr.py", ".") or die "Copy failed: $!";		
 	print "\n\n ... start Kmasker krispr module\n";	
 	my $full_kindex_name = "KINDEX_".$kindex_this.".jf";		
 	if(-e $absolut_path.$full_kindex_name){
@@ -402,16 +408,36 @@ sub run_krispr(){
 	
 	#SINGLE SEQ
 	# not activated in Kmasker
-	# system("python3.5 ".$path."/krispr.py single -q ".$krispr_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
+	# system("python3 ".$path."/krispr.py single -q ".$krispr_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
 	
 	#MULTI FASTA
-	system("python3.5 ".$path."/krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >".$OUT_krispr . " 2>&1");
+	system("python3 "."krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >".$OUT_krispr . ">>$log 2>&1");
 	print "\n\n ... Kmasker krispr module finished \n";
 	
 	#CLEAN
-	system("rm ".$full_kindex_name." data_krispr.RData models_krispr.R");
+	unlink($full_kindex_name);
+	unlink("data_krispr.RData");
+	unlink("models_krispr.R");
 }
-
+## subroutine
+#  make new model for krispr
+sub create_krispr_model(){
+	my $path 					= dirname abs_path $0;	
+	my $targets = $_[0];
+	my $coverage		= $_[1]; 
+	copy($path."/../krispr/data_krispr.RData", ".") or die "Copy failed: $!";
+	copy($path."/../krispr/models_krispr.R", ".") or die "Copy failed: $!";
+	copy($path."/../krispr/krispr.py", ".") or die "Copy failed: $!";
+	copy($path."/../krispr/save_model_data.R", ".") or die "Copy failed: $!";
+    system("python3 "."krispr.py new-model -e ".$targets." -c ".$coverage.">>$log 2>&1");
+    unlink("data_krispr_backup.RData");
+    if(-e "data_krispr.RData" ) {
+    	print("\n\n A new model was created in the current directory. You can copy/rename it.\n You can use it in kmasker run with -model.\n");
+    }
+    unlink("models_krispr.R");
+    unlink("krispr.py");
+    unlink("save_model_data.R");
+}
 
 ## subroutine
 #

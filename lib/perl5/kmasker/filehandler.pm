@@ -413,34 +413,22 @@ sub merge_tab_seeds{ #check chomping !
    my $old_end = 0;
    for(my $i=1; $i<$length; $i++) {
       if($ident[$old_end] ne $ident[$i]){
-         #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
-         #if($start[$old_end] != $end[$old_end]) {
-            print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
-         #}
+         print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
          $old_end = $i;
          $old_start = $i;
       }
-      elsif(((($start[$i] - $end[$old_end]) / ((($end[$old_end] - $start[$old_end]) + 1 )+ (($end[$i] - $start[$i]) + 1))) <= $percent_length/100) || (($start[$i] - $end [$old_end]) <= $min )) {
+      elsif(((($start[$i] - $end[$old_end]) / ((($end[$old_end] - $start[$old_end]) + 1 )+ (($end[$i] - $start[$i]) + 1))) <= $percent_length/100) || (($start[$i] - $end[$old_end]) <= $min )) {
          $old_end = $i;
       }
       else{
-         #if($start[$old_end] != $end[$old_end]) {
-             #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
-             print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
-         #}
+         print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
          $old_end = $i;
          $old_start = $i;
       }
-      #print $i . "\n";
    }
-   #seperate output for the last element
    if($length > 0) {
-      #push(@output, $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end]);
       print $out $ident[$old_end] . "\t" . $start[$old_start] . "\t" . $end[$old_end];
    }
-   #foreach (@output) {
-    #  print $out "$_";
-   #}
    close($out);
    close($seed_f);
 }
