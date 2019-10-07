@@ -71,7 +71,7 @@ my $repeat_threshold	= 10;
 my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
-my make_model;
+my $make_model;
 
 # set the following parameter using '--expert_setting_kmasker' or provide them in file using '--config_kmasker'
 my $MK_percent_gapsize	= 10;	#Default	MK_percent_gapsize (N) is the paramater allowing N percent of a region to be not repetitive when merging regions. Used in SK and MK.
@@ -168,7 +168,7 @@ my $result = GetOptions (	#MAIN
 							"minl=i"			=> \$length_threshold_usr,
 							"m=i"				=> \$mismatch,	
 							"model=s"			=> \$krispr_model,
-							"make_model=s"		=> \$make_model				
+							"make_model=s"		=> \$make_model,
 											
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
@@ -1805,7 +1805,7 @@ sub help(){
 		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
 		print "\n --fish\t\t Extracts long sequence strechtes with low repetitiveness as FISH candidates";
 		print "\n --model\t\t Use with --kripsr: You can specifiy an alternative krispr model here. It can be built with --make_model.";
-		print "\n --make_model\t\t Use with --krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI." 
+		print "\n --make_model\t\t Use with --krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI.";
 	
 		print "\n\n";
 		exit();
