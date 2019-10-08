@@ -1001,10 +1001,12 @@ sub initiate_user(){
 		print "\n Using $uconf as user configuration. \n" if(defined $verbose);
 	}else{
 		#SETUP user conf
+        print "Creating new user configuration in " . $uconf . "\n";
 		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
 		print $USER_CONF "PATH_kindex_private=".$ENV{"HOME"}."/KINDEX/";
 		print $USER_CONF "\nPATH_kindex_external=";
-		close $USER_CONF;	
+		close $USER_CONF;
+        $PATH_kindex_private = $ENV{"HOME"}."/KINDEX/";
 		
 		#SHOW INFO
 		print "\n PLEASE NOTE: \n You are writing all large data structures to your home directory [default].";
