@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
     
     opterr = 0;
     
-    while ((opt = getopt(argc, argv, "of:j:hn:r:p:s")) != EOF) {
+    while ((opt = getopt(argc, argv, "of:j:hn:r:p:st")) != EOF) {
         switch (opt) {
             case 'o':
                 occflag = true;
