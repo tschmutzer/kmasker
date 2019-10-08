@@ -1001,10 +1001,12 @@ sub initiate_user(){
 		print "\n Using $uconf as user configuration. \n" if(defined $verbose);
 	}else{
 		#SETUP user conf
+        print "Creating new user configuration in " . $uconf . "\n";
 		my $USER_CONF 	= new IO::File($uconf, "w") or die "could not write user repository : $!\n";
 		print $USER_CONF "PATH_kindex_private=".$ENV{"HOME"}."/KINDEX/";
 		print $USER_CONF "\nPATH_kindex_external=";
-		close $USER_CONF;	
+		close $USER_CONF;
+        $PATH_kindex_private = $ENV{"HOME"}."/KINDEX/";
 		
 		#SHOW INFO
 		print "\n PLEASE NOTE: \n You are writing all large data structures to your home directory [default].";
@@ -1080,6 +1082,8 @@ sub check_install(){
 	#PERMISSION - calling this procedure is only be possible for directory owner (who installed Kmasker)
 	#my $fp			 =  $path."/kmasker.config";
 	print "\n Global configuration: $gconf\n" if(defined $verbose);
+    print "\n User configuration: $uconf\n\n" if(defined $verbose);
+
 	if (-e $gconf) {
 		my ($installed_by) = getpwuid(stat($gconf)->uid);
 		#$installed_by =~ s/\n//;
@@ -1103,7 +1107,7 @@ sub check_install(){
 		if($HASH_requirments{$tool} eq ""){
 			$HASH_requirments{$tool} = `which $tool`;
 			$HASH_requirments{$tool} =~ s/\n//;
-			print "\n DEFAULT (".$tool.")= ".$HASH_requirments{$tool};
+			print "DEFAULT (".$tool.")= ".$HASH_requirments{$tool} . "\n";
 		}
 	}
 	
@@ -1128,6 +1132,23 @@ sub check_install(){
 			$HASH_provided{"makeblastdb"} 	= $line if($line =~ /^makeblastdb=/);
 			$HASH_provided{"R"}		= $line if($line =~ /^R=/);				
 		}
+        if(-e $uconf) {
+            my $uCFG = new IO::File($uconf, "r") or die "\n unable to open user config $!";
+            while(<$uCFG>) {
+                next if($_ =~ /^$/);
+                next if($_ =~ /^#/);
+                my $line = $_;
+                $line =~ s/\n//;
+                my @ARRAY_tmp = split("=", $line);
+                
+                $HASH_provided{"jellyfish"}     = $line if($line =~ /^jellyfish=/);
+                $HASH_provided{"fastq-stats"}     = $line if($line =~ /^fastq-stats=/);
+                $HASH_provided{"gffread"}        = $line if($line =~ /^gffread=/);
+                $HASH_provided{"blastn"}     = $line if($line =~ /^blastn=/);
+                $HASH_provided{"makeblastdb"}     = $line if($line =~ /^makeblastdb=/);
+                $HASH_provided{"R"}        = $line if($line =~ /^R=/);
+            }
+        }
 		
 		
 		#CHECK tool requirments
@@ -1162,7 +1183,8 @@ sub check_install(){
 		print "\n\n";
 		$gCFG_old->close();
 		$gCFG->close();
-		#system("mv ".$gconf.".tmp ".$gconf)	
+		#system("mv ".$gconf.".tmp ".$gconf)
+        print "Writing new global configuration file!\n" if(defined $verbose);
 		move "$gconf.tmp", $gconf;
 
 	} else { #global config is missing
