@@ -87,10 +87,10 @@ sub run_kmasker_SK{
 		my $masked_fasta;
         my $strict_param = "";
         if(defined $strict){
-            $strict_param = " -f ";
+            $strict_param = " -t ";
         }
 		#start
-		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . $strict_param . " >>$log 2>&1");
+		system("cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . $strict_param . " >>$log 2>&1");
        
        #clean
 		unlink($full_kindex_name);
@@ -264,10 +264,10 @@ sub run_kmasker_MK{
 				#PRODUCE OCC
                 my $strict_param = "";
                  if(defined $strict){
-                     $strict_param = " -f ";
+                     $strict_param = " -t ";
                  }
                 #start
-                system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . $strict_param . " >>$log 2>&1");
+                system("cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . $strict_param . " >>$log 2>&1");
 				#my @NAME = split(/\./, $fasta);
 				#pop @NAME;
 				#my $name = join(".", @NAME);
