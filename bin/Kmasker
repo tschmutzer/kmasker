@@ -6,5 +6,6 @@ if [ -f ~/.kmasker_user.config ]; then
 fi
 export PATH=$LOCATION:$PREFIX/share/kmasker/scripts:$PATH
 export PATH=$PREFIX/share/kmasker/krispr:$PATH
+export PATH=$PATH:$LOCATION
 export PERL5LIB=$PREFIX/lib/perl5:$PERL5LIB
 $PREFIX/share/kmasker/scripts/Kmasker.pl $@

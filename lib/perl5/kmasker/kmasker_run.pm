@@ -56,6 +56,7 @@ sub run_kmasker_SK{
 		my $min_gff				= $HASH_info_this{"MK_min_gff"}; 			# default : 10 (bp)
 		my $bed					= $HASH_info_this{"bed"}; 					# default : 'no'
 		my $PID					= $HASH_info_this{"PID"};
+        my $strict              = $HASH_info_this{"strict"};
 			
 		my @ARRAY_repository	= split("\t", $HASH_repository_kindex{$kindex});
 		my $absolut_path		= $ARRAY_repository[4];
@@ -84,8 +85,12 @@ sub run_kmasker_SK{
 		# OCC NAME
 		my $occ_kmer_counts = "KMASKER_kmer_counts_KDX_".$kindex."_".$PID.".occ";		
 		my $masked_fasta;
+        my $strict_param = "";
+        if(defined $strict){
+            $strict_param = " -t ";
+        }
 		#start
-		system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . " >>$log 2>&1");
+		system("cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . $strict_param . " >>$log 2>&1");
        
        #clean
 		unlink($full_kindex_name);
@@ -204,6 +209,7 @@ sub run_kmasker_MK{
 	my $verbose				= $HASH_info_this{"verbose"};
 	my $fold_change 		= $HASH_info_this{"fold-change"};
 	my $PID					= $HASH_info_this{"PID"};
+    my $strict              = $HASH_info_this{"strict"};
 
 
 	print "\n parameter setting: rept       = ".$rept;
@@ -256,8 +262,12 @@ sub run_kmasker_MK{
 				}
 				
 				#PRODUCE OCC
-				system("$path/cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . " >>$log 2>&1");
-				
+                my $strict_param = "";
+                 if(defined $strict){
+                     $strict_param = " -t ";
+                 }
+                #start
+                system("cmasker -f \"".$fasta."\" -j \"".$full_kindex_name."\" -n ".$seq_depth." -r ".$rept." -o" . " -p" .$kindex . "_" . $PID . $strict_param . " >>$log 2>&1");
 				#my @NAME = split(/\./, $fasta);
 				#pop @NAME;
 				#my $name = join(".", @NAME);

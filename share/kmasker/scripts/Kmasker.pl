@@ -72,6 +72,7 @@ my $repeat_threshod_usr;
 my $tolerant_length_threshold_usr;
 my $tolerant_length_threshold = 0;
 my $make_model;
+my $strict;
 
 # set the following parameter using '--expert_setting_kmasker' or provide them in file using '--config_kmasker'
 my $MK_percent_gapsize	= 10;	#Default	MK_percent_gapsize (N) is the paramater allowing N percent of a region to be not repetitive when merging regions. Used in SK and MK.
@@ -169,6 +170,7 @@ my $result = GetOptions (	#MAIN
 							"m=i"				=> \$mismatch,	
 							"model=s"			=> \$krispr_model,
 							"make_model=s"		=> \$make_model,
+                            "strict"            => \$strict,
 											
 							#EXPLORE
 							"annotate"			=> \$custom_annotate,
@@ -457,6 +459,7 @@ if(defined $run){
 	$HASH_info{"rept"}					= $repeat_threshold;
 	$HASH_info{"minl"}					= $length_threshold; 
 	$HASH_info{"version KMASKER"}		= $version;
+    $HASH_info{"strict"}                = $strict;
 	$HASH_info{"version BUILD"} 		= "";
 	
 	print "\n starting run module ... session id: $PID\n";
@@ -1825,9 +1828,10 @@ sub help(){
 		print "\n --compare\t perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)";
 		print "\n --rept\t\t frequency threshold used for masking [5]!";
 		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
+        print "\n --strict\t Mask the whole k-mer instead of a single nucleotide with a k-mer count over the freuquency treshold.";
 		print "\n --fish\t\t Extracts long sequence strechtes with low repetitiveness as FISH candidates";
-		print "\n --model\t\t Use with --kripsr: You can specifiy an alternative krispr model here. It can be built with --make_model.";
-		print "\n --make_model\t\t Use with --krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI.";
+		print "\n --model\t Use with --kripsr: You can specifiy an alternative krispr model here. It can be built with --make_model.";
+		print "\n --make_model\t Use with --krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI.";
 	
 		print "\n\n";
 		exit();
