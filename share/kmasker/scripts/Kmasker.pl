@@ -1548,6 +1548,15 @@ sub read_user_config(){
 		#SETUP user
 		&initiate_user();
 	}
+    foreach my $tool (@HASH_path{keys %HASH_path}){
+        my $tool_path = dirname($tool);
+        if($ENV{PATH} !~ /$tool_path/){
+            $ENV{PATH} = $tool_path . ":" . $ENV{PATH};
+        }
+    }
+    if(defined $verbose) {
+        print("Current path environment variable is " . $ENV{PATH} . "\n");
+    }
 }
 
 
