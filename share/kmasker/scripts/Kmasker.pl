@@ -18,7 +18,7 @@ use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_versio
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions;
 
-my $version 	= "0.0.35 rc190218";
+my $version 	= "1.1.0 rc191015";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 my $PID = $kmasker::functions::PID;
@@ -1884,7 +1884,7 @@ sub help(){
     print "\n\t There are three modules and you should select one for your analysis.";
     
     print "\n\n Modules:";
-	print "\n --build\t\t construction of new index (requires --indexfiles)";
+	print "\n --build\t\t construction of new index (requires --seq)";
 	print "\n --run\t\t\t perform analysis and masking (requires --fasta)";
 	print "\n --explore\t\t perform downstream analysis with constructed index and detected repeats";
 	

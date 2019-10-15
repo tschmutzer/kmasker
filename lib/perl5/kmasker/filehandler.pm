@@ -8,7 +8,7 @@ our @EXPORT = qw(read_sequence read_occ sequence_length occ_length extract_seque
 our @EXPORT_OK = qw(read_sequence read_occ sequence_length occ_length extract_sequence_region add_annotation_to_gff write_gff2bed);
 
 ## VERSION
-my $version_PM_filehandler 	= "0.0.3 rc190212";
+my $version_PM_filehandler 	= "1.1.0 rc190722";
 
 #all credit goes to http://code.izzid.com/2011/10/31/How-to-read-a-fasta-file-in-perl.html
 

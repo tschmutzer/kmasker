@@ -19,7 +19,7 @@ remove_repository_entry
 our @EXPORT_OK = qw(build_kindex_jelly remove_kindex set_kindex_external set_private_path set_external_path show_path_infos clean_repository_directory read_config);
 
 ## VERSION
-my $version_PM_build 	= "0.0.10 rc181023";
+my $version_PM_build 	= "1.1.0 rc190712";
 
 
 sub build_kindex_jelly{	

@@ -25,7 +25,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.35 rc190212";
+my $version_PM_run 	= "1.1.0 rc191010";
 
 
 ## subroutine
