@@ -25,7 +25,7 @@ our @EXPORT = qw(
 our @EXPORT_OK = qw(plot_histogram_raw plot_histogram_mean custom_annotation gff_construction report_statistics plot_maker plot_maker_direct plot_barplot);
 
 ## VERSION
-my $version_PM_explore 	= "0.0.2 rc180815";
+my $version_PM_explore 	= "1.1.0 rc190812";
 
 ## DATE
 my $loctime = localtime;

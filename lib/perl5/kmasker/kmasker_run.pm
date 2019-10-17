@@ -25,7 +25,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run
 
 
 ## VERSION
-my $version_PM_run 	= "0.0.35 rc190212";
+my $version_PM_run 	= "1.1.0 rc191010";
 
 
 ## subroutine
@@ -397,7 +397,7 @@ sub run_krispr(){
 		
 	#SETUP
 	if(defined $model) {
-		copy($model, ".") or die "Copy failed: $!";
+		copy($model, "data_krispr.RData") or die "Copy failed: $!";
 	}
 	else {
 		copy($path."/../krispr/data_krispr.RData", "data_krispr.RData") or die "Copy failed: $!";
@@ -421,7 +421,7 @@ sub run_krispr(){
 	# system("python3 ".$path."/krispr.py single -q ".$krispr_sequence." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold);
 	
 	#MULTI FASTA
-	system("python3 "."krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t >".$OUT_krispr . ">>$log 2>&1");
+	system("python3 "."krispr.py multi -q ".$krispr." -j ".$full_kindex_name." -m ".$kripr_mismatch." -c ".$kripr_coverage_threshold." -t > ".$OUT_krispr . " 2>>$log");
 	print "\n\n ... Kmasker krispr module finished \n";
 	
 	#CLEAN
@@ -434,19 +434,58 @@ sub run_krispr(){
 sub create_krispr_model(){
 	my $path 					= dirname abs_path $0;	
 	my $targets = $_[0];
-	my $coverage		= $_[1]; 
+	my $coverage		= $_[1];
+    my $href_repo    = $_[2];
+    my %HASH_repository_kindex     = %{$href_repo};
+    
+    open(my $targets_fh, "<", $targets) or die "Can't open $targets !";
+    my @ARRAY_kindex;
+    my @ARRAY_full_kindex_names;
+    while (my $row = <$targets_fh>) {
+        chomp $row;
+        my $kindexname=(split(/,/, $row))[2];
+        $kindexname =~ s/\.jf//;
+        $kindexname =~s/^KINDEX_//;
+        push(@ARRAY_kindex, $kindexname);
+    }
+    for(my $i=0;$i<scalar(@ARRAY_kindex);$i++){
+        my $kindex = $ARRAY_kindex[$i];
+        if(! defined $HASH_repository_kindex{$kindex}) {
+            die "Could not find $kindex in any repository!\n\t Kmasker has been stopped\n\n";
+        }
+        my @ARRAY_repository     = split("\t", $HASH_repository_kindex{$kindex});
+        my $absolut_path        = $ARRAY_repository[4];
+        
+        #create symbolic link to kindex from private or global
+        my $full_kindex_name = "KINDEX_".$kindex.".jf";
+        push(@ARRAY_full_kindex_names, $full_kindex_name);
+        if(-e $absolut_path.$full_kindex_name){
+            my $sl_result = eval {symlink("${absolut_path}${full_kindex_name}", getcwd()."/".$full_kindex_name); 1};
+            if (($sl_result == 0) ||! (-e $full_kindex_name)) {
+                die "Symbolic link of ${absolut_path}${full_kindex_name} could not be created!\n";
+            }
+        } else {
+            print "\n ... using path ".$absolut_path;
+            print "\n WARNING: KINDEX (".$full_kindex_name.") not found in path. Please check path variables! \n\t Kmasker has been stopped\n\n";
+            exit();
+        }
+    }
+    
 	copy($path."/../krispr/data_krispr.RData", ".") or die "Copy failed: $!";
 	copy($path."/../krispr/models_krispr.R", ".") or die "Copy failed: $!";
 	copy($path."/../krispr/krispr.py", ".") or die "Copy failed: $!";
 	copy($path."/../krispr/save_model_data.R", ".") or die "Copy failed: $!";
-    system("python3 "."krispr.py new-model -e ".$targets." -c ".$coverage.">>$log 2>&1");
-    unlink("data_krispr_backup.RData");
-    if(-e "data_krispr.RData" ) {
+    system("python3 "."krispr.py new-model -e ".$targets." -c ".$coverage." >>$log 2>&1");
+    if(-e "data_krispr_backup.RData" ) {
     	print("\n\n A new model was created in the current directory. You can copy/rename it.\n You can use it in kmasker run with -model.\n");
     }
+    unlink("data_krispr_backup.RData");
     unlink("models_krispr.R");
     unlink("krispr.py");
     unlink("save_model_data.R");
+    foreach my $fullname (@ARRAY_full_kindex_names) {
+        unlink($fullname);
+    }
 }
 
 ## subroutine

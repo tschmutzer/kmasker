@@ -18,7 +18,7 @@ use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_versio
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions;
 
-my $version 	= "0.0.35 rc190218";
+my $version 	= "1.1.0 rc191015";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 my $PID = $kmasker::functions::PID;
@@ -285,7 +285,7 @@ if(defined $uPID) {
 			
 #############
 # CALLING HELP if requested						
-$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore));
+$help = 1 if((!defined $build)&&(!defined $run)&&(!defined $explore)&&(!defined $make_model));
 
 if(defined $help){
 	&help();	
@@ -444,7 +444,13 @@ if(defined $build){
 	exit();
 }
 
-
+#######################
+###
+### Make Model for Krispr
+###
+if(defined $make_model) {
+    &create_krispr_model($make_model, $mismatch, \%HASH_repository_kindex);
+}
 #######################
 ###
 ### RUN SECTION
@@ -466,15 +472,10 @@ if(defined $run){
 	
 	#CRISPR design modul
 	if(defined $krispr){
-		if(defined $make_model) {
-
-		} 
-		else {
 			if(exists $HASH_repository_kindex{$kindex}){
 				&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
 			}
 			print "\n - Thanks for using Kmasker! -\n\n";
-		}
 		if($verbose) {
         	print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";
        	}
@@ -1103,7 +1104,8 @@ sub check_install(){
 								"gffread" => "",
 								"blastn"  => "",
 								"makeblastdb" => "",
-								"R" => "");
+								"R" => "",
+                                "python3" => "");
 			
 	#SET default path if tool is detected
 	foreach my $tool (keys %HASH_requirments){
@@ -1133,7 +1135,9 @@ sub check_install(){
 			$HASH_provided{"gffread"}		= $line if($line =~ /^gffread=/);
 			$HASH_provided{"blastn"} 	= $line if($line =~ /^blastn=/);
 			$HASH_provided{"makeblastdb"} 	= $line if($line =~ /^makeblastdb=/);
-			$HASH_provided{"R"}		= $line if($line =~ /^R=/);				
+			$HASH_provided{"R"}		= $line if($line =~ /^R=/);
+            $HASH_provided{"python3"}        = $line if($line =~ /^python3=/);
+
 		}
         if(-e $uconf) {
             my $uCFG = new IO::File($uconf, "r") or die "\n unable to open user config $!";
@@ -1150,6 +1154,8 @@ sub check_install(){
                 $HASH_provided{"blastn"}     = $line if($line =~ /^blastn=/);
                 $HASH_provided{"makeblastdb"}     = $line if($line =~ /^makeblastdb=/);
                 $HASH_provided{"R"}        = $line if($line =~ /^R=/);
+                $HASH_provided{"python3"}        = $line if($line =~ /^python3=/);
+
             }
         }
 		
@@ -1172,6 +1178,10 @@ sub check_install(){
 		
 		#R
 		$HASH_requirments{"R"} = &check_routine_for_requirement("R", $HASH_provided{"R"}, $HASH_requirments{"R"});
+        
+        #Python3
+        $HASH_requirments{"python3"} = &check_routine_for_requirement("python3", $HASH_provided{"python3"}, $HASH_requirments{"python3"});
+
 				
 		#WRITE
 		print $gCFG "#external tool requirements\n";
@@ -1210,6 +1220,10 @@ sub check_install(){
 		
 		#R
 		$HASH_requirments{"R"} = &check_routine_for_requirement("R", "", $HASH_requirments{"R"});
+        
+        #Python3
+        $HASH_requirments{"python3"} = &check_routine_for_requirement("python3", "", $HASH_requirments{"python3"});
+
 				
 		#WRITE
 		print $gCFG "#external tool requirements\n";
@@ -1484,6 +1498,7 @@ sub read_user_config(){
 			&check_tool($line, "blastn");
 			&check_tool($line, "makeblastdb");
 			&check_tool($line, "R");
+            &check_tool($line, "python3");
 
 		}
 	}
@@ -1507,6 +1522,7 @@ sub read_user_config(){
 			&check_tool($line, "blastn");
 			&check_tool($line, "makeblastdb");
 			&check_tool($line, "R");
+            &check_tool($line, "python3");
 			
 			$PATH_kindex_private= $ARRAY_tmp[1] if($ARRAY_tmp[0] eq "PATH_kindex_private");
 			$PATH_kindex_private.= "/" if($PATH_kindex_private !~ /\/$/);
@@ -1839,9 +1855,9 @@ sub help(){
 		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
         print "\n --strict\t Mask the whole k-mer instead of a single nucleotide with a k-mer count over the freuquency treshold.";
 		print "\n --fish\t\t Extracts long sequence strechtes with low repetitiveness as FISH candidates";
-		print "\n --model\t Use with --kripsr: You can specifiy an alternative krispr model here. It can be built with --make_model.";
-		print "\n --make_model\t Use with --krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI.";
-	
+		print "\n --model\t Use with --krispr: You can specifiy an alternative krispr model here. It can be built with --make_model.";
+        print "\n --m\t Use with --krispr: You can specifiy the coverage threshold here.";
+
 		print "\n\n";
 		exit();
 	}
@@ -1884,7 +1900,7 @@ sub help(){
     print "\n\t There are three modules and you should select one for your analysis.";
     
     print "\n\n Modules:";
-	print "\n --build\t\t construction of new index (requires --indexfiles)";
+	print "\n --build\t\t construction of new index (requires --seq)";
 	print "\n --run\t\t\t perform analysis and masking (requires --fasta)";
 	print "\n --explore\t\t perform downstream analysis with constructed index and detected repeats";
 	
@@ -1909,6 +1925,7 @@ sub help(){
 	print "\n --long_id\t\t\t create a process id that is unique for this host (e.g. for use in cluster environments)";
 	print "\n --temp\t\t\t\t sets the location of temporary files [${temp_path}]";
 	print "\n --verbose\t\t\t enables verbose output and keeps log files";
+    print "\n --make_model\t\t\t For use with krispr: Build a new krispr model. You have to specifiy a .csv after this paramter. Details at https://git.io/JecYI. You can use -m to specify the coverage threshold.";
 
 
 	
