@@ -96,14 +96,14 @@ The build in help can be used in general:
 Kmasker --help
 
 Usage of program Kmasker:
- (version:  0.0.35 rc190218)				(session id: 8sAmvoVLq)
+ (version:  0.0.36 rc191017)				(session id: 8sAmvoVLq)
 
  Description:
 	 Kmasker is a tool for the automatic detection of repetitive sequence regions.
 	 There are three modules and you should select one for your analysis.
 
  Modules:
- --build		 construction of new index (requires --indexfiles)
+ --build		 construction of new index (requires --seq)
  --run			 perform analysis and masking (requires --fasta)
  --explore		 perform downstream analysis with constructed index and detected repeats
 
@@ -152,7 +152,7 @@ The `--expert_setting_jelly size=3` will add --size 3 to jellyfish. You can also
 Kmasker --help --build
 
 Usage of program Kmasker:
- (version:  0.0.35 rc190218)				(session id: 4rrLaaftil)
+ (version:  0.0.36 rc191017)				(session id: 4rrLaaftil)
 
  Command:
 	 Kmasker --build --seq mysequences.fasta
@@ -239,7 +239,7 @@ Now the gap is just 4bp, but the sum of the regions is also just 4bp. The ratio 
 
 ```
 Usage of program Kmasker:
- (version:  0.0.35 rc190218)				(session id: 72quHhdU9k)
+ (version:  0.0.36 rc191017)				(session id: 72quHhdU9k)
 
  Command:
 	 Kmasker --run --fasta sequence_to_be_analyzed.fasta
@@ -309,7 +309,7 @@ This example would set -perc_identity=0.95 -evalue=10 for the blast command. The
 
 ```
 Usage of program Kmasker:
- (version:  0.0.35 rc190218)				(session id: 71FVo0GF39)
+ (version:  0.0.36 rc191017)				(session id: 71FVo0GF39)
 
  Command (subset):
 
@@ -335,7 +335,7 @@ Usage of program Kmasker:
  --barplot		 create barplot (apply after '--run --compare' mode)
  --occ			 provide a Kmasker constructed occ file containing k-mer frequencies
  --file			 provide simple file (three columns) for plotting
- --cfile			 provide comparative file for plotting
+ --cfile		 provide comparative file for plotting
  --list			 file containing a subset of selected contig identifier
  --stats		 create report of basic statistics (requires --occ and --gff)
  --cstats		 create copmarative statistics (requires --occ)
