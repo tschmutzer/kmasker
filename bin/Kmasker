@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
-LOCATION=$(dirname `which $0`)
+LOCATION=$(dirname `realpath $0`)
+PREFIX=$(dirname $LOCATION)
 if [ -f ~/.kmasker_user.config ]; then
  	source <(grep "^export " ~/.kmasker_user.config)
 fi
-export PATH=$LOCATION:$PATH
-$LOCATION/Kmasker.pl $@
+export PATH=$LOCATION:$PREFIX/share/kmasker/scripts:$PATH
+export PATH=$PREFIX/share/kmasker/krispr:$PATH
+export PATH=$PATH:$LOCATION
+export PERL5LIB=$PREFIX/lib/perl5:$PERL5LIB
+$PREFIX/share/kmasker/scripts/Kmasker.pl $@
