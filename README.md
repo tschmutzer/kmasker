@@ -141,12 +141,17 @@ One either can provide parameters using the command line or use the option '--co
 Kmasker --build --seq sequence.fastq --gs 135 --in At1 --cn arabidopsis
 
 ### Expert settings
-Sometimes a server or desktop computer has not enough computational power to calculate the indicies with jellyfish. 
 
-E.g. for a desktop computer with 12 threads and 16GB memory:
+In general, all expert setting are edited in the form 'parameter=value'. For example to change the parameter minseed or pctgap from Kmasker plants use the '--expert_setting_kmasker' switch, followed by the parameters minseed=40 and pctgap=20.
+
+`Kmasker --run --fasta assembly3_WGSMorex.fasta --kindex Hv1 --expert_setting_kmasker minseed=40 pctgap=20`
+
+Another use case might be, that sometimes a server or desktop computer has not enough computational power to calculate the indicies with jellyfish. For this purpose, the parameters can be adjusted as follows e.g. for a desktop computer with 12 threads and 16GB memory:
 
 `Kmasker --build --seq assembly3_WGSMorex_renamed_blastable_carma.fasta -gs 5 --in WGSMorex --cn barley --verbose --threads 12 --expert_setting_jelly size=3`
+
 The `--expert_setting_jelly size=3` will add --size 3 to jellyfish. You can also specifiy the threads (regardless of Kmaskers --threads flag - in case you want to change the number of threads just for jellyfish).
+
 ### Module help
 ```
 Kmasker --help --build
