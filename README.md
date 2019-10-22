@@ -1,5 +1,5 @@
 # Kmasker
-
+[![Anaconda-Server Badge](https://anaconda.org/bioconda/kmasker/badges/license.svg)](https://anaconda.org/bioconda/kmasker)
 ## Installation
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/kmasker/README.html)
 
