@@ -257,7 +257,7 @@ Usage of program Kmasker:
  --fasta	 sequences in FASTA format for k-mer analysis and masking
  --krispr	 provide gRNA sequences in FASTA format for specificity analysis
  --compare	 perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)
- --rept		 frequency threshold used for masking [5]!
+ --rept		 frequency threshold used for masking [10]!
  --minl		 minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]
  --fish		 Extracts long sequence strechtes with low repetitiveness as FISH candidates
 ```
