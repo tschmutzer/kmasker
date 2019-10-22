@@ -1,6 +1,8 @@
 # Kmasker
 
 ## Installation
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat)](http://bioconda.github.io/recipes/kmasker/README.html)
+
 The installation instructions are available at: [INSTALL.md](https://github.com/tschmutzer/kmasker/blob/master/INSTALL.md). There, you find our list of requirements of external tools. Please make sure, that these are in your PATH environemnt if you installed from source. If not please specify them in the 'etc/kmasker.config' file.
 
 Kmasker uses an interal repository for reuse of kindex structures. The data (calculated kindex) will be stored either in local ('private' - definied in ~/.kmasker_user.config) or in the external directory. The path to the external directory has to be set in the 'etc/kmasker.config' file after installation.
