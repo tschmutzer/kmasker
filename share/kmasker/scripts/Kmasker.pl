@@ -1851,7 +1851,7 @@ sub help(){
 		print "\n --fasta\t sequences in FASTA format for k-mer analysis and masking";
 		print "\n --krispr\t provide gRNA sequences in FASTA format for specificity analysis";
 		print "\n --compare\t perform comparative analysis using multiple k-mer indices (requires --kindex K1 K2)";
-		print "\n --rept\t\t frequency threshold used for masking [5]!";
+		print "\n --rept\t\t frequency threshold used for masking [10]!";
 		print "\n --minl\t\t minimal length of sequence. Kmasker will extract all non-repetitive sequences with sufficient length [100]";
         print "\n --strict\t Mask the whole k-mer instead of a single nucleotide with a k-mer count over the freuquency treshold.";
 		print "\n --fish\t\t Extracts long sequence strechtes with low repetitiveness as FISH candidates";
