@@ -30,7 +30,7 @@ ibin = env.InstallFiles(target=idir_bin, source='bin')
 lib = env.InstallFiles(target=idir_lib, source='lib')
 etc = env.InstallFiles(target=idir_etc, source='etc')
 share = env.InstallFiles(target=idir_data, source='share')
-examples = env.InstallFiles(target=idir_data + '/examples', source='examples')
+examples = env.InstallFiles(target=idir_data + '/kmasker/examples', source='examples')
 
 #env.Alias('install', 'build') #Just installation for release with binaries
 env.Alias('install', [lib, etc, share, ibin, examples])
