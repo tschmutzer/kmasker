@@ -18,7 +18,7 @@ use kmasker::kmasker_run qw(run_kmasker_SK run_kmasker_MK run_krispr show_versio
 use kmasker::kmasker_explore qw(plot_histogram_raw plot_histogram_mean custom_annotation report_statistics plot_maker plot_maker_direct plot_barplot);
 use kmasker::functions;
 
-my $version 	= "1.1.0 rc191015";
+my $version 	= "1.1.1 rc231015";
 my $path 		= dirname abs_path $0;		
 my $indexfile;
 my $PID = $kmasker::functions::PID;
@@ -449,7 +449,7 @@ if(defined $build){
 ### Make Model for Krispr
 ###
 if(defined $make_model) {
-    &create_krispr_model($make_model, $mismatch, \%HASH_repository_kindex);
+    &create_krispr_model($make_model, \%HASH_repository_kindex);
 }
 #######################
 ###
@@ -472,9 +472,19 @@ if(defined $run){
 	
 	#CRISPR design modul
 	if(defined $krispr){
-			if(exists $HASH_repository_kindex{$kindex}){
-				&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
-			}
+            #READ repository.info
+            my $FILE_repository_info = "";
+            if(exists $HASH_repository_kindex{$kindex}){
+                my @ARRAY_repository    = split("\t", $HASH_repository_kindex{$kindex});
+                $FILE_repository_info     = $ARRAY_repository[4]."repository_".$kindex.".info";
+            }else{
+                print "\n .. Kmasker was stopped. Info for kindex does not exists!\n";
+                exit ();
+            }
+        
+            my $href_info     = &read_config($FILE_repository_info, \%HASH_info, \%HASH_repository_kindex, "run");
+            %HASH_info        = %{$href_info};
+			&run_krispr($kindex, $fasta, \%HASH_repository_kindex, \%HASH_info);
 			print "\n - Thanks for using Kmasker! -\n\n";
 		if($verbose) {
         	print "Output of external commands was written to " . $kmasker::kmasker_run::log."\n";

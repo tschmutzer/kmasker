@@ -25,7 +25,7 @@ our @EXPORT_OK = qw(run_kmasker_SK run_kmasker_MK run_krispr show_version_PM_run
 
 
 ## VERSION
-my $version_PM_run 	= "1.1.0 rc191010";
+my $version_PM_run 	= "1.1.1 rc231010";
 
 
 ## subroutine
@@ -46,7 +46,7 @@ sub run_kmasker_SK{
 		# GET info from repository
 		my $rept 				= $HASH_info_this{"rept"};
 		my $length_threshold 	= $HASH_info_this{"minl"};
-		my $seq_depth			= sprintf("%.0f" , $HASH_info_this{"sequencing depth"});
+		my $seq_depth			= $HASH_info_this{"sequencing depth"};
 		my $k					= $HASH_info_this{"k-mer"};
 		my $threads				= $HASH_info_this{"threads"};
 		my $temp_path       	= $HASH_info_this{"temp_path"};
@@ -387,7 +387,8 @@ sub run_krispr(){
 	my %HASH_info_this		 	= %{$href_info};
 	my @ARRAY_repository 		= split("\t", $HASH_repository_kindex{$kindex_this});
 	my $absolut_path			= $ARRAY_repository[4];
-	my $kripr_coverage_threshold= $HASH_info_this{"rept"};
+	my $kripr_coverage_threshold= sprintf("%.0f" , $HASH_info_this{"sequencing depth"});
+
 	my $kripr_mismatch			= $HASH_info_this{"krisp mismatch"};
 	my $PID						= $HASH_info_this{"PID"};
 	my $model 					= $HASH_info_this{"krisp model"};
@@ -434,8 +435,7 @@ sub run_krispr(){
 sub create_krispr_model(){
 	my $path 					= dirname abs_path $0;	
 	my $targets = $_[0];
-	my $coverage		= $_[1];
-    my $href_repo    = $_[2];
+    my $href_repo    = $_[1];
     my %HASH_repository_kindex     = %{$href_repo};
     
     open(my $targets_fh, "<", $targets) or die "Can't open $targets !";
@@ -475,7 +475,7 @@ sub create_krispr_model(){
 	copy($path."/../krispr/models_krispr.R", ".") or die "Copy failed: $!";
 	copy($path."/../krispr/krispr.py", ".") or die "Copy failed: $!";
 	copy($path."/../krispr/save_model_data.R", ".") or die "Copy failed: $!";
-    system("python3 "."krispr.py new-model -e ".$targets." -c ".$coverage." >>$log 2>&1");
+    system("python3 "."krispr.py new-model -e ".$targets." >>$log 2>&1");
     if(-e "data_krispr_backup.RData" ) {
     	print("\n\n A new model was created in the current directory. You can copy/rename it.\n You can use it in kmasker run with -model.\n");
     }
