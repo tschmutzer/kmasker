@@ -208,7 +208,7 @@ cd setup
 
 **Information: You should be able to use the terminal in OSX. Please note that whether kmasker nor its dependencies has a graphical user interface.** 
 
-Install brew from [https://brew.sh/](https://brew.sh/) (you can also use macports or fink, but this unsupported) and its dependencies (like OSX command line tools). Brew will guide you through its installation. We are working on a ready-to-use formula for brew at the moment. You can also use bioconda (instructions at the end of this document).
+Install brew from [https://brew.sh/](https://brew.sh/) (you can also use macports or fink, but this unsupported) and its dependencies (like OSX command line tools). Brew will guide you through its installation. We are working on a ready-to-use formula for brew at the moment. You can also use bioconda (instructions at the begin of this document).
 ### Install Homebrew
 Add the bioinformatics repository to brew.
 
