@@ -18,10 +18,13 @@ You can install kmasker in the following ways:
 
 
 *You should have installed bioconda before: [https://bioconda.github.io/](https://bioconda.github.io/)*
-
+We recommend to create a new conda environment to avoid dependency issues. 
 ```bash
 conda activate #if not active
-conda install kmasker
+conda create -n Kmasker Kmasker #create a environment called Kmasker
+conda activate Kmasker #to use the Kmasker environment
+#Check Kmasker installation
+Kmasker --check_config --verbose
 ```
 
 You can start kmasker with `Kmasker --help`
